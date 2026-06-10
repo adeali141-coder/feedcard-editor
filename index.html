@@ -4,9 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Album Card Feed Editor</title>
+
+<!-- Open Graph Meta Tags -->
 <meta property="og:title" content="Album Card Feed">
 <meta property="og:description" content="Buat dan bagikan album card feed">
 <meta property="og:type" content="website">
+<meta property="og:image" content="">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Nova Variety Feed">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Album Card Feed">
+<meta name="twitter:description" content="Buat dan bagikan album card feed">
+<meta name="twitter:image" content="">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config={theme:{extend:{colors:{accent:'#e8572a',accent2:'#fbbf24'}}}}
@@ -69,11 +82,11 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
 
 <!-- EDITOR VIEW -->
 <div id="editorView" class="h-full flex flex-col">
-  <header class="flex items-center gap-3 px-4 py-3 border-b border-dk-500 bg-dk-900 shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
+  <header class="flex items-center gap-3 px-4 py-3 border-b shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
     <span class="text-xl">&#x1F4F8;</span>
     <input id="albumNameInput" class="inp flex-1" style="padding:6px 12px;font-size:15px;font-weight:600" placeholder="Nama Album" />
     <button onclick="toggleView('preview')" class="btn-g flex items-center gap-2"><i class="fas fa-eye text-xs"></i><span class="hidden sm:inline">Preview</span></button>
-    <button onclick="openShareModal()" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i><span class="hidden sm:inline">Bagikan</span></button>
+    <button onclick="openShareModal(-1)" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i><span class="hidden sm:inline">Bagikan</span></button>
   </header>
   <div class="flex items-center gap-2 px-4 py-3 border-b shrink-0 overflow-x-auto" style="border-color:#1a1a1a;background:#111" id="cardSelector"></div>
   <div class="flex-1 overflow-y-auto px-4 py-4 pb-24" id="editorMain"></div>
@@ -88,7 +101,7 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
   <header class="flex items-center gap-3 px-4 py-3 border-b shrink-0 z-10 absolute top-0 left-0 right-0" style="border-color:#1a1a1a;background:rgba(10,10,10,0.9);backdrop-filter:blur(12px)">
     <button onclick="toggleView('editor')" class="btn-g flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-pen text-xs"></i> Editor</button>
     <span id="previewAlbumName" class="flex-1 text-center font-semibold truncate"></span>
-    <button onclick="openShareModal()" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i></button>
+    <button onclick="openShareModal(-1)" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i></button>
   </header>
   <div class="feed-scroll pt-14" id="feedScroll"></div>
   <div class="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20" id="scrollDots"></div>
@@ -104,8 +117,16 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()">
   <div class="modal-ct">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-bold">Bagikan Album</h3>
+      <h3 class="text-lg font-bold" id="shareModalTitle">Bagikan Album</h3>
       <button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button>
+    </div>
+    <div id="sharePreviewCard" style="margin-bottom:16px;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;background:#1a1a1a">
+      <div id="sharePreviewImg" style="width:100%;aspect-ratio:1.91/1;background:#222;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+      <div style="padding:12px 16px">
+        <p style="font-size:11px;color:#888;margin-bottom:2px" id="sharePreviewDomain">feed.novavariety.store</p>
+        <p style="font-size:15px;font-weight:600;margin-bottom:2px" id="sharePreviewTitle">Judul Album</p>
+        <p style="font-size:12px;color:#999" id="sharePreviewDesc">Deskripsi album...</p>
+      </div>
     </div>
     <div class="mb-4">
       <label class="text-xs text-gray-400 mb-1 block">Link Album</label>
@@ -119,6 +140,8 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
       <button onclick="shareToWhatsApp()" class="share-btn" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button>
       <button onclick="shareToThreads()" class="share-btn" style="background:#000;border:1px solid #333"><i class="fab fa-threads w-6 text-center"></i> Threads</button>
       <button onclick="shareToInstagram()" class="share-btn" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"><i class="fab fa-instagram w-6 text-center"></i> Instagram (Salin Link)</button>
+      <button onclick="shareToTelegram()" class="share-btn" style="background:#0088cc"><i class="fab fa-telegram w-6 text-center"></i> Telegram</button>
+      <button onclick="shareToTwitter()" class="share-btn" style="background:#000;border:1px solid #333"><i class="fab fa-x-twitter w-6 text-center"></i> X / Twitter</button>
     </div>
   </div>
 </div>
@@ -156,6 +179,16 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
         <input id="settingsFavicon" class="inp" placeholder="Emoji atau URL" />
       </div>
       <div>
+        <label class="text-xs text-gray-400 mb-1 block">OG Image URL (gambar preview saat share ke sosmed)</label>
+        <input id="settingsOGImage" class="inp" placeholder="https://example.com/preview.jpg" />
+        <p class="text-xs text-gray-500 mt-1">Ukuran ideal: 1200x630px. Kosongkan = otomatis pakai gambar pertama.</p>
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">Domain Kustom</label>
+        <input id="settingsDomain" class="inp" placeholder="feed.novavariety.store" />
+        <p class="text-xs text-gray-500 mt-1">Domain yang digunakan untuk share link. Kosongkan = otomatis deteksi.</p>
+      </div>
+      <div>
         <label class="text-xs text-gray-400 mb-1 block">Firebase Config (opsional, JSON)</label>
         <textarea id="settingsFirebase" class="inp" style="height:96px;resize:none;font-family:monospace;font-size:11px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}'></textarea>
         <p class="text-xs text-gray-500 mt-1">Isi untuk sinkronisasi data ke Firebase. Kosongkan = localStorage.</p>
@@ -185,6 +218,23 @@ var ASPECTS = [
 ];
 
 // ============================
+// DOMAIN HELPER
+// ============================
+function getAppDomain() {
+  // Prioritas: 1) settings manual, 2) window.location
+  if (album.customDomain) return album.customDomain;
+  return window.location.hostname;
+}
+
+function getAppBaseUrl() {
+  var domain = getAppDomain();
+  var protocol = 'https://';
+  // Jika di localhost, pakai http
+  if (domain === 'localhost' || domain === '127.0.0.1') protocol = 'http://';
+  return protocol + domain + window.location.pathname;
+}
+
+// ============================
 // STATE
 // ============================
 var uid = function() {
@@ -211,6 +261,8 @@ var album = {
   id: uid(),
   name: 'Album Feed Saya',
   favicon: '\uD83D\uDCF8',
+  ogImage: '',
+  customDomain: 'feed.novavariety.store',
   gaId: '',
   firebaseConfig: '',
   cards: [defaultCard(), defaultCard()]
@@ -221,6 +273,52 @@ var currentView = 'editor';
 var commentCardIdx = -1;
 var replyTo = null;
 var sliderStates = {};
+var shareTargetCard = -1;
+
+// ============================
+// OG TAGS MANAGEMENT
+// ============================
+function updateOGTags(title, desc, imageUrl) {
+  var ogTitle = document.querySelector('meta[property="og:title"]');
+  var ogDesc = document.querySelector('meta[property="og:description"]');
+  var ogImage = document.querySelector('meta[property="og:image"]');
+  var twTitle = document.querySelector('meta[name="twitter:title"]');
+  var twDesc = document.querySelector('meta[name="twitter:description"]');
+  var twImage = document.querySelector('meta[name="twitter:image"]');
+
+  if (ogTitle) ogTitle.content = title;
+  if (ogDesc) ogDesc.content = desc;
+  if (ogImage) ogImage.content = imageUrl;
+  if (twTitle) twTitle.content = title;
+  if (twDesc) twDesc.content = desc;
+  if (twImage) twImage.content = imageUrl;
+  document.title = title;
+}
+
+function getOGImageUrl(cardIdx) {
+  if (album.ogImage) return album.ogImage;
+  var card = cardIdx >= 0 ? album.cards[cardIdx] : album.cards[0];
+  if (!card) return '';
+  for (var i = 0; i < card.images.length; i++) {
+    if (card.images[i].url) return card.images[i].url;
+  }
+  return '';
+}
+
+function getOGTitle(cardIdx) {
+  if (cardIdx >= 0) {
+    return album.cards[cardIdx].title.text + ' - ' + album.name;
+  }
+  return album.name;
+}
+
+function getOGDesc(cardIdx) {
+  if (cardIdx >= 0) {
+    return album.cards[cardIdx].desc.text.slice(0, 200);
+  }
+  var firstDesc = album.cards[0] ? album.cards[0].desc.text : '';
+  return firstDesc.slice(0, 200);
+}
 
 // ============================
 // PERSISTENCE
@@ -235,6 +333,8 @@ function loadAlbum() {
     if (d) {
       album = JSON.parse(d);
       if (!album.cards || !album.cards.length) album.cards = [defaultCard()];
+      if (!album.ogImage) album.ogImage = '';
+      if (!album.customDomain) album.customDomain = '';
     }
   } catch(e) {}
   document.getElementById('albumNameInput').value = album.name;
@@ -288,8 +388,7 @@ function toggleView(view) {
 function addCard() {
   album.cards.push(defaultCard());
   currentCardIdx = album.cards.length - 1;
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
   showToast('Card baru ditambahkan');
 }
 
@@ -297,20 +396,15 @@ function removeCard(idx) {
   if (album.cards.length <= 1) { showToast('Minimal 1 card'); return; }
   album.cards.splice(idx, 1);
   if (currentCardIdx >= album.cards.length) currentCardIdx = album.cards.length - 1;
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
 }
 
 function duplicateCard(idx) {
   var clone = JSON.parse(JSON.stringify(album.cards[idx]));
-  clone.id = uid();
-  clone.likes = 0;
-  clone.liked = false;
-  clone.comments = [];
+  clone.id = uid(); clone.likes = 0; clone.liked = false; clone.comments = [];
   album.cards.splice(idx + 1, 0, clone);
   currentCardIdx = idx + 1;
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
   showToast('Card diduplikasi');
 }
 
@@ -321,38 +415,29 @@ function moveCard(idx, dir) {
   album.cards[idx] = album.cards[ni];
   album.cards[ni] = tmp;
   currentCardIdx = ni;
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
 }
 
-function selectCard(idx) {
-  currentCardIdx = idx;
-  renderEditor();
-}
+function selectCard(idx) { currentCardIdx = idx; renderEditor(); }
 
 // ============================
 // IMAGE OPERATIONS
 // ============================
 function addImage(ci) {
   album.cards[ci].images.push({url:'', aspectRatio:'16/9'});
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
 }
 
 function removeImage(ci, ii) {
   if (album.cards[ci].images.length <= 1) { showToast('Minimal 1 gambar'); return; }
   album.cards[ci].images.splice(ii, 1);
-  saveAlbum();
-  renderEditor();
+  saveAlbum(); renderEditor();
 }
 
 // ============================
 // EDITOR RENDERING
 // ============================
-function renderEditor() {
-  renderCardSelector();
-  renderCardEditorForm();
-}
+function renderEditor() { renderCardSelector(); renderCardEditorForm(); }
 
 function renderCardSelector() {
   var el = document.getElementById('cardSelector');
@@ -410,8 +495,7 @@ function renderCardEditorForm() {
   h += '<div class="sec-tog open" onclick="toggleSec(this)">';
   h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-palette" style="margin-right:8px;color:#e8572a"></i>Warna Latar Card</span>';
   h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body open"><div style="padding:12px 0">';
-  h += '<div class="color-wrap">';
+  h += '<div class="sec-body open"><div style="padding:12px 0"><div class="color-wrap">';
   h += '<input type="color" value="' + c.bgColor + '" onchange="upd(\'bgColor\',this.value)" />';
   h += '<input class="inp" style="flex:1" value="' + c.bgColor + '" onchange="upd(\'bgColor\',this.value)" placeholder="#1a1a2e" />';
   h += '</div></div></div>';
@@ -421,7 +505,6 @@ function renderCardEditorForm() {
   h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-images" style="margin-right:8px;color:#fbbf24"></i>Gambar Slide</span>';
   h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
   h += '<div class="sec-body open"><div style="padding:12px 0;display:flex;flex-direction:column;gap:12px">';
-
   for (var ii = 0; ii < c.images.length; ii++) {
     var img = c.images[ii];
     h += '<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';
@@ -435,7 +518,6 @@ function renderCardEditorForm() {
     h += '<select class="sel" style="font-size:12px" onchange="updImg(' + ii + ',\'aspectRatio\',this.value)">' + aspectOptions(img.aspectRatio) + '</select>';
     h += '</div>';
   }
-
   h += '<button onclick="addImage(' + currentCardIdx + ')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Gambar</button>';
   h += '</div></div>';
 
@@ -505,11 +587,7 @@ function renderCardEditorForm() {
 
 function escAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-function toggleSec(el) {
-  el.classList.toggle('open');
-  el.nextElementSibling.classList.toggle('open');
-}
+function toggleSec(el) { el.classList.toggle('open'); el.nextElementSibling.classList.toggle('open'); }
 
 // ============================
 // DATA UPDATE HELPERS
@@ -522,22 +600,19 @@ function updCta(key, val) { album.cards[currentCardIdx].cta[key] = val; saveAlbu
 function updAnalytics(key, val) { album.cards[currentCardIdx].analytics[key] = val; saveAlbum(); }
 
 // ============================
-// PREVIEW RENDERING
+// PREVIEW & FEED RENDERING
 // ============================
 function renderPreview() {
-  var container = document.getElementById('feedScroll');
   document.getElementById('previewAlbumName').textContent = album.name;
-  renderFeedInto(container);
+  renderFeedInto(document.getElementById('feedScroll'));
   renderScrollDots('scrollDots');
 }
 
 function renderPublished(data) {
   album = data;
-  var ev = document.getElementById('editorView');
-  ev.style.display = 'none';
+  document.getElementById('editorView').style.display = 'none';
   var pv = document.getElementById('publishedView');
-  pv.classList.remove('hidden');
-  pv.style.display = 'flex';
+  pv.classList.remove('hidden'); pv.style.display = 'flex';
   document.title = album.name;
   setFavicon(album.favicon);
   renderFeedInto(document.getElementById('publishedScroll'));
@@ -550,36 +625,25 @@ function renderFeedInto(container) {
     var c = album.cards[idx];
     var titleFont = c.title.font === 'sans-serif' ? 'sans-serif' : "'" + c.title.font + "', sans-serif";
     var descFont = c.desc.font === 'sans-serif' ? 'sans-serif' : "'" + c.desc.font + "', sans-serif";
-
     var slideId = 'slider_' + idx;
     sliderStates[slideId] = 0;
-
-    // Filter valid images
     var validImgs = [];
     for (var vi = 0; vi < c.images.length; vi++) {
       if (c.images[vi].url) validImgs.push(c.images[vi]);
     }
-
-    var slidesHtml = '';
-    var dotsHtml = '';
+    var slidesHtml = '', dotsHtml = '';
     for (var si = 0; si < validImgs.length; si++) {
-      slidesHtml += '<div class="slide"><img src="' + escAttr(validImgs[si].url) + '" style="width:100%;aspect-ratio:' + (validImgs[si].aspectRatio || '16/9') + ';object-fit:cover;display:block;border-radius:16px" onerror="this.parentElement.innerHTML=\'<div style=\\\'aspect-ratio:' + (validImgs[si].aspectRatio || '16/9') + ';display:flex;align-items:center;justify-content:center;background:#1a1a1a;border-radius:16px\\\'><i class=\\\'fas fa-image\\\' style=\\\'font-size:28px;color:#444\\\'></i></div>\'" /></div>';
+      slidesHtml += '<div class="slide"><img src="' + escAttr(validImgs[si].url) + '" style="width:100%;aspect-ratio:' + (validImgs[si].aspectRatio || '16/9') + ';object-fit:cover;display:block;border-radius:16px" onerror="this.style.display=\'none\'" /></div>';
       dotsHtml += '<div class="slider-dot' + (si === 0 ? ' active' : '') + '" onclick="goSlide(\'' + slideId + '\',' + si + ')"></div>';
     }
-
-    // Video
     var videoHtml = '';
     if (c.videoUrl) {
       var embedUrl = '';
       try {
         var vu = new URL(c.videoUrl);
-        if (vu.hostname.indexOf('youtube.com') >= 0) {
-          embedUrl = 'https://www.youtube.com/embed/' + (vu.searchParams.get('v') || '');
-        } else if (vu.hostname.indexOf('youtu.be') >= 0) {
-          embedUrl = 'https://www.youtube.com/embed/' + vu.pathname.slice(1);
-        } else if (vu.hostname.indexOf('vimeo.com') >= 0) {
-          embedUrl = 'https://player.vimeo.com/video' + vu.pathname;
-        }
+        if (vu.hostname.indexOf('youtube.com') >= 0) embedUrl = 'https://www.youtube.com/embed/' + (vu.searchParams.get('v') || '');
+        else if (vu.hostname.indexOf('youtu.be') >= 0) embedUrl = 'https://www.youtube.com/embed/' + vu.pathname.slice(1);
+        else if (vu.hostname.indexOf('vimeo.com') >= 0) embedUrl = 'https://player.vimeo.com/video' + vu.pathname;
       } catch(e) {}
       if (embedUrl) {
         videoHtml = '<div style="margin-top:16px;border-radius:16px;overflow:hidden;aspect-ratio:16/9"><iframe src="' + escAttr(embedUrl) + '" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>';
@@ -587,52 +651,37 @@ function renderFeedInto(container) {
         videoHtml = '<video src="' + escAttr(c.videoUrl) + '" controls style="margin-top:16px;border-radius:16px;width:100%;max-height:300px"></video>';
       }
     }
-
     var cmtCount = c.comments ? c.comments.length : 0;
     var likeCount = c.likes || 0;
 
     h += '<div class="feed-card-wrap">';
     h += '<div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:' + c.bgColor + ';animation:fadeUp .5s ease ' + (idx * 0.1) + 's both;position:relative">';
-
-    // Image Slider
     if (slidesHtml) {
       h += '<div style="position:relative;overflow:hidden;border-radius:16px" id="' + slideId + '">';
       h += '<div class="slider-track" id="track_' + slideId + '">' + slidesHtml + '</div>';
       if (validImgs.length > 1) {
-        h += '<button onclick="slideNav(\'' + slideId + '\',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s"><i class="fas fa-chevron-left"></i></button>';
-        h += '<button onclick="slideNav(\'' + slideId + '\',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s"><i class="fas fa-chevron-right"></i></button>';
+        h += '<button onclick="slideNav(\'' + slideId + '\',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-left"></i></button>';
+        h += '<button onclick="slideNav(\'' + slideId + '\',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-right"></i></button>';
         h += '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_' + slideId + '">' + dotsHtml + '</div>';
       }
       h += '</div>';
     }
-
-    // Title
     h += '<h2 style="margin-top:16px;line-height:1.2;font-family:' + titleFont + ';font-size:' + c.title.size + 'px;color:' + c.title.color + ';font-weight:' + (c.title.bold ? '700' : '400') + '">' + escHtml(c.title.text) + '</h2>';
-
-    // Description
     h += '<p style="margin-top:8px;line-height:1.6;font-family:' + descFont + ';font-size:' + c.desc.size + 'px;color:' + c.desc.color + '">' + escHtml(c.desc.text) + '</p>';
-
-    // Video
     h += videoHtml;
-
-    // CTA Button
     if (c.cta.text) {
       h += '<a href="' + escAttr(c.cta.url) + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px" onclick="trackClick(' + idx + ')">';
       h += '<button style="background:' + c.cta.bgColor + ';color:' + c.cta.textColor + ';border-radius:' + c.cta.radius + 'px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s;box-shadow:0 4px 15px ' + c.cta.bgColor + '44">' + escHtml(c.cta.text) + '</button>';
       h += '</a>';
     }
-
-    // Actions Bar
     h += '<div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">';
     h += '<button class="like-btn' + (c.liked ? ' liked' : '') + '" id="likeBtn_' + idx + '" onclick="toggleLike(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:' + (c.liked ? '#ef4444' : '#aaa') + ';cursor:pointer;transition:all .2s"><i class="fas fa-heart"></i><span id="likeCount_' + idx + '">' + likeCount + '</span></button>';
     h += '<button onclick="openCommentModal(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;transition:all .2s"><i class="fas fa-comment"></i><span>' + cmtCount + '</span></button>';
-    h += '<button onclick="shareCard(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;transition:all .2s;margin-left:auto"><i class="fas fa-share-from-square"></i></button>';
+    h += '<button onclick="openShareModal(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;transition:all .2s;margin-left:auto"><i class="fas fa-share-from-square"></i></button>';
     h += '</div>';
-
     if (c.analytics.id) {
       h += '<div style="margin-top:8px;font-size:9px;color:#555;text-align:right"><i class="fas fa-chart-line" style="margin-right:4px"></i>' + escHtml(c.analytics.name || c.analytics.id) + '</div>';
     }
-
     h += '</div></div>';
   }
   container.innerHTML = h;
@@ -693,11 +742,7 @@ function goSlide(sliderId, idx) {
   if (dotsC) {
     var dots = dotsC.children;
     for (var i = 0; i < dots.length; i++) {
-      if (i === idx) {
-        dots[i].classList.add('active');
-      } else {
-        dots[i].classList.remove('active');
-      }
+      if (i === idx) { dots[i].classList.add('active'); } else { dots[i].classList.remove('active'); }
     }
   }
 }
@@ -706,7 +751,6 @@ function slideNav(sliderId, dir) {
   goSlide(sliderId, (sliderStates[sliderId] || 0) + dir);
 }
 
-// Touch swipe
 document.addEventListener('touchstart', function(e) {
   var slider = e.target.closest('[id^="slider_"]');
   if (!slider) return;
@@ -717,9 +761,7 @@ document.addEventListener('touchend', function(e) {
   var slider = e.target.closest('[id^="slider_"]');
   if (!slider || slider._touchStartX == null) return;
   var diff = slider._touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) {
-    slideNav(slider.id, diff > 0 ? 1 : -1);
-  }
+  if (Math.abs(diff) > 50) { slideNav(slider.id, diff > 0 ? 1 : -1); }
   slider._touchStartX = null;
 }, {passive:true});
 
@@ -733,12 +775,7 @@ function toggleLike(idx) {
   saveAlbum();
   var btn = document.getElementById('likeBtn_' + idx);
   var count = document.getElementById('likeCount_' + idx);
-  if (btn) {
-    btn.classList.toggle('liked', c.liked);
-    btn.style.color = c.liked ? '#ef4444' : '#aaa';
-    btn.classList.add('heart-pop');
-    setTimeout(function() { btn.classList.remove('heart-pop'); }, 300);
-  }
+  if (btn) { btn.classList.toggle('liked', c.liked); btn.style.color = c.liked ? '#ef4444' : '#aaa'; btn.classList.add('heart-pop'); setTimeout(function() { btn.classList.remove('heart-pop'); }, 300); }
   if (count) count.textContent = c.likes;
 }
 
@@ -746,65 +783,42 @@ function toggleLike(idx) {
 // COMMENT SYSTEM
 // ============================
 function openCommentModal(idx) {
-  commentCardIdx = idx;
-  replyTo = null;
-  var c = album.cards[idx];
-  document.getElementById('commentModalTitle').textContent = 'Komentar (' + c.comments.length + ')';
+  commentCardIdx = idx; replyTo = null;
+  document.getElementById('commentModalTitle').textContent = 'Komentar (' + album.cards[idx].comments.length + ')';
   document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || '';
   renderComments();
   document.getElementById('commentModal').classList.add('show');
 }
-
-function closeCommentModal() {
-  document.getElementById('commentModal').classList.remove('show');
-  commentCardIdx = -1;
-  replyTo = null;
-}
+function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
 
 function renderComments() {
   var c = album.cards[commentCardIdx];
   if (!c) return;
   var el = document.getElementById('commentList');
-  if (!c.comments.length) {
-    el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';
-    return;
-  }
+  if (!c.comments.length) { el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>'; return; }
   var h = '';
   for (var ci = 0; ci < c.comments.length; ci++) {
     var cm = c.comments[ci];
     var time = new Date(cm.timestamp).toLocaleString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-
     h += '<div style="padding:12px;border-radius:12px;background:#1a1a1a;animation:fadeUp .3s ease">';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px">';
     h += '<div style="width:28px;height:28px;border-radius:50%;background:rgba(232,87,42,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e8572a">' + (cm.author[0] || '?').toUpperCase() + '</div>';
-    h += '<span style="font-size:13px;font-weight:600">' + escHtml(cm.author) + '</span>';
-    h += '</div>';
-    h += '<div style="display:flex;align-items:center;gap:8px">';
-    h += '<span style="font-size:10px;color:#666">' + time + '</span>';
-    if (cm.isLocal) {
-      h += '<button onclick="deleteComment(' + commentCardIdx + ',' + ci + ')" style="color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
-    }
+    h += '<span style="font-size:13px;font-weight:600">' + escHtml(cm.author) + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:#666">' + time + '</span>';
+    if (cm.isLocal) h += '<button onclick="deleteComment(' + commentCardIdx + ',' + ci + ')" style="color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
     h += '</div></div>';
     h += '<p style="font-size:13px;margin-top:6px;color:#ccc">' + escHtml(cm.text) + '</p>';
     h += '<button onclick="setReply(' + ci + ',\'' + escAttr(cm.author) + '\')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>';
-
-    // Replies
     if (cm.replies && cm.replies.length) {
       for (var ri = 0; ri < cm.replies.length; ri++) {
         var r = cm.replies[ri];
         var rt = new Date(r.timestamp).toLocaleString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
         h += '<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222;animation:fadeUp .3s ease">';
-        h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-        h += '<span style="font-size:12px;font-weight:600;color:#22d3ee">' + escHtml(r.author) + '</span>';
-        h += '<div style="display:flex;align-items:center;gap:6px">';
-        h += '<span style="font-size:9px;color:#666">' + rt + '</span>';
-        if (r.isLocal) {
-          h += '<button onclick="deleteReply(' + commentCardIdx + ',' + ci + ',\'' + r.id + '\')" style="color:#f87171;font-size:10px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
-        }
+        h += '<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:600;color:#22d3ee">' + escHtml(r.author) + '</span>';
+        h += '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666">' + rt + '</span>';
+        if (r.isLocal) h += '<button onclick="deleteReply(' + commentCardIdx + ',' + ci + ',\'' + r.id + '\')" style="color:#f87171;font-size:10px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
         h += '</div></div>';
-        h += '<p style="font-size:12px;margin-top:4px;color:#bbb">' + escHtml(r.text) + '</p>';
-        h += '</div>';
+        h += '<p style="font-size:12px;margin-top:4px;color:#bbb">' + escHtml(r.text) + '</p></div>';
       }
     }
     h += '</div>';
@@ -812,11 +826,7 @@ function renderComments() {
   el.innerHTML = h;
 }
 
-function setReply(ci, author) {
-  replyTo = ci;
-  document.getElementById('commentText').placeholder = 'Membalas ' + author + '...';
-  document.getElementById('commentText').focus();
-}
+function setReply(ci, author) { replyTo = ci; document.getElementById('commentText').placeholder = 'Membalas ' + author + '...'; document.getElementById('commentText').focus(); }
 
 function submitComment() {
   var author = document.getElementById('commentAuthor').value.trim() || 'Anonim';
@@ -838,97 +848,95 @@ function submitComment() {
   renderComments();
 }
 
-function deleteComment(cardIdx, cmtIdx) {
-  album.cards[cardIdx].comments.splice(cmtIdx, 1);
-  saveAlbum();
-  renderComments();
-}
+function deleteComment(cardIdx, cmtIdx) { album.cards[cardIdx].comments.splice(cmtIdx, 1); saveAlbum(); renderComments(); }
 
 function deleteReply(cardIdx, cmtIdx, replyId) {
   var cmt = album.cards[cardIdx].comments[cmtIdx];
-  if (cmt && cmt.replies) {
-    cmt.replies = cmt.replies.filter(function(r) { return r.id !== replyId; });
-    saveAlbum();
-    renderComments();
-  }
+  if (cmt && cmt.replies) { cmt.replies = cmt.replies.filter(function(r) { return r.id !== replyId; }); saveAlbum(); renderComments(); }
 }
 
 // ============================
 // SHARE SYSTEM
 // ============================
-function openShareModal() {
-  var link = generateShareLink();
+function openShareModal(cardIdx) {
+  shareTargetCard = cardIdx;
+  var title = getOGTitle(cardIdx);
+  var desc = getOGDesc(cardIdx);
+  var imgUrl = getOGImageUrl(cardIdx);
+  var link = generateShareLink(cardIdx);
+  updateOGTags(title, desc, imgUrl);
+
+  var modalTitle = cardIdx >= 0 ? 'Bagikan Card ' + (cardIdx + 1) : 'Bagikan Album';
+  document.getElementById('shareModalTitle').textContent = modalTitle;
   document.getElementById('shareLinkInput').value = link;
+  document.getElementById('sharePreviewDomain').textContent = getAppDomain();
+  document.getElementById('sharePreviewTitle').textContent = title;
+  document.getElementById('sharePreviewDesc').textContent = desc.slice(0, 100) + (desc.length > 100 ? '...' : '');
+  var previewImg = document.getElementById('sharePreviewImg');
+  if (imgUrl) {
+    previewImg.innerHTML = '<img src="' + escAttr(imgUrl) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';
+  } else {
+    previewImg.innerHTML = '<i class="fas fa-image" style="font-size:32px;color:#444"></i>';
+  }
   document.getElementById('shareModal').classList.add('show');
 }
 
-function closeShareModal() {
-  document.getElementById('shareModal').classList.remove('show');
-}
+function closeShareModal() { document.getElementById('shareModal').classList.remove('show'); }
 
-function generateShareLink() {
+function generateShareLink(cardIdx) {
   try {
     var shareData = {
-      n: album.name,
-      f: album.favicon,
+      n: album.name, f: album.favicon, og: album.ogImage, cd: album.customDomain,
+      ci: cardIdx >= 0 ? cardIdx : -1,
       c: album.cards.map(function(c) {
-        return {
-          bg: c.bgColor,
-          im: c.images.filter(function(i) { return i.url; }).map(function(i) { return {u:i.url, a:i.aspectRatio}; }),
-          t: {x:c.title.text, f:c.title.font, s:c.title.size, c:c.title.color, b:c.title.bold?1:0},
-          d: {x:c.desc.text, f:c.desc.font, s:c.desc.size, c:c.desc.color},
-          ct: {x:c.cta.text, u:c.cta.url, b:c.cta.bgColor, t:c.cta.textColor, r:c.cta.radius},
-          v: c.videoUrl,
-          lk: c.likes,
-          an: c.analytics
-        };
+        return { bg:c.bgColor, im:c.images.filter(function(i){return i.url;}).map(function(i){return{u:i.url,a:i.aspectRatio};}),
+          t:{x:c.title.text,f:c.title.font,s:c.title.size,c:c.title.color,b:c.title.bold?1:0},
+          d:{x:c.desc.text,f:c.desc.font,s:c.desc.size,c:c.desc.color},
+          ct:{x:c.cta.text,u:c.cta.url,b:c.cta.bgColor,t:c.cta.textColor,r:c.cta.radius},
+          v:c.videoUrl, lk:c.likes, an:c.analytics };
       })
     };
     var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
-    return window.location.origin + window.location.pathname + '#album=' + encoded;
-  } catch(e) {
-    return window.location.href;
-  }
+    return getAppBaseUrl() + '#album=' + encoded;
+  } catch(e) { return window.location.href; }
 }
 
 function shareToFacebook() {
-  var url = encodeURIComponent(generateShareLink());
+  var url = encodeURIComponent(generateShareLink(shareTargetCard));
   window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, '_blank', 'width=600,height=400');
 }
 
 function shareToWhatsApp() {
-  var text = encodeURIComponent(album.name + ' - Lihat album card feed saya! ' + generateShareLink());
-  window.open('https://wa.me/?text=' + text, '_blank');
+  var title = getOGTitle(shareTargetCard);
+  var link = generateShareLink(shareTargetCard);
+  window.open('https://wa.me/?text=' + encodeURIComponent(title + '\n\n' + link), '_blank');
 }
 
 function shareToThreads() {
-  var text = encodeURIComponent(album.name + ' - Lihat album card feed saya! ' + generateShareLink());
-  window.open('https://www.threads.net/intent/post?text=' + text, '_blank');
+  var title = getOGTitle(shareTargetCard);
+  var link = generateShareLink(shareTargetCard);
+  window.open('https://www.threads.net/intent/post?text=' + encodeURIComponent(title + '\n\n' + link), '_blank');
 }
 
-function shareToInstagram() {
-  copyShareLink();
-  showToast('Link disalin! Buka Instagram dan tempel di story/bio Anda');
+function shareToInstagram() { copyShareLink(); showToast('Link disalin! Buka Instagram dan tempel di story/bio Anda'); }
+
+function shareToTelegram() {
+  var title = getOGTitle(shareTargetCard);
+  var link = generateShareLink(shareTargetCard);
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(title), '_blank');
+}
+
+function shareToTwitter() {
+  var title = getOGTitle(shareTargetCard);
+  var link = generateShareLink(shareTargetCard);
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(title) + '&url=' + encodeURIComponent(link), '_blank');
 }
 
 function copyShareLink() {
   var input = document.getElementById('shareLinkInput');
   input.select();
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(input.value).then(function() { showToast('Link berhasil disalin!'); });
-  } else {
-    document.execCommand('copy');
-    showToast('Link berhasil disalin!');
-  }
-}
-
-function shareCard(idx) {
-  var c = album.cards[idx];
-  if (navigator.share) {
-    navigator.share({title:c.title.text, text:c.desc.text, url:generateShareLink()}).catch(function(){});
-  } else {
-    openShareModal();
-  }
+  if (navigator.clipboard) { navigator.clipboard.writeText(input.value).then(function() { showToast('Link berhasil disalin!'); }); }
+  else { document.execCommand('copy'); showToast('Link berhasil disalin!'); }
 }
 
 // ============================
@@ -936,17 +944,19 @@ function shareCard(idx) {
 // ============================
 function openSettingsModal() {
   document.getElementById('settingsFavicon').value = album.favicon || '';
+  document.getElementById('settingsOGImage').value = album.ogImage || '';
+  document.getElementById('settingsDomain').value = album.customDomain || '';
   document.getElementById('settingsGA').value = album.gaId || '';
   document.getElementById('settingsFirebase').value = album.firebaseConfig || '';
   document.getElementById('settingsModal').classList.add('show');
 }
 
-function closeSettingsModal() {
-  document.getElementById('settingsModal').classList.remove('show');
-}
+function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('show'); }
 
 function saveSettings() {
   album.favicon = document.getElementById('settingsFavicon').value || '\uD83D\uDCF8';
+  album.ogImage = document.getElementById('settingsOGImage').value || '';
+  album.customDomain = document.getElementById('settingsDomain').value || '';
   album.gaId = document.getElementById('settingsGA').value;
   album.firebaseConfig = document.getElementById('settingsFirebase').value;
   setFavicon(album.favicon);
@@ -966,7 +976,7 @@ function trackClick(cardIdx) {
 }
 
 // ============================
-// PUBLISHED VIEW (shared link)
+// PUBLISHED VIEW
 // ============================
 function checkPublishedView() {
   var hash = window.location.hash;
@@ -975,32 +985,33 @@ function checkPublishedView() {
       var encoded = hash.slice(7);
       var decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))));
       var sharedAlbum = {
-        id: uid(),
-        name: decoded.n || 'Album Feed',
-        favicon: decoded.f || '\uD83D\uDCF8',
-        gaId: '',
-        firebaseConfig: '',
+        id: uid(), name: decoded.n || 'Album Feed', favicon: decoded.f || '\uD83D\uDCF8',
+        ogImage: decoded.og || '', customDomain: decoded.cd || '', gaId: '', firebaseConfig: '',
         cards: (decoded.c || []).map(function(sc) {
-          return {
-            id: uid(),
-            bgColor: sc.bg || '#1a1a2e',
-            images: (sc.im || []).map(function(i) { return {url:i.u, aspectRatio:i.a || '16/9'}; }),
-            title: {text:sc.t?sc.t.x:'',font:sc.t?sc.t.f:'Poppins',size:sc.t?sc.t.s:22,color:sc.t?sc.t.c:'#fff',bold:!!(sc.t&&sc.t.b)},
-            desc: {text:sc.d?sc.d.x:'',font:sc.d?sc.d.f:'DM Sans',size:sc.d?sc.d.s:15,color:sc.d?sc.d.c:'#ccc'},
-            cta: {text:sc.ct?sc.ct.x:'',url:sc.ct?sc.ct.u:'#',bgColor:sc.ct?sc.ct.b:'#e8572a',textColor:sc.ct?sc.ct.t:'#fff',radius:sc.ct?sc.ct.r:24},
-            videoUrl: sc.v || '',
-            analytics: sc.an || {id:'',name:''},
-            likes: sc.lk || 0,
-            liked: false,
-            comments: []
-          };
+          return { id:uid(), bgColor:sc.bg||'#1a1a2e',
+            images:(sc.im||[]).map(function(i){return{url:i.u,aspectRatio:i.a||'16/9'};}),
+            title:{text:sc.t?sc.t.x:'',font:sc.t?sc.t.f:'Poppins',size:sc.t?sc.t.s:22,color:sc.t?sc.t.c:'#fff',bold:!!(sc.t&&sc.t.b)},
+            desc:{text:sc.d?sc.d.x:'',font:sc.d?sc.d.f:'DM Sans',size:sc.d?sc.d.s:15,color:sc.d?sc.d.c:'#ccc'},
+            cta:{text:sc.ct?sc.ct.x:'',url:sc.ct?sc.ct.u:'#',bgColor:sc.ct?sc.ct.b:'#e8572a',textColor:sc.ct?sc.ct.t:'#fff',radius:sc.ct?sc.ct.r:24},
+            videoUrl:sc.v||'', analytics:sc.an||{id:'',name:''}, likes:sc.lk||0, liked:false, comments:[] };
         })
       };
+      var cardIdx = decoded.ci >= 0 ? decoded.ci : 0;
+      var ogTitle = decoded.ci >= 0 ? sharedAlbum.cards[cardIdx].title.text + ' - ' + sharedAlbum.name : sharedAlbum.name;
+      var ogDesc = sharedAlbum.cards[cardIdx] ? sharedAlbum.cards[cardIdx].desc.text : '';
+      var ogImg = sharedAlbum.ogImage || (sharedAlbum.cards[cardIdx] && sharedAlbum.cards[cardIdx].images[0] ? sharedAlbum.cards[cardIdx].images[0].url : '');
+      updateOGTags(ogTitle, ogDesc, ogImg);
+      setFavicon(sharedAlbum.favicon);
       renderPublished(sharedAlbum);
+      if (decoded.ci >= 0 && decoded.ci < sharedAlbum.cards.length) {
+        setTimeout(function() {
+          var scrollEl = document.getElementById('publishedScroll');
+          var cards = scrollEl.querySelectorAll('.feed-card-wrap');
+          if (cards[decoded.ci]) cards[decoded.ci].scrollIntoView({behavior:'smooth'});
+        }, 500);
+      }
       return true;
-    } catch(e) {
-      console.error('Gagal memuat data album dari URL', e);
-    }
+    } catch(e) { console.error('Gagal memuat data album dari URL', e); }
   }
   return false;
 }
@@ -1009,9 +1020,7 @@ function checkPublishedView() {
 // ALBUM NAME LISTENER
 // ============================
 document.getElementById('albumNameInput').addEventListener('input', function() {
-  album.name = this.value;
-  saveAlbum();
-  document.title = album.name + ' - Editor';
+  album.name = this.value; saveAlbum(); document.title = album.name + ' - Editor';
 });
 
 // ============================
@@ -1023,19 +1032,10 @@ document.getElementById('albumNameInput').addEventListener('input', function() {
   setFavicon(album.favicon);
   document.title = album.name + ' - Editor';
   renderEditor();
-
   document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 's') {
-      e.preventDefault();
-      saveAlbum();
-      showToast('Disimpan!');
-    }
-    if (e.key === 'Escape' && currentView === 'preview') {
-      toggleView('editor');
-    }
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveAlbum(); showToast('Disimpan!'); }
+    if (e.key === 'Escape' && currentView === 'preview') toggleView('editor');
   });
-
-  document.getElementById('ogTitle').content = album.name;
 })();
 </script>
 </body>
