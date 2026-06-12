@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Album Card Feed Editor</title>
-
-<!-- Open Graph Meta Tags -->
 <meta property="og:title" content="Album Card Feed">
 <meta property="og:description" content="Buat dan bagikan album card feed">
 <meta property="og:type" content="website">
@@ -13,77 +11,76 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Nova Variety Feed">
-
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Album Card Feed">
 <meta name="twitter:description" content="Buat dan bagikan album card feed">
 <meta name="twitter:image" content="">
 
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config={theme:{extend:{colors:{accent:'#e8572a',accent2:'#fbbf24'}}}}
-</script>
+<script>tailwind.config={theme:{extend:{colors:{accent:'#e8572a',accent2:'#fbbf24'}}}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=Lora:wght@400;600;700&family=Montserrat:wght@400;500;600;700;800;900&family=Nunito:wght@300;400;600;700&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Raleway:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link id="dynFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B8%3C/text%3E%3C/svg%3E">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#333 transparent}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
 body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:hidden;height:100dvh}
 .feed-scroll{scroll-snap-type:y mandatory;overflow-y:scroll;height:100%}
 .feed-card-wrap{scroll-snap-align:start;min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
-.glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08)}
 .inp{background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:8px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
 .inp:focus{border-color:#e8572a}
 .sel{background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:8px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.sel:focus{border-color:#e8572a}
 .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px}
 .btn-a:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(232,87,42,0.3)}
 .btn-g{background:transparent;color:#aaa;border:1px solid #2a2a2a;border-radius:10px;padding:8px 16px;cursor:pointer;transition:all .2s;font-size:13px}
 .btn-g:hover{color:#f0f0f0;border-color:#555}
 .sec-tog{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1a1a1a}
-.sec-tog i.arr{transition:transform .3s}
-.sec-tog.open i.arr{transform:rotate(180deg)}
-.sec-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
-.sec-body.open{max-height:2000px}
+.sec-tog i.arr{transition:transform .3s}.sec-tog.open i.arr{transform:rotate(180deg)}
+.sec-body{max-height:0;overflow:hidden;transition:max-height .4s ease}.sec-body.open{max-height:2000px}
 .slider-track{display:flex;transition:transform .4s cubic-bezier(.25,.8,.25,1)}
 .slide{min-width:100%;position:relative}
-.slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer}
-.slider-dot.active{background:#fff;transform:scale(1.3)}
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
-.modal-ov.show{opacity:1;pointer-events:all}
+.slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer}.slider-dot.active{background:#fff;transform:scale(1.3)}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.modal-ov.show{opacity:1;pointer-events:all}
 .modal-ct{background:#111;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px}
 .modal-ov.show .modal-ct{transform:translateY(0)}
 @media(min-width:640px){.modal-ct{border-radius:20px;margin-bottom:10%;max-height:70vh}}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s cubic-bezier(.25,.8,.25,1);pointer-events:none}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.card-th{border:2px solid transparent;transition:all .2s;cursor:pointer}
-.card-th.active{border-color:#e8572a}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
+.card-th{border:2px solid transparent;transition:all .2s;cursor:pointer}.card-th.active{border-color:#e8572a}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
-.heart-pop{animation:heartPop .3s ease}
-.like-btn.liked{color:#ef4444}
-.share-btn{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;cursor:pointer;transition:all .2s;font-weight:500;width:100%;border:none;color:#fff}
-.share-btn:hover{transform:translateX(4px)}
-.color-wrap{position:relative;display:flex;align-items:center;gap:8px}
+.heart-pop{animation:heartPop .3s ease}.like-btn.liked{color:#ef4444}
+.share-btn{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;cursor:pointer;transition:all .2s;font-weight:500;width:100%;border:none;color:#fff}.share-btn:hover{transform:translateX(4px)}
+.color-wrap{display:flex;align-items:center;gap:8px}
 .color-wrap input[type=color]{width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;background:none;padding:0}
 .color-wrap input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
 .color-wrap input[type=color]::-webkit-color-swatch{border-radius:6px;border:1px solid #333}
+.saving-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center}
+.saving-box{background:#111;border-radius:16px;padding:24px 32px;text-align:center;border:1px solid #2a2a2a}
+.slug-display{background:#0d3320;border:1px solid #166534;border-radius:10px;padding:10px 14px;color:#4ade80;font-size:13px;word-break:break-all}
 </style>
 </head>
 <body>
 
 <div id="toast" class="toast"></div>
 
+<div id="savingOverlay" class="saving-ov" style="display:none">
+  <div class="saving-box">
+    <i class="fas fa-cloud-arrow-up" style="font-size:28px;color:#e8572a;margin-bottom:12px;display:block"></i>
+    <p style="font-size:15px;font-weight:600">Menyimpan ke Cloud...</p>
+    <p style="font-size:12px;color:#888;margin-top:4px">Mohon tunggu sebentar</p>
+  </div>
+</div>
+
 <!-- EDITOR VIEW -->
 <div id="editorView" class="h-full flex flex-col">
   <header class="flex items-center gap-3 px-4 py-3 border-b shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
-    <span class="text-xl" id="headerLogo">📸</span>
+    <span class="text-xl" id="headerLogo">&#x1F4F8;</span>
     <input id="albumNameInput" class="inp flex-1" style="padding:6px 12px;font-size:15px;font-weight:600" placeholder="Nama Album" />
     <button onclick="toggleView('preview')" class="btn-g flex items-center gap-2"><i class="fas fa-eye text-xs"></i><span class="hidden sm:inline">Preview</span></button>
     <button onclick="openShareModal(-1)" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i><span class="hidden sm:inline">Bagikan</span></button>
@@ -92,7 +89,8 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
   <div class="flex-1 overflow-y-auto px-4 py-4 pb-24" id="editorMain"></div>
   <div class="flex items-center gap-3 px-4 py-3 border-t shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
     <button onclick="addCard()" class="btn-a flex-1 flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Tambah Card</button>
-    <button onclick="openSettingsModal()" class="btn-g" style="padding:8px 12px" title="Pengaturan Album"><i class="fas fa-cog"></i></button>
+    <button onclick="saveToCloud()" class="btn-a flex items-center gap-2" style="background:linear-gradient(135deg,#059669,#34d399);padding:10px 16px" title="Simpan & Bagikan"><i class="fas fa-cloud-arrow-up"></i></button>
+    <button onclick="openSettingsModal()" class="btn-g" style="padding:8px 12px" title="Pengaturan"><i class="fas fa-cog"></i></button>
   </div>
 </div>
 
@@ -117,23 +115,25 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()">
   <div class="modal-ct">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-bold" id="shareModalTitle">Bagikan Album</h3>
+      <h3 class="text-lg font-bold" id="shareModalTitle">Bagikan</h3>
       <button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button>
     </div>
     <div id="sharePreviewCard" style="margin-bottom:16px;border-radius:16px;overflow:hidden;border:1px solid #2a2a2a;background:#1a1a1a">
       <div id="sharePreviewImg" style="width:100%;aspect-ratio:1.91/1;background:#222;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
       <div style="padding:12px 16px">
         <p style="font-size:11px;color:#888;margin-bottom:2px" id="sharePreviewDomain">feed.novavariety.store</p>
-        <p style="font-size:15px;font-weight:600;margin-bottom:2px" id="sharePreviewTitle">Judul Album</p>
-        <p style="font-size:12px;color:#999" id="sharePreviewDesc">Deskripsi album...</p>
+        <p style="font-size:15px;font-weight:600;margin-bottom:2px" id="sharePreviewTitle"></p>
+        <p style="font-size:12px;color:#999" id="sharePreviewDesc"></p>
       </div>
     </div>
     <div class="mb-4">
-      <label class="text-xs text-gray-400 mb-1 block">Link Album</label>
+      <label class="text-xs text-gray-400 mb-1 block">Link Preview (hanya 1 link pendek)</label>
+      <div id="shareLinkContainer" class="slug-display mb-2" style="display:none"></div>
       <div class="flex gap-2">
         <input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly />
         <button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px"><i class="fas fa-copy"></i></button>
       </div>
+      <p id="shareLinkNote" class="text-xs text-gray-500 mt-2" style="display:none"><i class="fas fa-info-circle mr-1"></i>Simpan ke Cloud dulu untuk mendapatkan link pendek.</p>
     </div>
     <div class="space-y-2">
       <button onclick="shareToFacebook()" class="share-btn" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button>
@@ -155,9 +155,7 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
     </div>
     <div id="commentList" class="space-y-3 mb-4" style="max-height:50vh;overflow-y:auto"></div>
     <div class="border-t pt-3" style="border-color:#222">
-      <div class="flex gap-2 mb-2">
-        <input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" />
-      </div>
+      <div class="flex gap-2 mb-2"><input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" /></div>
       <div class="flex gap-2">
         <input id="commentText" class="inp flex-1" style="padding:6px 10px" placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter')submitComment()" />
         <button onclick="submitComment()" class="btn-a" style="padding:6px 14px"><i class="fas fa-paper-plane"></i></button>
@@ -170,876 +168,323 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
 <div id="settingsModal" class="modal-ov" onclick="if(event.target===this)closeSettingsModal()">
   <div class="modal-ct">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-bold">Pengaturan Album</h3>
+      <h3 class="text-lg font-bold">Pengaturan</h3>
       <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button>
     </div>
     <div class="space-y-4">
+      <div><label class="text-xs text-gray-400 mb-1 block">Favicon (Emoji atau URL gambar)</label><input id="settingsFavicon" class="inp" placeholder="Emoji atau URL" /></div>
+      <div><label class="text-xs text-gray-400 mb-1 block">OG Image URL (preview saat share)</label><input id="settingsOGImage" class="inp" placeholder="https://..." /><p class="text-xs text-gray-500 mt-1">Ukuran ideal: 1200x630px</p></div>
+      <div><label class="text-xs text-gray-400 mb-1 block">Domain Kustom</label><input id="settingsDomain" class="inp" placeholder="feed.novavariety.store" /></div>
       <div>
-        <label class="text-xs text-gray-400 mb-1 block">Favicon (Emoji atau URL gambar)</label>
-        <input id="settingsFavicon" class="inp" placeholder="Emoji atau URL" />
+        <label class="text-xs text-gray-400 mb-1 block">Firebase Config (wajib untuk link pendek)</label>
+        <textarea id="settingsFirebase" class="inp" style="height:120px;resize:none;font-family:monospace;font-size:11px" placeholder='Paste config Firebase Anda di sini, contoh:&#10;{"apiKey":"AIza...","authDomain":"project.firebaseapp.com","projectId":"project-id","storageBucket":"project.firebasestorage.app","messagingSenderId":"123","appId":"1:123:web:abc"}'></textarea>
+        <p class="text-xs text-gray-500 mt-1">Wajib diisi agar bisa menyimpan ke cloud &amp; membuat share link pendek.</p>
       </div>
-      <div>
-        <label class="text-xs text-gray-400 mb-1 block">OG Image URL (gambar preview saat share ke sosmed)</label>
-        <input id="settingsOGImage" class="inp" placeholder="https://example.com/preview.jpg" />
-        <p class="text-xs text-gray-500 mt-1">Ukuran ideal: 1200x630px. Kosongkan = otomatis pakai gambar pertama.</p>
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 mb-1 block">Domain Kustom</label>
-        <input id="settingsDomain" class="inp" placeholder="feed.novavariety.store" />
-        <p class="text-xs text-gray-500 mt-1">Domain yang digunakan untuk share link. Kosongkan = otomatis deteksi.</p>
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 mb-1 block">Firebase Config (opsional, JSON)</label>
-        <textarea id="settingsFirebase" class="inp" style="height:96px;resize:none;font-family:monospace;font-size:11px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}'></textarea>
-        <p class="text-xs text-gray-500 mt-1">Isi untuk sinkronisasi data ke Firebase. Kosongkan = localStorage.</p>
-      </div>
-      <div>
-        <label class="text-xs text-gray-400 mb-1 block">ID Tracking Analitik (Google Analytics)</label>
-        <input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" />
-      </div>
+      <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
       <button onclick="saveSettings()" class="btn-a w-full">Simpan Pengaturan</button>
     </div>
   </div>
 </div>
 
 <script>
-// ============================
-// KONSTANTA
-// ============================
-var FONTS = ['Poppins','Montserrat','DM Sans','DM Serif Display','Playfair Display','Lora','Oswald','Raleway','Nunito','Roboto Mono','sans-serif','serif'];
-var ASPECTS = [
-  {n:'16:9 Landscape',v:'16/9'},
-  {n:'9:16 Portrait',v:'9/16'},
-  {n:'1:1 Kotak',v:'1/1'},
-  {n:'4:3 Landscape',v:'4/3'},
-  {n:'3:4 Portrait',v:'3/4'},
-  {n:'4:5 Portrait',v:'4/5'},
-  {n:'21:9 Ultrawide',v:'21/9'}
-];
+var FONTS=['Poppins','Montserrat','DM Sans','DM Serif Display','Playfair Display','Lora','Oswald','Raleway','Nunito','Roboto Mono','sans-serif','serif'];
+var ASPECTS=[{n:'16:9 Landscape',v:'16/9'},{n:'9:16 Portrait',v:'9/16'},{n:'1:1 Kotak',v:'1/1'},{n:'4:3 Landscape',v:'4/3'},{n:'3:4 Portrait',v:'3/4'},{n:'4:5 Portrait',v:'4/5'},{n:'21:9 Ultrawide',v:'21/9'}];
 
-// ============================
-// DOMAIN HELPER
-// ============================
-function getAppDomain() {
-  // Prioritas: 1) settings manual, 2) window.location
-  if (album.customDomain) return album.customDomain;
-  return window.location.hostname;
+// Slug helper
+function slugify(t){return t.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'album-'+Date.now().toString(36);}
+function getDomain(){return album.customDomain||window.location.hostname;}
+function getBaseUrl(){var d=getDomain();return(d==='localhost'?'http://':'https://')+d+window.location.pathname;}
+
+// Firebase
+var db=null,fbReady=false;
+function initFB(cfgStr){
+  if(!cfgStr){fbReady=false;return;}
+  try{
+    var cfg=JSON.parse(cfgStr);
+    if(!firebase.apps.length)firebase.initializeApp(cfg);
+    db=firebase.firestore();fbReady=true;
+  }catch(e){console.error('FB error:',e);fbReady=false;}
 }
 
-function getAppBaseUrl() {
-  var domain = getAppDomain();
-  var protocol = 'https://';
-  // Jika di localhost, pakai http
-  if (domain === 'localhost' || domain === '127.0.0.1') protocol = 'http://';
-  return protocol + domain + window.location.pathname;
-}
+var uid=function(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);};
+var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'https://picsum.photos/seed/'+Math.random().toString(36).slice(2,8)+'/800/450',aspectRatio:'16/9'}],title:{text:'Judul Feed',font:'Poppins',size:22,color:'#ffffff',bold:true},desc:{text:'Tulis deskripsi menarik di sini...',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'Beli Sekarang',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},likes:Math.floor(Math.random()*50),liked:false,comments:[]};};
 
-// ============================
-// STATE
-// ============================
-var uid = function() {
-  return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-};
+var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',customDomain:'feed.novavariety.store',gaId:'',firebaseConfig:'',slug:'',cards:[defCard(),defCard()]};
+var currentCardIdx=0,currentView='editor',commentCardIdx=-1,replyTo=null,sliderStates={},shareTargetCard=-1;
 
-var defaultCard = function() {
-  return {
-    id: uid(),
-    bgColor: '#1a1a2e',
-    images: [{url:'https://picsum.photos/seed/' + Math.random().toString(36).slice(2,8) + '/800/450', aspectRatio:'16/9'}],
-    title: {text:'Judul Feed',font:'Poppins',size:22,color:'#ffffff',bold:true},
-    desc: {text:'Tulis deskripsi menarik untuk feed card Anda di sini...',font:'DM Sans',size:15,color:'#cccccc'},
-    cta: {text:'Beli Sekarang',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},
-    videoUrl: '',
-    analytics: {id:'',name:''},
-    likes: Math.floor(Math.random()*50),
-    liked: false,
-    comments: []
+// OG
+function updOG(t,d,img){var m=[['og:title',t],['og:description',d],['og:image',img],['twitter:title',t],['twitter:description',d],['twitter:image',img]];for(var i=0;i<m.length;i++){var el=document.querySelector('[property="'+m[i][0]+'"]')||document.querySelector('[name="'+m[i][0]+'"]');if(el)el.content=m[i][1];}document.title=t;}
+function getOGImg(ci){if(album.ogImage)return album.ogImage;var c=ci>=0?album.cards[ci]:album.cards[0];if(!c)return'';for(var i=0;i<c.images.length;i++){if(c.images[i].url)return c.images[i].url;}return'';}
+function getOGTitle(ci){return ci>=0?album.cards[ci].title.text+' - '+album.name:album.name;}
+function getOGDesc(ci){return(ci>=0?album.cards[ci].desc.text:(album.cards[0]?album.cards[0].desc.text:'')).slice(0,200);}
+
+// Persistence
+function saveLocal(){try{localStorage.setItem('acf_album',JSON.stringify(album));}catch(e){}}
+function loadLocal(){try{var d=localStorage.getItem('acf_album');if(d){album=JSON.parse(d);if(!album.cards||!album.cards.length)album.cards=[defCard()];if(!album.slug)album.slug='';if(!album.customDomain)album.customDomain='';if(!album.ogImage)album.ogImage='';}}catch(e){}document.getElementById('albumNameInput').value=album.name;}
+function setFav(v){var el=document.getElementById('dynFavicon'),h=document.getElementById('headerLogo');if(!v)return;if(v.indexOf('http')===0){el.href=v;}else{el.href='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'90\'%3E'+encodeURIComponent(v)+'%3C/text%3E%3C/svg%3E';}if(h){if(v.indexOf('http')===0){h.innerHTML='<img src="'+escA(v)+'" style="height:24px;width:24px;object-fit:contain;border-radius:4px;vertical-align:middle" onerror="this.outerHTML=\'📸\'" />';}else{h.textContent=v;}}}
+
+// Cloud
+function saveToCloud(){
+  if(!fbReady||!db){showToast('Firebase belum dikonfigurasi. Buka Pengaturan.');return;}
+  var ov=document.getElementById('savingOverlay');ov.style.display='flex';
+  album.slug=album.slug||slugify(album.name);
+  var data={name:album.name,favicon:album.favicon,ogImage:album.ogImage,customDomain:album.customDomain,slug:album.slug,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    cards:album.cards.map(function(c){return{bgColor:c.bgColor,images:c.images.filter(function(i){return i.url;}).map(function(i){return{url:i.url,aspectRatio:i.aspectRatio};}),title:c.title,desc:c.desc,cta:c.cta,videoUrl:c.videoUrl,analytics:c.analytics,likes:c.likes||0};})
   };
-};
-
-var album = {
-  id: uid(),
-  name: 'Album Feed Saya',
-  favicon: '\uD83D\uDCF8',
-  ogImage: '',
-  customDomain: 'feed.novavariety.store',
-  gaId: '',
-  firebaseConfig: '',
-  cards: [defaultCard(), defaultCard()]
-};
-
-var currentCardIdx = 0;
-var currentView = 'editor';
-var commentCardIdx = -1;
-var replyTo = null;
-var sliderStates = {};
-var shareTargetCard = -1;
-
-// ============================
-// OG TAGS MANAGEMENT
-// ============================
-function updateOGTags(title, desc, imageUrl) {
-  var ogTitle = document.querySelector('meta[property="og:title"]');
-  var ogDesc = document.querySelector('meta[property="og:description"]');
-  var ogImage = document.querySelector('meta[property="og:image"]');
-  var twTitle = document.querySelector('meta[name="twitter:title"]');
-  var twDesc = document.querySelector('meta[name="twitter:description"]');
-  var twImage = document.querySelector('meta[name="twitter:image"]');
-
-  if (ogTitle) ogTitle.content = title;
-  if (ogDesc) ogDesc.content = desc;
-  if (ogImage) ogImage.content = imageUrl;
-  if (twTitle) twTitle.content = title;
-  if (twDesc) twDesc.content = desc;
-  if (twImage) twImage.content = imageUrl;
-  document.title = title;
+  db.collection('albums').doc(album.slug).set(data).then(function(){ov.style.display='none';saveLocal();showToast('Berhasil disimpan ke Cloud!');}).catch(function(e){ov.style.display='none';showToast('Gagal: '+e.message);});
 }
 
-function getOGImageUrl(cardIdx) {
-  if (album.ogImage) return album.ogImage;
-  var card = cardIdx >= 0 ? album.cards[cardIdx] : album.cards[0];
-  if (!card) return '';
-  for (var i = 0; i < card.images.length; i++) {
-    if (card.images[i].url) return card.images[i].url;
-  }
-  return '';
+function loadFromCloud(slug,cb){
+  if(!fbReady||!db){cb(null);return;}
+  db.collection('albums').doc(slug).get().then(function(doc){cb(doc.exists?doc.data():null);}).catch(function(e){console.error(e);cb(null);});
 }
 
-function getOGTitle(cardIdx) {
-  if (cardIdx >= 0) {
-    return album.cards[cardIdx].title.text + ' - ' + album.name;
-  }
-  return album.name;
-}
+// Toast
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
-function getOGDesc(cardIdx) {
-  if (cardIdx >= 0) {
-    return album.cards[cardIdx].desc.text.slice(0, 200);
-  }
-  var firstDesc = album.cards[0] ? album.cards[0].desc.text : '';
-  return firstDesc.slice(0, 200);
-}
+// View
+function toggleView(v){currentView=v;var ev=document.getElementById('editorView'),pv=document.getElementById('previewView');if(v==='editor'){ev.classList.remove('hidden');ev.style.display='flex';pv.classList.add('hidden');pv.style.display='none';}else{ev.classList.add('hidden');ev.style.display='none';pv.classList.remove('hidden');pv.style.display='flex';renderPreview();}}
 
-// ============================
-// PERSISTENCE
-// ============================
-function saveAlbum() {
-  try { localStorage.setItem('acf_album', JSON.stringify(album)); } catch(e) {}
-}
+// Card ops
+function addCard(){album.cards.push(defCard());currentCardIdx=album.cards.length-1;saveLocal();renderEditor();showToast('Card ditambahkan');}
+function removeCard(i){if(album.cards.length<=1){showToast('Minimal 1 card');return;}album.cards.splice(i,1);if(currentCardIdx>=album.cards.length)currentCardIdx=album.cards.length-1;saveLocal();renderEditor();}
+function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.splice(i+1,0,c);currentCardIdx=i+1;saveLocal();renderEditor();showToast('Card diduplikasi');}
+function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();renderEditor();}
+function selCard(i){currentCardIdx=i;renderEditor();}
+function addImg(ci){album.cards[ci].images.push({url:'',aspectRatio:'16/9'});saveLocal();renderEditor();}
+function remImg(ci,ii){if(album.cards[ci].images.length<=1){showToast('Minimal 1 gambar');return;}album.cards[ci].images.splice(ii,1);saveLocal();renderEditor();}
 
-function loadAlbum() {
-  try {
-    var d = localStorage.getItem('acf_album');
-    if (d) {
-      album = JSON.parse(d);
-      if (!album.cards || !album.cards.length) album.cards = [defaultCard()];
-      if (!album.ogImage) album.ogImage = '';
-      if (!album.customDomain) album.customDomain = '';
-    }
-  } catch(e) {}
-  document.getElementById('albumNameInput').value = album.name;
-}
+// Editor
+function renderEditor(){renderSel();renderForm();}
+function renderSel(){var el=document.getElementById('cardSelector'),h='';for(var i=0;i<album.cards.length;i++){var c=album.cards[i],bg=c.bgColor||'#1a1a2e',img=c.images[0]&&c.images[0].url?c.images[0].url:'',cls=i===currentCardIdx?'card-th active':'card-th';h+='<div onclick="selCard('+i+')" class="'+cls+' shrink-0 rounded-xl overflow-hidden relative" style="background:'+bg+';width:60px;height:76px">';if(img){h+='<img src="'+img+'" style="width:100%;height:100%;object-fit:cover;opacity:0.6" onerror="this.style.display=\'none\'" />';}else{h+='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0.3;font-size:16px"><i class="fas fa-image"></i></div>';}h+='<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8)">'+(i+1)+'</div></div>';}el.innerHTML=h;}
 
-function setFavicon(v) {
-  var el = document.getElementById('dynFavicon');
-  var headerEl = document.getElementById('headerLogo');
-  if (!v) return;
-  
-  // Update favicon di tab browser
-  if (v.indexOf('http') === 0) {
-    el.href = v;
-  } else {
-    var encoded = encodeURIComponent(v);
-    el.href = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'90\'%3E' + encoded + '%3C/text%3E%3C/svg%3E';
-  }
+function fntOpt(s){var h='';for(var i=0;i<FONTS.length;i++){h+='<option value="'+FONTS[i]+'"'+(FONTS[i]===s?' selected':'')+'>'+FONTS[i]+'</option>';}return h;}
+function aspOpt(s){var h='';for(var i=0;i<ASPECTS.length;i++){h+='<option value="'+ASPECTS[i].v+'"'+(ASPECTS[i].v===s?' selected':'')+'>'+ASPECTS[i].n+'</option>';}return h;}
+function escA(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  // Update logo di kiri atas header
-  if (headerEl) {
-    if (v.indexOf('http') === 0) {
-      // Jika pakai URL gambar, tampilkan sebagai img
-      headerEl.innerHTML = '<img src="' + escAttr(v) + '" style="height:24px;width:24px;object-fit:contain;border-radius:4px;vertical-align:middle" onerror="this.outerHTML=\'📸\'" />';
-    } else {
-      // Jika pakai emoji, tampilkan sebagai teks
-      headerEl.textContent = v;
-    }
-  }
-}
+function renderForm(){
+  var el=document.getElementById('editorMain'),c=album.cards[currentCardIdx];
+  if(!c){el.innerHTML='<p style="color:#666;text-align:center;margin-top:40px">Tidak ada card</p>';return;}
+  var h='<div style="max-width:500px;margin:0 auto">';
 
-// ============================
-// VIEW TOGGLE
-// ============================
-function toggleView(view) {
-  currentView = view;
-  var ev = document.getElementById('editorView');
-  var pv = document.getElementById('previewView');
-  if (view === 'editor') {
-    ev.classList.remove('hidden');
-    ev.style.display = 'flex';
-    pv.classList.add('hidden');
-    pv.style.display = 'none';
-  } else {
-    ev.classList.add('hidden');
-    ev.style.display = 'none';
-    pv.classList.remove('hidden');
-    pv.style.display = 'flex';
-    renderPreview();
-  }
-}
+  // Slug info
+  if(album.slug){h+='<div class="slug-display" style="margin-bottom:12px;font-size:12px"><i class="fas fa-link" style="margin-right:6px"></i>Share URL: '+getBaseUrl()+'#'+escH(album.slug)+'</div>';}
 
-// ============================
-// CARD OPERATIONS
-// ============================
-function addCard() {
-  album.cards.push(defaultCard());
-  currentCardIdx = album.cards.length - 1;
-  saveAlbum(); renderEditor();
-  showToast('Card baru ditambahkan');
-}
+  // Actions
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:13px;font-weight:600;flex:1">Card '+(currentCardIdx+1)+' dari '+album.cards.length+'</span>';
+  h+='<button onclick="moveCard('+currentCardIdx+',-1)" class="btn-g" style="padding:4px 8px;font-size:11px"><i class="fas fa-chevron-up"></i></button>';
+  h+='<button onclick="moveCard('+currentCardIdx+',1)" class="btn-g" style="padding:4px 8px;font-size:11px"><i class="fas fa-chevron-down"></i></button>';
+  h+='<button onclick="dupCard('+currentCardIdx+')" class="btn-g" style="padding:4px 8px;font-size:11px"><i class="fas fa-copy"></i></button>';
+  h+='<button onclick="if(confirm(\'Hapus?\'))removeCard('+currentCardIdx+')" class="btn-g" style="padding:4px 8px;font-size:11px;color:#f87171"><i class="fas fa-trash"></i></button></div>';
 
-function removeCard(idx) {
-  if (album.cards.length <= 1) { showToast('Minimal 1 card'); return; }
-  album.cards.splice(idx, 1);
-  if (currentCardIdx >= album.cards.length) currentCardIdx = album.cards.length - 1;
-  saveAlbum(); renderEditor();
-}
-
-function duplicateCard(idx) {
-  var clone = JSON.parse(JSON.stringify(album.cards[idx]));
-  clone.id = uid(); clone.likes = 0; clone.liked = false; clone.comments = [];
-  album.cards.splice(idx + 1, 0, clone);
-  currentCardIdx = idx + 1;
-  saveAlbum(); renderEditor();
-  showToast('Card diduplikasi');
-}
-
-function moveCard(idx, dir) {
-  var ni = idx + dir;
-  if (ni < 0 || ni >= album.cards.length) return;
-  var tmp = album.cards[idx];
-  album.cards[idx] = album.cards[ni];
-  album.cards[ni] = tmp;
-  currentCardIdx = ni;
-  saveAlbum(); renderEditor();
-}
-
-function selectCard(idx) { currentCardIdx = idx; renderEditor(); }
-
-// ============================
-// IMAGE OPERATIONS
-// ============================
-function addImage(ci) {
-  album.cards[ci].images.push({url:'', aspectRatio:'16/9'});
-  saveAlbum(); renderEditor();
-}
-
-function removeImage(ci, ii) {
-  if (album.cards[ci].images.length <= 1) { showToast('Minimal 1 gambar'); return; }
-  album.cards[ci].images.splice(ii, 1);
-  saveAlbum(); renderEditor();
-}
-
-// ============================
-// EDITOR RENDERING
-// ============================
-function renderEditor() { renderCardSelector(); renderCardEditorForm(); }
-
-function renderCardSelector() {
-  var el = document.getElementById('cardSelector');
-  var html = '';
-  for (var i = 0; i < album.cards.length; i++) {
-    var c = album.cards[i];
-    var bg = c.bgColor || '#1a1a2e';
-    var thumbImg = c.images[0] && c.images[0].url ? c.images[0].url : '';
-    var cls = i === currentCardIdx ? 'card-th active' : 'card-th';
-    html += '<div onclick="selectCard(' + i + ')" class="' + cls + ' shrink-0 rounded-xl overflow-hidden relative" style="background:' + bg + ';width:60px;height:76px">';
-    if (thumbImg) {
-      html += '<img src="' + thumbImg + '" style="width:100%;height:100%;object-fit:cover;opacity:0.6" onerror="this.style.display=\'none\'" />';
-    } else {
-      html += '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;opacity:0.3;font-size:16px"><i class="fas fa-image"></i></div>';
-    }
-    html += '<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8)">' + (i + 1) + '</div>';
-    html += '</div>';
-  }
-  el.innerHTML = html;
-}
-
-function fontOptions(selected) {
-  var h = '';
-  for (var i = 0; i < FONTS.length; i++) {
-    h += '<option value="' + FONTS[i] + '"' + (FONTS[i] === selected ? ' selected' : '') + '>' + FONTS[i] + '</option>';
-  }
-  return h;
-}
-
-function aspectOptions(selected) {
-  var h = '';
-  for (var i = 0; i < ASPECTS.length; i++) {
-    h += '<option value="' + ASPECTS[i].v + '"' + (ASPECTS[i].v === selected ? ' selected' : '') + '>' + ASPECTS[i].n + '</option>';
-  }
-  return h;
-}
-
-function renderCardEditorForm() {
-  var el = document.getElementById('editorMain');
-  var c = album.cards[currentCardIdx];
-  if (!c) { el.innerHTML = '<p style="color:#666;text-align:center;margin-top:40px">Tidak ada card</p>'; return; }
-
-  var h = '<div style="max-width:500px;margin:0 auto">';
-
-  // Card Actions
-  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-  h += '<span style="font-size:13px;font-weight:600;flex:1">Card ' + (currentCardIdx + 1) + ' dari ' + album.cards.length + '</span>';
-  h += '<button onclick="moveCard(' + currentCardIdx + ',-1)" class="btn-g" style="padding:4px 8px;font-size:11px" title="Naik"><i class="fas fa-chevron-up"></i></button>';
-  h += '<button onclick="moveCard(' + currentCardIdx + ',1)" class="btn-g" style="padding:4px 8px;font-size:11px" title="Turun"><i class="fas fa-chevron-down"></i></button>';
-  h += '<button onclick="duplicateCard(' + currentCardIdx + ')" class="btn-g" style="padding:4px 8px;font-size:11px" title="Duplikasi"><i class="fas fa-copy"></i></button>';
-  h += '<button onclick="if(confirm(\'Hapus card ini?\'))removeCard(' + currentCardIdx + ')" class="btn-g" style="padding:4px 8px;font-size:11px;color:#f87171" title="Hapus"><i class="fas fa-trash"></i></button>';
-  h += '</div>';
-
-  // Background Color
-  h += '<div class="sec-tog open" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-palette" style="margin-right:8px;color:#e8572a"></i>Warna Latar Card</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body open"><div style="padding:12px 0"><div class="color-wrap">';
-  h += '<input type="color" value="' + c.bgColor + '" onchange="upd(\'bgColor\',this.value)" />';
-  h += '<input class="inp" style="flex:1" value="' + c.bgColor + '" onchange="upd(\'bgColor\',this.value)" placeholder="#1a1a2e" />';
-  h += '</div></div></div>';
+  // BG
+  h+=sec('open','fa-palette','#e8572a','Warna Latar Card',function(){return '<div class="color-wrap"><input type="color" value="'+c.bgColor+'" onchange="upd(\'bgColor\',this.value)" /><input class="inp" style="flex:1" value="'+c.bgColor+'" onchange="upd(\'bgColor\',this.value)" /></div>';});
 
   // Images
-  h += '<div class="sec-tog open" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-images" style="margin-right:8px;color:#fbbf24"></i>Gambar Slide</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body open"><div style="padding:12px 0;display:flex;flex-direction:column;gap:12px">';
-  for (var ii = 0; ii < c.images.length; ii++) {
-    var img = c.images[ii];
-    h += '<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';
-    if (c.images.length > 1) {
-      h += '<button onclick="removeImage(' + currentCardIdx + ',' + ii + ')" style="position:absolute;top:8px;right:8px;color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-xmark"></i></button>';
-    }
-    h += '<input class="inp" style="font-size:12px" value="' + escAttr(img.url) + '" placeholder="URL gambar..." onchange="updImg(' + ii + ',\'url\',this.value)" />';
-    if (img.url) {
-      h += '<img src="' + escAttr(img.url) + '" style="width:100%;height:80px;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\'" />';
-    }
-    h += '<select class="sel" style="font-size:12px" onchange="updImg(' + ii + ',\'aspectRatio\',this.value)">' + aspectOptions(img.aspectRatio) + '</select>';
-    h += '</div>';
-  }
-  h += '<button onclick="addImage(' + currentCardIdx + ')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Gambar</button>';
-  h += '</div></div>';
+  h+=sec('open','fa-images','#fbbf24','Gambar Slide',function(){var s='';for(var i=0;i<c.images.length;i++){s+='<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';if(c.images.length>1)s+='<button onclick="remImg('+currentCardIdx+','+i+')" style="position:absolute;top:8px;right:8px;color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-xmark"></i></button>';s+='<input class="inp" style="font-size:12px" value="'+escA(c.images[i].url)+'" placeholder="URL gambar..." onchange="updImg('+i+',\'url\',this.value)" />';if(c.images[i].url)s+='<img src="'+escA(c.images[i].url)+'" style="width:100%;height:80px;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\'" />';s+='<select class="sel" style="font-size:12px" onchange="updImg('+i+',\'aspectRatio\',this.value)">'+aspOpt(c.images[i].aspectRatio)+'</select></div>';}s+='<button onclick="addImg('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Gambar</button>';return s;});
 
   // Title
-  h += '<div class="sec-tog open" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-heading" style="margin-right:8px;color:#22d3ee"></i>Judul Feed</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body open"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px">';
-  h += '<input class="inp" value="' + escAttr(c.title.text) + '" placeholder="Judul feed..." onchange="updTitle(\'text\',this.value)" />';
-  h += '<div style="display:flex;gap:8px;align-items:center">';
-  h += '<select class="sel" style="flex:1" onchange="updTitle(\'font\',this.value)">' + fontOptions(c.title.font) + '</select>';
-  h += '<input type="number" class="inp" style="width:70px" value="' + c.title.size + '" min="10" max="60" onchange="updTitle(\'size\',+this.value)" />';
-  h += '<div class="color-wrap"><input type="color" value="' + c.title.color + '" onchange="updTitle(\'color\',this.value)" /></div>';
-  h += '<button onclick="updTitle(\'bold\',!album.cards[currentCardIdx].title.bold)" class="btn-g" style="padding:6px 10px;' + (c.title.bold ? 'color:#e8572a' : '') + '"><i class="fas fa-bold"></i></button>';
-  h += '</div></div></div>';
+  h+=sec('open','fa-heading','#22d3ee','Judul Feed',function(){return '<input class="inp" value="'+escA(c.title.text)+'" placeholder="Judul feed..." onchange="updT(\'text\',this.value)" /><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><select class="sel" style="flex:1" onchange="updT(\'font\',this.value)">'+fntOpt(c.title.font)+'</select><input type="number" class="inp" style="width:70px" value="'+c.title.size+'" min="10" max="60" onchange="updT(\'size\',+this.value)" /><div class="color-wrap"><input type="color" value="'+c.title.color+'" onchange="updT(\'color\',this.value)" /></div><button onclick="updT(\'bold\',!album.cards[currentCardIdx].title.bold)" class="btn-g" style="padding:6px 10px;'+(c.title.bold?'color:#e8572a':'')+'"><i class="fas fa-bold"></i></button></div>';});
 
-  // Description
-  h += '<div class="sec-tog" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-align-left" style="margin-right:8px;color:#4ade80"></i>Deskripsi</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px">';
-  h += '<textarea class="inp" style="height:72px;resize:none" placeholder="Deskripsi..." onchange="updDesc(\'text\',this.value)">' + escHtml(c.desc.text) + '</textarea>';
-  h += '<div style="display:flex;gap:8px;align-items:center">';
-  h += '<select class="sel" style="flex:1" onchange="updDesc(\'font\',this.value)">' + fontOptions(c.desc.font) + '</select>';
-  h += '<input type="number" class="inp" style="width:70px" value="' + c.desc.size + '" min="10" max="40" onchange="updDesc(\'size\',+this.value)" />';
-  h += '<div class="color-wrap"><input type="color" value="' + c.desc.color + '" onchange="updDesc(\'color\',this.value)" /></div>';
-  h += '</div></div></div>';
+  // Desc
+  h+=sec('','fa-align-left','#4ade80','Deskripsi',function(){return '<textarea class="inp" style="height:72px;resize:none" placeholder="Deskripsi..." onchange="updD(\'text\',this.value)">'+escH(c.desc.text)+'</textarea><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><select class="sel" style="flex:1" onchange="updD(\'font\',this.value)">'+fntOpt(c.desc.font)+'</select><input type="number" class="inp" style="width:70px" value="'+c.desc.size+'" min="10" max="40" onchange="updD(\'size\',+this.value)" /><div class="color-wrap"><input type="color" value="'+c.desc.color+'" onchange="updD(\'color\',this.value)" /></div></div>';});
 
-  // CTA Button
-  h += '<div class="sec-tog" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-arrow-pointer" style="margin-right:8px;color:#f472b6"></i>Tombol CTA</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px">';
-  h += '<input class="inp" value="' + escAttr(c.cta.text) + '" placeholder="Teks tombol (bisa emoji)..." onchange="updCta(\'text\',this.value)" />';
-  h += '<input class="inp" style="font-size:12px" value="' + escAttr(c.cta.url) + '" placeholder="URL tujuan..." onchange="updCta(\'url\',this.value)" />';
-  h += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-  h += '<div class="color-wrap"><span style="font-size:10px;color:#888">Latar</span><input type="color" value="' + c.cta.bgColor + '" onchange="updCta(\'bgColor\',this.value)" /></div>';
-  h += '<div class="color-wrap"><span style="font-size:10px;color:#888">Teks</span><input type="color" value="' + c.cta.textColor + '" onchange="updCta(\'textColor\',this.value)" /></div>';
-  h += '<div style="flex:1"><span style="font-size:10px;color:#888">Radius</span><input type="range" min="0" max="50" value="' + c.cta.radius + '" style="width:100%" onchange="updCta(\'radius\',+this.value)" /></div>';
-  h += '</div>';
-  h += '<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a">';
-  h += '<p style="font-size:10px;color:#888;margin-bottom:8px">Preview Tombol:</p>';
-  h += '<button style="background:' + c.cta.bgColor + ';color:' + c.cta.textColor + ';border-radius:' + c.cta.radius + 'px;padding:10px 24px;font-size:14px;font-weight:600;border:none;cursor:pointer">' + escHtml(c.cta.text) + '</button>';
-  h += '</div></div></div>';
+  // CTA
+  h+=sec('','fa-arrow-pointer','#f472b6','Tombol CTA',function(){return '<input class="inp" value="'+escA(c.cta.text)+'" placeholder="Teks tombol (bisa emoji)..." onchange="updC(\'text\',this.value)" /><input class="inp" style="font-size:12px;margin-top:8px" value="'+escA(c.cta.url)+'" placeholder="URL tujuan..." onchange="updC(\'url\',this.value)" /><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><div class="color-wrap"><span style="font-size:10px;color:#888">Latar</span><input type="color" value="'+c.cta.bgColor+'" onchange="updC(\'bgColor\',this.value)" /></div><div class="color-wrap"><span style="font-size:10px;color:#888">Teks</span><input type="color" value="'+c.cta.textColor+'" onchange="updC(\'textColor\',this.value)" /></div><div style="flex:1"><span style="font-size:10px;color:#888">Radius</span><input type="range" min="0" max="50" value="'+c.cta.radius+'" style="width:100%" onchange="updC(\'radius\',+this.value)" /></div></div><div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;margin-top:8px"><p style="font-size:10px;color:#888;margin-bottom:8px">Preview:</p><button style="background:'+c.cta.bgColor+';color:'+c.cta.textColor+';border-radius:'+c.cta.radius+'px;padding:10px 24px;font-size:14px;font-weight:600;border:none;cursor:pointer">'+escH(c.cta.text)+'</button></div>';});
 
   // Video
-  h += '<div class="sec-tog" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-video" style="margin-right:8px;color:#a78bfa"></i>Video</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body"><div style="padding:12px 0">';
-  h += '<input class="inp" style="font-size:12px" value="' + escAttr(c.videoUrl) + '" placeholder="URL video YouTube/Vimeo..." onchange="upd(\'videoUrl\',this.value)" />';
-  h += '<p style="font-size:10px;color:#666;margin-top:4px">Dukungan: YouTube, Vimeo, URL langsung</p>';
-  h += '</div></div>';
+  h+=sec('','fa-video','#a78bfa','Video',function(){return '<input class="inp" style="font-size:12px" value="'+escA(c.videoUrl)+'" placeholder="URL video YouTube/Vimeo..." onchange="upd(\'videoUrl\',this.value)" /><p style="font-size:10px;color:#666;margin-top:4px">Dukungan: YouTube, Vimeo, URL langsung</p>';});
 
   // Analytics
-  h += '<div class="sec-tog" onclick="toggleSec(this)">';
-  h += '<span style="font-size:13px;font-weight:600"><i class="fas fa-chart-line" style="margin-right:8px;color:#fbbf24"></i>Analitik</span>';
-  h += '<i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
-  h += '<div class="sec-body"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px">';
-  h += '<input class="inp" style="font-size:12px" value="' + escAttr(c.analytics.id) + '" placeholder="ID Tracking (G-XXXXXXX)" onchange="updAnalytics(\'id\',this.value)" />';
-  h += '<input class="inp" style="font-size:12px" value="' + escAttr(c.analytics.name) + '" placeholder="Nama Analitik / Campaign" onchange="updAnalytics(\'name\',this.value)" />';
-  h += '</div></div>';
+  h+=sec('','fa-chart-line','#fbbf24','Analitik',function(){return '<input class="inp" style="font-size:12px" value="'+escA(c.analytics.id)+'" placeholder="ID Tracking (G-XXXXXXX)" onchange="updAn(\'id\',this.value)" /><input class="inp" style="font-size:12px;margin-top:8px" value="'+escA(c.analytics.name)+'" placeholder="Nama Analitik / Campaign" onchange="updAn(\'name\',this.value)" />';});
 
-  h += '</div>';
-  el.innerHTML = h;
+  h+='</div>';el.innerHTML=h;
 }
 
-function escAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function toggleSec(el) { el.classList.toggle('open'); el.nextElementSibling.classList.toggle('open'); }
+function sec(cls,icon,color,title,fn){
+  var h='<div class="sec-tog '+cls+'" onclick="togSec(this)"><span style="font-size:13px;font-weight:600"><i class="fas '+icon+'" style="margin-right:8px;color:'+color+'"></i>'+title+'</span><i class="fas fa-chevron-down arr" style="font-size:10px;color:#666"></i></div>';
+  h+='<div class="sec-body '+cls+'"><div style="padding:12px 0;display:flex;flex-direction:column;gap:8px">'+fn()+'</div></div>';return h;
+}
+function togSec(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('open');}
 
-// ============================
-// DATA UPDATE HELPERS
-// ============================
-function upd(key, val) { album.cards[currentCardIdx][key] = val; saveAlbum(); }
-function updImg(ii, key, val) { album.cards[currentCardIdx].images[ii][key] = val; saveAlbum(); renderEditor(); }
-function updTitle(key, val) { album.cards[currentCardIdx].title[key] = val; saveAlbum(); if (key === 'bold') renderEditor(); }
-function updDesc(key, val) { album.cards[currentCardIdx].desc[key] = val; saveAlbum(); }
-function updCta(key, val) { album.cards[currentCardIdx].cta[key] = val; saveAlbum(); renderEditor(); }
-function updAnalytics(key, val) { album.cards[currentCardIdx].analytics[key] = val; saveAlbum(); }
+function upd(k,v){album.cards[currentCardIdx][k]=v;saveLocal();}
+function updImg(i,k,v){album.cards[currentCardIdx].images[i][k]=v;saveLocal();renderEditor();}
+function updT(k,v){album.cards[currentCardIdx].title[k]=v;saveLocal();if(k==='bold')renderEditor();}
+function updD(k,v){album.cards[currentCardIdx].desc[k]=v;saveLocal();}
+function updC(k,v){album.cards[currentCardIdx].cta[k]=v;saveLocal();renderEditor();}
+function updAn(k,v){album.cards[currentCardIdx].analytics[k]=v;saveLocal();}
 
-// ============================
-// PREVIEW & FEED RENDERING
-// ============================
-function renderPreview() {
-  document.getElementById('previewAlbumName').textContent = album.name;
-  renderFeedInto(document.getElementById('feedScroll'));
-  renderScrollDots('scrollDots');
+// Preview
+function renderPreview(){document.getElementById('previewAlbumName').textContent=album.name;renderFeed(document.getElementById('feedScroll'));renderDots('scrollDots');}
+function renderPublished(data){album=data;document.getElementById('editorView').style.display='none';var pv=document.getElementById('publishedView');pv.classList.remove('hidden');pv.style.display='flex';document.title=album.name;setFav(album.favicon);renderFeed(document.getElementById('publishedScroll'));renderDots('pubScrollDots');}
+
+function renderFeed(ctr){
+  var h='';for(var idx=0;idx<album.cards.length;idx++){var c=album.cards[idx],tf=c.title.font==='sans-serif'?'sans-serif':"'"+c.title.font+"', sans-serif",df=c.desc.font==='sans-serif'?'sans-serif':"'"+c.desc.font+"', sans-serif",sid='slider_'+idx;sliderStates[sid]=0;var vi=[];for(var j=0;j<c.images.length;j++){if(c.images[j].url)vi.push(c.images[j]);}var sh='',dh='';for(var s=0;s<vi.length;s++){sh+='<div class="slide"><img src="'+escA(vi[s].url)+'" style="width:100%;aspect-ratio:'+(vi[s].aspectRatio||'16/9')+';object-fit:cover;display:block;border-radius:16px" onerror="this.style.display=\'none\'" /></div>';dh+='<div class="slider-dot'+(s===0?' active':'')+'" onclick="goSlide(\''+sid+'\','+s+')"></div>';}var vh='';if(c.videoUrl){var eu='';try{var vu=new URL(c.videoUrl);if(vu.hostname.indexOf('youtube.com')>=0)eu='https://www.youtube.com/embed/'+(vu.searchParams.get('v')||'');else if(vu.hostname.indexOf('youtu.be')>=0)eu='https://www.youtube.com/embed/'+vu.pathname.slice(1);else if(vu.hostname.indexOf('vimeo.com')>=0)eu='https://player.vimeo.com/video'+vu.pathname;}catch(e){}if(eu)vh='<div style="margin-top:16px;border-radius:16px;overflow:hidden;aspect-ratio:16/9"><iframe src="'+escA(eu)+'" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>';else vh='<video src="'+escA(c.videoUrl)+'" controls style="margin-top:16px;border-radius:16px;width:100%;max-height:300px"></video>';}
+  var cc=c.comments?c.comments.length:0,lk=c.likes||0;
+  h+='<div class="feed-card-wrap"><div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:'+c.bgColor+';animation:fadeUp .5s ease '+(idx*0.1)+'s both;position:relative">';
+  if(sh){h+='<div style="position:relative;overflow:hidden;border-radius:16px" id="'+sid+'"><div class="slider-track" id="track_'+sid+'">'+sh+'</div>';if(vi.length>1){h+='<button onclick="slideNav(\''+sid+'\',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-left"></i></button>';h+='<button onclick="slideNav(\''+sid+'\',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-right"></i></button>';h+='<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_'+sid+'">'+dh+'</div>';}h+='</div>';}
+  h+='<h2 style="margin-top:16px;line-height:1.2;font-family:'+tf+';font-size:'+c.title.size+'px;color:'+c.title.color+';font-weight:'+(c.title.bold?'700':'400')+'">'+escH(c.title.text)+'</h2>';
+  h+='<p style="margin-top:8px;line-height:1.6;font-family:'+df+';font-size:'+c.desc.size+'px;color:'+c.desc.color+'">'+escH(c.desc.text)+'</p>';
+  h+=vh;
+  if(c.cta.text){h+='<a href="'+escA(c.cta.url)+'" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px"><button style="background:'+c.cta.bgColor+';color:'+c.cta.textColor+';border-radius:'+c.cta.radius+'px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer;box-shadow:0 4px 15px '+c.cta.bgColor+'44">'+escH(c.cta.text)+'</button></a>';}
+  h+='<div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">';
+  h+='<button class="like-btn'+(c.liked?' liked':'')+'" id="likeBtn_'+idx+'" onclick="toggleLike('+idx+')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:'+(c.liked?'#ef4444':'#aaa')+';cursor:pointer"><i class="fas fa-heart"></i><span id="likeCount_'+idx+'">'+lk+'</span></button>';
+  h+='<button onclick="openCommentModal('+idx+')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-comment"></i><span>'+cc+'</span></button>';
+  h+='<button onclick="openShareModal('+idx+')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto"><i class="fas fa-share-from-square"></i></button>';
+  h+='</div>';if(c.analytics.id){h+='<div style="margin-top:8px;font-size:9px;color:#555;text-align:right"><i class="fas fa-chart-line" style="margin-right:4px"></i>'+escH(c.analytics.name||c.analytics.id)+'</div>';}
+  h+='</div></div>';}ctr.innerHTML=h;
 }
 
-function renderPublished(data) {
-  album = data;
-  document.getElementById('editorView').style.display = 'none';
-  var pv = document.getElementById('publishedView');
-  pv.classList.remove('hidden'); pv.style.display = 'flex';
-  document.title = album.name;
-  setFavicon(album.favicon);
-  renderFeedInto(document.getElementById('publishedScroll'));
-  renderScrollDots('pubScrollDots');
-}
+// Scroll dots
+function renderDots(cid){var el=document.getElementById(cid),h='';for(var i=0;i<album.cards.length;i++){h+='<div style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer" id="'+cid+'_dot'+i+'" onclick="scrollToCard('+i+',\''+cid+'\')"></div>';}el.innerHTML=h;setTimeout(function(){setupScroll(cid);},200);}
+function scrollToCard(i,cid){var s=cid==='scrollDots'?document.getElementById('feedScroll'):document.getElementById('publishedScroll');var cards=s.querySelectorAll('.feed-card-wrap');if(cards[i])cards[i].scrollIntoView({behavior:'smooth'});}
+function setupScroll(cid){var s=cid==='scrollDots'?document.getElementById('feedScroll'):document.getElementById('publishedScroll');if(!s)return;s.addEventListener('scroll',function(){var cards=s.querySelectorAll('.feed-card-wrap'),st=s.scrollTop,vh=s.clientHeight,a=0;for(var i=0;i<cards.length;i++){if(cards[i].offsetTop<=st+vh/2)a=i;}for(var j=0;j<album.cards.length;j++){var d=document.getElementById(cid+'_dot'+j);if(d){d.style.background=j===a?'#fff':'rgba(255,255,255,0.3)';d.style.transform=j===a?'scale(1.5)':'scale(1)';}}});}
 
-function renderFeedInto(container) {
-  var h = '';
-  for (var idx = 0; idx < album.cards.length; idx++) {
-    var c = album.cards[idx];
-    var titleFont = c.title.font === 'sans-serif' ? 'sans-serif' : "'" + c.title.font + "', sans-serif";
-    var descFont = c.desc.font === 'sans-serif' ? 'sans-serif' : "'" + c.desc.font + "', sans-serif";
-    var slideId = 'slider_' + idx;
-    sliderStates[slideId] = 0;
-    var validImgs = [];
-    for (var vi = 0; vi < c.images.length; vi++) {
-      if (c.images[vi].url) validImgs.push(c.images[vi]);
-    }
-    var slidesHtml = '', dotsHtml = '';
-    for (var si = 0; si < validImgs.length; si++) {
-      slidesHtml += '<div class="slide"><img src="' + escAttr(validImgs[si].url) + '" style="width:100%;aspect-ratio:' + (validImgs[si].aspectRatio || '16/9') + ';object-fit:cover;display:block;border-radius:16px" onerror="this.style.display=\'none\'" /></div>';
-      dotsHtml += '<div class="slider-dot' + (si === 0 ? ' active' : '') + '" onclick="goSlide(\'' + slideId + '\',' + si + ')"></div>';
-    }
-    var videoHtml = '';
-    if (c.videoUrl) {
-      var embedUrl = '';
-      try {
-        var vu = new URL(c.videoUrl);
-        if (vu.hostname.indexOf('youtube.com') >= 0) embedUrl = 'https://www.youtube.com/embed/' + (vu.searchParams.get('v') || '');
-        else if (vu.hostname.indexOf('youtu.be') >= 0) embedUrl = 'https://www.youtube.com/embed/' + vu.pathname.slice(1);
-        else if (vu.hostname.indexOf('vimeo.com') >= 0) embedUrl = 'https://player.vimeo.com/video' + vu.pathname;
-      } catch(e) {}
-      if (embedUrl) {
-        videoHtml = '<div style="margin-top:16px;border-radius:16px;overflow:hidden;aspect-ratio:16/9"><iframe src="' + escAttr(embedUrl) + '" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>';
-      } else {
-        videoHtml = '<video src="' + escAttr(c.videoUrl) + '" controls style="margin-top:16px;border-radius:16px;width:100%;max-height:300px"></video>';
-      }
-    }
-    var cmtCount = c.comments ? c.comments.length : 0;
-    var likeCount = c.likes || 0;
+// Slider
+function goSlide(sid,idx){var tr=document.getElementById('track_'+sid),dc=document.getElementById('dots_'+sid);if(!tr)return;var total=tr.children.length;if(idx<0)idx=total-1;if(idx>=total)idx=0;sliderStates[sid]=idx;tr.style.transform='translateX(-'+(idx*100)+'%)';if(dc){for(var i=0;i<dc.children.length;i++){if(i===idx)dc.children[i].classList.add('active');else dc.children[i].classList.remove('active');}}}
+function slideNav(sid,dir){goSlide(sid,(sliderStates[sid]||0)+dir);}
+document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
+document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
 
-    h += '<div class="feed-card-wrap">';
-    h += '<div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:' + c.bgColor + ';animation:fadeUp .5s ease ' + (idx * 0.1) + 's both;position:relative">';
-    if (slidesHtml) {
-      h += '<div style="position:relative;overflow:hidden;border-radius:16px" id="' + slideId + '">';
-      h += '<div class="slider-track" id="track_' + slideId + '">' + slidesHtml + '</div>';
-      if (validImgs.length > 1) {
-        h += '<button onclick="slideNav(\'' + slideId + '\',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-left"></i></button>';
-        h += '<button onclick="slideNav(\'' + slideId + '\',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-right"></i></button>';
-        h += '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_' + slideId + '">' + dotsHtml + '</div>';
-      }
-      h += '</div>';
+// Like
+function toggleLike(i){var c=album.cards[i];c.liked=!c.liked;c.likes=Math.max(0,(c.likes||0)+(c.liked?1:-1));saveLocal();var b=document.getElementById('likeBtn_'+i),ct=document.getElementById('likeCount_'+i);if(b){b.classList.toggle('liked',c.liked);b.style.color=c.liked?'#ef4444':'#aaa';b.classList.add('heart-pop');setTimeout(function(){b.classList.remove('heart-pop');},300);}if(ct)ct.textContent=c.likes;}
+
+// Comments
+function openCommentModal(i){commentCardIdx=i;replyTo=null;document.getElementById('commentModalTitle').textContent='Komentar ('+album.cards[i].comments.length+')';document.getElementById('commentAuthor').value=localStorage.getItem('acf_userName')||'';renderCmts();document.getElementById('commentModal').classList.add('show');}
+function closeCommentModal(){document.getElementById('commentModal').classList.remove('show');commentCardIdx=-1;replyTo=null;}
+function renderCmts(){var c=album.cards[commentCardIdx];if(!c)return;var el=document.getElementById('commentList');if(!c.comments.length){el.innerHTML='<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';return;}var h='';for(var ci=0;ci<c.comments.length;ci++){var cm=c.comments[ci],tm=new Date(cm.timestamp).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});h+='<div style="padding:12px;border-radius:12px;background:#1a1a1a;animation:fadeUp .3s ease"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:rgba(232,87,42,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e8572a">'+(cm.author[0]||'?').toUpperCase()+'</div><span style="font-size:13px;font-weight:600">'+escH(cm.author)+'</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:#666">'+tm+'</span>'+(cm.isLocal?'<button onclick="delCmt('+commentCardIdx+','+ci+')" style="color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>':'')+'</div></div><p style="font-size:13px;margin-top:6px;color:#ccc">'+escH(cm.text)+'</p><button onclick="setReply('+ci+',\''+escA(cm.author)+'\')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>';if(cm.replies&&cm.replies.length){for(var ri=0;ri<cm.replies.length;ri++){var r=cm.replies[ri],rt=new Date(r.timestamp).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});h+='<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222;animation:fadeUp .3s ease"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:600;color:#22d3ee">'+escH(r.author)+'</span><div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666">'+rt+'</span>'+(r.isLocal?'<button onclick="delReply('+commentCardIdx+','+ci+',\''+r.id+'\')" style="color:#f87171;font-size:10px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>':'')+'</div></div><p style="font-size:12px;margin-top:4px;color:#bbb">'+escH(r.text)+'</p></div>';}}h+='</div>';}el.innerHTML=h;}
+function setReply(ci,a){replyTo=ci;document.getElementById('commentText').placeholder='Membalas '+a+'...';document.getElementById('commentText').focus();}
+function submitComment(){var a=document.getElementById('commentAuthor').value.trim()||'Anonim',t=document.getElementById('commentText').value.trim();if(!t)return;localStorage.setItem('acf_userName',a);var c=album.cards[commentCardIdx];if(replyTo!==null&&c.comments[replyTo]){if(!c.comments[replyTo].replies)c.comments[replyTo].replies=[];c.comments[replyTo].replies.push({id:uid(),author:a,text:t,timestamp:Date.now(),isLocal:true});}else{c.comments.push({id:uid(),author:a,text:t,timestamp:Date.now(),replies:[],isLocal:true});}saveLocal();document.getElementById('commentText').value='';document.getElementById('commentText').placeholder='Tulis komentar...';replyTo=null;document.getElementById('commentModalTitle').textContent='Komentar ('+c.comments.length+')';renderCmts();}
+function delCmt(ci,mi){album.cards[commentCardIdx].comments.splice(mi,1);saveLocal();renderCmts();}
+function delReply(ci,mi,rid){var cmt=album.cards[commentCardIdx].comments[mi];if(cmt&&cmt.replies){cmt.replies=cmt.replies.filter(function(r){return r.id!==rid;});saveLocal();renderCmts();}}
+
+// ============================
+// SHARE SYSTEM (DIPERBAIKI)
+// ============================
+function openShareModal(cardIdx){
+  shareTargetCard=cardIdx;
+  var title=getOGTitle(cardIdx),desc=getOGDesc(cardIdx),img=getOGImageUrl(cardIdx);
+  updOG(title,desc,img);
+
+  var mTitle=cardIdx>=0?'Bagikan Card '+(cardIdx+1):'Bagikan Album';
+  document.getElementById('shareModalTitle').textContent=mTitle;
+
+  // Generate share link
+  var link='';
+  var note=document.getElementById('shareLinkNote');
+  var linkContainer=document.getElementById('shareLinkContainer');
+
+  if(album.slug&&fbReady){
+    // LINK PENDEK dari Firebase slug
+    if(cardIdx>=0){
+      var cardSlug=slugify(album.cards[cardIdx].title.text);
+      link=getBaseUrl()+'#'+album.slug+'/'+cardSlug;
+    }else{
+      link=getBaseUrl()+'#'+album.slug;
     }
-    h += '<h2 style="margin-top:16px;line-height:1.2;font-family:' + titleFont + ';font-size:' + c.title.size + 'px;color:' + c.title.color + ';font-weight:' + (c.title.bold ? '700' : '400') + '">' + escHtml(c.title.text) + '</h2>';
-    h += '<p style="margin-top:8px;line-height:1.6;font-family:' + descFont + ';font-size:' + c.desc.size + 'px;color:' + c.desc.color + '">' + escHtml(c.desc.text) + '</p>';
-    h += videoHtml;
-    if (c.cta.text) {
-      h += '<a href="' + escAttr(c.cta.url) + '" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px" onclick="trackClick(' + idx + ')">';
-      h += '<button style="background:' + c.cta.bgColor + ';color:' + c.cta.textColor + ';border-radius:' + c.cta.radius + 'px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s;box-shadow:0 4px 15px ' + c.cta.bgColor + '44">' + escHtml(c.cta.text) + '</button>';
-      h += '</a>';
-    }
-    h += '<div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">';
-    h += '<button class="like-btn' + (c.liked ? ' liked' : '') + '" id="likeBtn_' + idx + '" onclick="toggleLike(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:' + (c.liked ? '#ef4444' : '#aaa') + ';cursor:pointer;transition:all .2s"><i class="fas fa-heart"></i><span id="likeCount_' + idx + '">' + likeCount + '</span></button>';
-    h += '<button onclick="openCommentModal(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;transition:all .2s"><i class="fas fa-comment"></i><span>' + cmtCount + '</span></button>';
-    h += '<button onclick="openShareModal(' + idx + ')" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;transition:all .2s;margin-left:auto"><i class="fas fa-share-from-square"></i></button>';
-    h += '</div>';
-    if (c.analytics.id) {
-      h += '<div style="margin-top:8px;font-size:9px;color:#555;text-align:right"><i class="fas fa-chart-line" style="margin-right:4px"></i>' + escHtml(c.analytics.name || c.analytics.id) + '</div>';
-    }
-    h += '</div></div>';
+    linkContainer.style.display='none';
+    note.style.display='none';
+  }else{
+    // Fallback: link panjang base64
+    link=generateLongLink(cardIdx);
+    linkContainer.style.display='block';
+    linkContainer.innerHTML='<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Link panjang. Klik tombol hijau <i class="fas fa-cloud-arrow-up"></i> untuk simpan ke Cloud &amp; dapatkan link pendek.';
+    note.style.display='block';
   }
-  container.innerHTML = h;
-}
 
-// ============================
-// SCROLL DOTS
-// ============================
-function renderScrollDots(containerId) {
-  var el = document.getElementById(containerId);
-  var dh = '';
-  for (var i = 0; i < album.cards.length; i++) {
-    dh += '<div style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer" id="' + containerId + '_dot' + i + '" onclick="scrollToCard(' + i + ',\'' + containerId + '\')"></div>';
-  }
-  el.innerHTML = dh;
-  setTimeout(function() { setupScrollListener(containerId); }, 200);
-}
-
-function scrollToCard(idx, containerId) {
-  var scrollEl = containerId === 'scrollDots' ? document.getElementById('feedScroll') : document.getElementById('publishedScroll');
-  var cards = scrollEl.querySelectorAll('.feed-card-wrap');
-  if (cards[idx]) cards[idx].scrollIntoView({behavior:'smooth'});
-}
-
-function setupScrollListener(containerId) {
-  var scrollEl = containerId === 'scrollDots' ? document.getElementById('feedScroll') : document.getElementById('publishedScroll');
-  if (!scrollEl) return;
-  scrollEl.addEventListener('scroll', function() {
-    var cards = scrollEl.querySelectorAll('.feed-card-wrap');
-    var scrollTop = scrollEl.scrollTop;
-    var vh = scrollEl.clientHeight;
-    var active = 0;
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].offsetTop <= scrollTop + vh / 2) active = i;
-    }
-    for (var j = 0; j < album.cards.length; j++) {
-      var dot = document.getElementById(containerId + '_dot' + j);
-      if (dot) {
-        dot.style.background = j === active ? '#fff' : 'rgba(255,255,255,0.3)';
-        dot.style.transform = j === active ? 'scale(1.5)' : 'scale(1)';
-      }
-    }
-  });
-}
-
-// ============================
-// IMAGE SLIDER
-// ============================
-function goSlide(sliderId, idx) {
-  var track = document.getElementById('track_' + sliderId);
-  var dotsC = document.getElementById('dots_' + sliderId);
-  if (!track) return;
-  var total = track.children.length;
-  if (idx < 0) idx = total - 1;
-  if (idx >= total) idx = 0;
-  sliderStates[sliderId] = idx;
-  track.style.transform = 'translateX(-' + (idx * 100) + '%)';
-  if (dotsC) {
-    var dots = dotsC.children;
-    for (var i = 0; i < dots.length; i++) {
-      if (i === idx) { dots[i].classList.add('active'); } else { dots[i].classList.remove('active'); }
-    }
-  }
-}
-
-function slideNav(sliderId, dir) {
-  goSlide(sliderId, (sliderStates[sliderId] || 0) + dir);
-}
-
-document.addEventListener('touchstart', function(e) {
-  var slider = e.target.closest('[id^="slider_"]');
-  if (!slider) return;
-  slider._touchStartX = e.changedTouches[0].clientX;
-}, {passive:true});
-
-document.addEventListener('touchend', function(e) {
-  var slider = e.target.closest('[id^="slider_"]');
-  if (!slider || slider._touchStartX == null) return;
-  var diff = slider._touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) { slideNav(slider.id, diff > 0 ? 1 : -1); }
-  slider._touchStartX = null;
-}, {passive:true});
-
-// ============================
-// LIKE SYSTEM
-// ============================
-function toggleLike(idx) {
-  var c = album.cards[idx];
-  c.liked = !c.liked;
-  c.likes = Math.max(0, (c.likes || 0) + (c.liked ? 1 : -1));
-  saveAlbum();
-  var btn = document.getElementById('likeBtn_' + idx);
-  var count = document.getElementById('likeCount_' + idx);
-  if (btn) { btn.classList.toggle('liked', c.liked); btn.style.color = c.liked ? '#ef4444' : '#aaa'; btn.classList.add('heart-pop'); setTimeout(function() { btn.classList.remove('heart-pop'); }, 300); }
-  if (count) count.textContent = c.likes;
-}
-
-// ============================
-// COMMENT SYSTEM
-// ============================
-function openCommentModal(idx) {
-  commentCardIdx = idx; replyTo = null;
-  document.getElementById('commentModalTitle').textContent = 'Komentar (' + album.cards[idx].comments.length + ')';
-  document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || '';
-  renderComments();
-  document.getElementById('commentModal').classList.add('show');
-}
-function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
-
-function renderComments() {
-  var c = album.cards[commentCardIdx];
-  if (!c) return;
-  var el = document.getElementById('commentList');
-  if (!c.comments.length) { el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>'; return; }
-  var h = '';
-  for (var ci = 0; ci < c.comments.length; ci++) {
-    var cm = c.comments[ci];
-    var time = new Date(cm.timestamp).toLocaleString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-    h += '<div style="padding:12px;border-radius:12px;background:#1a1a1a;animation:fadeUp .3s ease">';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px">';
-    h += '<div style="width:28px;height:28px;border-radius:50%;background:rgba(232,87,42,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e8572a">' + (cm.author[0] || '?').toUpperCase() + '</div>';
-    h += '<span style="font-size:13px;font-weight:600">' + escHtml(cm.author) + '</span></div>';
-    h += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:#666">' + time + '</span>';
-    if (cm.isLocal) h += '<button onclick="deleteComment(' + commentCardIdx + ',' + ci + ')" style="color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
-    h += '</div></div>';
-    h += '<p style="font-size:13px;margin-top:6px;color:#ccc">' + escHtml(cm.text) + '</p>';
-    h += '<button onclick="setReply(' + ci + ',\'' + escAttr(cm.author) + '\')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>';
-    if (cm.replies && cm.replies.length) {
-      for (var ri = 0; ri < cm.replies.length; ri++) {
-        var r = cm.replies[ri];
-        var rt = new Date(r.timestamp).toLocaleString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-        h += '<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222;animation:fadeUp .3s ease">';
-        h += '<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:600;color:#22d3ee">' + escHtml(r.author) + '</span>';
-        h += '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:#666">' + rt + '</span>';
-        if (r.isLocal) h += '<button onclick="deleteReply(' + commentCardIdx + ',' + ci + ',\'' + r.id + '\')" style="color:#f87171;font-size:10px;background:none;border:none;cursor:pointer"><i class="fas fa-trash"></i></button>';
-        h += '</div></div>';
-        h += '<p style="font-size:12px;margin-top:4px;color:#bbb">' + escHtml(r.text) + '</p></div>';
-      }
-    }
-    h += '</div>';
-  }
-  el.innerHTML = h;
-}
-
-function setReply(ci, author) { replyTo = ci; document.getElementById('commentText').placeholder = 'Membalas ' + author + '...'; document.getElementById('commentText').focus(); }
-
-function submitComment() {
-  var author = document.getElementById('commentAuthor').value.trim() || 'Anonim';
-  var text = document.getElementById('commentText').value.trim();
-  if (!text) return;
-  localStorage.setItem('acf_userName', author);
-  var c = album.cards[commentCardIdx];
-  if (replyTo !== null && c.comments[replyTo]) {
-    if (!c.comments[replyTo].replies) c.comments[replyTo].replies = [];
-    c.comments[replyTo].replies.push({id:uid(), author:author, text:text, timestamp:Date.now(), isLocal:true});
-  } else {
-    c.comments.push({id:uid(), author:author, text:text, timestamp:Date.now(), replies:[], isLocal:true});
-  }
-  saveAlbum();
-  document.getElementById('commentText').value = '';
-  document.getElementById('commentText').placeholder = 'Tulis komentar...';
-  replyTo = null;
-  document.getElementById('commentModalTitle').textContent = 'Komentar (' + c.comments.length + ')';
-  renderComments();
-}
-
-function deleteComment(cardIdx, cmtIdx) { album.cards[cardIdx].comments.splice(cmtIdx, 1); saveAlbum(); renderComments(); }
-
-function deleteReply(cardIdx, cmtIdx, replyId) {
-  var cmt = album.cards[cardIdx].comments[cmtIdx];
-  if (cmt && cmt.replies) { cmt.replies = cmt.replies.filter(function(r) { return r.id !== replyId; }); saveAlbum(); renderComments(); }
-}
-
-// ============================
-// SHARE SYSTEM
-// ============================
-function openShareModal(cardIdx) {
-  shareTargetCard = cardIdx;
-  var title = getOGTitle(cardIdx);
-  var desc = getOGDesc(cardIdx);
-  var imgUrl = getOGImageUrl(cardIdx);
-  var link = generateShareLink(cardIdx);
-  updateOGTags(title, desc, imgUrl);
-
-  var modalTitle = cardIdx >= 0 ? 'Bagikan Card ' + (cardIdx + 1) : 'Bagikan Album';
-  document.getElementById('shareModalTitle').textContent = modalTitle;
-  document.getElementById('shareLinkInput').value = link;
-  document.getElementById('sharePreviewDomain').textContent = getAppDomain();
-  document.getElementById('sharePreviewTitle').textContent = title;
-  document.getElementById('sharePreviewDesc').textContent = desc.slice(0, 100) + (desc.length > 100 ? '...' : '');
-  var previewImg = document.getElementById('sharePreviewImg');
-  if (imgUrl) {
-    previewImg.innerHTML = '<img src="' + escAttr(imgUrl) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';
-  } else {
-    previewImg.innerHTML = '<i class="fas fa-image" style="font-size:32px;color:#444"></i>';
-  }
+  document.getElementById('shareLinkInput').value=link;
+  document.getElementById('sharePreviewDomain').textContent=getDomain();
+  document.getElementById('sharePreviewTitle').textContent=title;
+  document.getElementById('sharePreviewDesc').textContent=desc.slice(0,100)+(desc.length>100?'...':'');
+  var pi=document.getElementById('sharePreviewImg');
+  if(img){pi.innerHTML='<img src="'+escA(img)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';}else{pi.innerHTML='<i class="fas fa-image" style="font-size:32px;color:#444"></i>';}
   document.getElementById('shareModal').classList.add('show');
 }
+function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
 
-function closeShareModal() { document.getElementById('shareModal').classList.remove('show'); }
-
-function generateShareLink(cardIdx) {
-  try {
-    var shareData = {
-      n: album.name, f: album.favicon, og: album.ogImage, cd: album.customDomain,
-      ci: cardIdx >= 0 ? cardIdx : -1,
-      c: album.cards.map(function(c) {
-        return { bg:c.bgColor, im:c.images.filter(function(i){return i.url;}).map(function(i){return{u:i.url,a:i.aspectRatio};}),
-          t:{x:c.title.text,f:c.title.font,s:c.title.size,c:c.title.color,b:c.title.bold?1:0},
-          d:{x:c.desc.text,f:c.desc.font,s:c.desc.size,c:c.desc.color},
-          ct:{x:c.cta.text,u:c.cta.url,b:c.cta.bgColor,t:c.cta.textColor,r:c.cta.radius},
-          v:c.videoUrl, lk:c.likes, an:c.analytics };
-      })
-    };
-    var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
-    return getAppBaseUrl() + '#album=' + encoded;
-  } catch(e) { return window.location.href; }
+function generateLongLink(ci){
+  try{var d={n:album.name,f:album.favicon,og:album.ogImage,cd:album.customDomain,ci:ci>=0?ci:-1,c:album.cards.map(function(c){return{bg:c.bgColor,im:c.images.filter(function(i){return i.url;}).map(function(i){return{u:i.url,a:i.aspectRatio};}),t:{x:c.title.text,f:c.title.font,s:c.title.size,c:c.title.color,b:c.title.bold?1:0},d:{x:c.desc.text,f:c.desc.font,s:c.desc.size,c:c.desc.color},ct:{x:c.cta.text,u:c.cta.url,b:c.cta.bgColor,t:c.cta.textColor,r:c.cta.radius},v:c.videoUrl,lk:c.likes,an:c.analytics};})};var e=btoa(unescape(encodeURIComponent(JSON.stringify(d))));return getBaseUrl()+'#album='+e;}catch(er){return window.location.href;}
 }
 
-function shareToFacebook() {
-  var url = encodeURIComponent(generateShareLink(shareTargetCard));
-  window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, '_blank', 'width=600,height=400');
+// PERBAIKAN: Semua share sekarang HANYA mengirim 1 link, tanpa tambahan teks
+function shareToFacebook(){var u=encodeURIComponent(document.getElementById('shareLinkInput').value);window.open('https://www.facebook.com/sharer/sharer.php?u='+u,'_blank','width=600,height=400');}
+function shareToWhatsApp(){var u=encodeURIComponent(document.getElementById('shareLinkInput').value);window.open('https://wa.me/?text='+u,'_blank');}
+function shareToThreads(){var u=encodeURIComponent(document.getElementById('shareLinkInput').value);window.open('https://www.threads.net/intent/post?text='+u,'_blank');}
+function shareToInstagram(){copyShareLink();showToast('Link disalin! Tempel di Instagram story/bio');}
+function shareToTelegram(){var u=encodeURIComponent(document.getElementById('shareLinkInput').value);window.open('https://t.me/share/url?url='+u,'_blank');}
+function shareToTwitter(){var u=encodeURIComponent(document.getElementById('shareLinkInput').value);window.open('https://twitter.com/intent/tweet?url='+u,'_blank');}
+function copyShareLink(){var i=document.getElementById('shareLinkInput');i.select();if(navigator.clipboard){navigator.clipboard.writeText(i.value).then(function(){showToast('Link disalin!');});}else{document.execCommand('copy');showToast('Link disalin!');}}
+
+// Settings
+function openSettingsModal(){document.getElementById('settingsFavicon').value=album.favicon||'';document.getElementById('settingsOGImage').value=album.ogImage||'';document.getElementById('settingsDomain').value=album.customDomain||'';document.getElementById('settingsFirebase').value=album.firebaseConfig||'';document.getElementById('settingsGA').value=album.gaId||'';document.getElementById('settingsModal').classList.add('show');}
+function closeSettingsModal(){document.getElementById('settingsModal').classList.remove('show');}
+function saveSettings(){
+  album.favicon=document.getElementById('settingsFavicon').value||'\uD83D\uDCF8';
+  album.ogImage=document.getElementById('settingsOGImage').value||'';
+  album.customDomain=document.getElementById('settingsDomain').value||'';
+  album.firebaseConfig=document.getElementById('settingsFirebase').value||'';
+  album.gaId=document.getElementById('settingsGA').value;
+  setFav(album.favicon);
+  if(album.firebaseConfig)initFB(album.firebaseConfig);
+  saveLocal();closeSettingsModal();showToast('Pengaturan disimpan');
 }
 
-function shareToWhatsApp() {
-  var title = getOGTitle(shareTargetCard);
-  var link = generateShareLink(shareTargetCard);
-  window.open('https://wa.me/?text=' + encodeURIComponent(title + '\n\n' + link), '_blank');
-}
+function trackClick(i){var c=album.cards[i];if(c.analytics.id&&album.gaId&&typeof gtag==='function')gtag('event','cta_click',{event_category:c.analytics.name||'album_card',event_label:c.cta.text});}
 
-function shareToThreads() {
-  var title = getOGTitle(shareTargetCard);
-  var link = generateShareLink(shareTargetCard);
-  window.open('https://www.threads.net/intent/post?text=' + encodeURIComponent(title + '\n\n' + link), '_blank');
-}
+// Published view
+function checkPublished(){
+  var hash=window.location.hash;
+  if(!hash||hash.length<2)return false;
 
-function shareToInstagram() { copyShareLink(); showToast('Link disalin! Buka Instagram dan tempel di story/bio Anda'); }
+  var slug='',cardSlug='';
 
-function shareToTelegram() {
-  var title = getOGTitle(shareTargetCard);
-  var link = generateShareLink(shareTargetCard);
-  window.open('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(title), '_blank');
-}
-
-function shareToTwitter() {
-  var title = getOGTitle(shareTargetCard);
-  var link = generateShareLink(shareTargetCard);
-  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(title) + '&url=' + encodeURIComponent(link), '_blank');
-}
-
-function copyShareLink() {
-  var input = document.getElementById('shareLinkInput');
-  input.select();
-  if (navigator.clipboard) { navigator.clipboard.writeText(input.value).then(function() { showToast('Link berhasil disalin!'); }); }
-  else { document.execCommand('copy'); showToast('Link berhasil disalin!'); }
-}
-
-// ============================
-// SETTINGS
-// ============================
-function openSettingsModal() {
-  document.getElementById('settingsFavicon').value = album.favicon || '';
-  document.getElementById('settingsOGImage').value = album.ogImage || '';
-  document.getElementById('settingsDomain').value = album.customDomain || '';
-  document.getElementById('settingsGA').value = album.gaId || '';
-  document.getElementById('settingsFirebase').value = album.firebaseConfig || '';
-  document.getElementById('settingsModal').classList.add('show');
-}
-
-function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('show'); }
-
-function saveSettings() {
-  album.favicon = document.getElementById('settingsFavicon').value || '\uD83D\uDCF8';
-  album.ogImage = document.getElementById('settingsOGImage').value || '';
-  album.customDomain = document.getElementById('settingsDomain').value || '';
-  album.gaId = document.getElementById('settingsGA').value;
-  album.firebaseConfig = document.getElementById('settingsFirebase').value;
-  setFavicon(album.favicon);
-  saveAlbum();
-  closeSettingsModal();
-  showToast('Pengaturan disimpan');
-}
-
-// ============================
-// ANALYTICS TRACKING
-// ============================
-function trackClick(cardIdx) {
-  var c = album.cards[cardIdx];
-  if (c.analytics.id && album.gaId && typeof gtag === 'function') {
-    gtag('event', 'cta_click', {event_category: c.analytics.name || 'album_card', event_label: c.cta.text, card_id: c.id});
+  // Format baru: #slug atau #slug/card-slug
+  if(hash.indexOf('#album=')!==0){
+    var clean=hash.slice(1);
+    var parts=clean.split('/');
+    slug=parts[0];
+    cardSlug=parts[1]||'';
   }
-}
 
-// ============================
-// PUBLISHED VIEW
-// ============================
-function checkPublishedView() {
-  var hash = window.location.hash;
-  if (hash.indexOf('#album=') === 0) {
-    try {
-      var encoded = hash.slice(7);
-      var decoded = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-      var sharedAlbum = {
-        id: uid(), name: decoded.n || 'Album Feed', favicon: decoded.f || '\uD83D\uDCF8',
-        ogImage: decoded.og || '', customDomain: decoded.cd || '', gaId: '', firebaseConfig: '',
-        cards: (decoded.c || []).map(function(sc) {
-          return { id:uid(), bgColor:sc.bg||'#1a1a2e',
-            images:(sc.im||[]).map(function(i){return{url:i.u,aspectRatio:i.a||'16/9'};}),
-            title:{text:sc.t?sc.t.x:'',font:sc.t?sc.t.f:'Poppins',size:sc.t?sc.t.s:22,color:sc.t?sc.t.c:'#fff',bold:!!(sc.t&&sc.t.b)},
-            desc:{text:sc.d?sc.d.x:'',font:sc.d?sc.d.f:'DM Sans',size:sc.d?sc.d.s:15,color:sc.d?sc.d.c:'#ccc'},
-            cta:{text:sc.ct?sc.ct.x:'',url:sc.ct?sc.ct.u:'#',bgColor:sc.ct?sc.ct.b:'#e8572a',textColor:sc.ct?sc.ct.t:'#fff',radius:sc.ct?sc.ct.r:24},
-            videoUrl:sc.v||'', analytics:sc.an||{id:'',name:''}, likes:sc.lk||0, liked:false, comments:[] };
-        })
-      };
-      var cardIdx = decoded.ci >= 0 ? decoded.ci : 0;
-      var ogTitle = decoded.ci >= 0 ? sharedAlbum.cards[cardIdx].title.text + ' - ' + sharedAlbum.name : sharedAlbum.name;
-      var ogDesc = sharedAlbum.cards[cardIdx] ? sharedAlbum.cards[cardIdx].desc.text : '';
-      var ogImg = sharedAlbum.ogImage || (sharedAlbum.cards[cardIdx] && sharedAlbum.cards[cardIdx].images[0] ? sharedAlbum.cards[cardIdx].images[0].url : '');
-      updateOGTags(ogTitle, ogDesc, ogImg);
-      setFavicon(sharedAlbum.favicon);
-      renderPublished(sharedAlbum);
-      if (decoded.ci >= 0 && decoded.ci < sharedAlbum.cards.length) {
-        setTimeout(function() {
-          var scrollEl = document.getElementById('publishedScroll');
-          var cards = scrollEl.querySelectorAll('.feed-card-wrap');
-          if (cards[decoded.ci]) cards[decoded.ci].scrollIntoView({behavior:'smooth'});
-        }, 500);
-      }
+  // Format lama: #album=base64...
+  if(hash.indexOf('#album=')===0){
+    try{
+      var enc=hash.slice(7);var dec=JSON.parse(decodeURIComponent(escape(atob(enc))));
+      var sa={id:uid(),name:dec.n||'Album Feed',favicon:dec.f||'\uD83D\uDCF8',ogImage:dec.og||'',customDomain:dec.cd||'',gaId:'',firebaseConfig:'',slug:'',cards:(dec.c||[]).map(function(sc){return{id:uid(),bgColor:sc.bg||'#1a1a2e',images:(sc.im||[]).map(function(i){return{url:i.u,aspectRatio:i.a||'16/9'};}),title:{text:sc.t?sc.t.x:'',font:sc.t?sc.t.f:'Poppins',size:sc.t?sc.t.s:22,color:sc.t?sc.t.c:'#fff',bold:!!(sc.t&&sc.t.b)},desc:{text:sc.d?sc.d.x:'',font:sc.d?sc.d.f:'DM Sans',size:sc.d?sc.d.s:15,color:sc.d?sc.d.c:'#ccc'},cta:{text:sc.ct?sc.ct.x:'',url:sc.ct?sc.ct.u:'#',bgColor:sc.ct?sc.ct.b:'#e8572a',textColor:sc.ct?sc.ct.t:'#fff',radius:sc.ct?sc.ct.r:24},videoUrl:sc.v||'',analytics:sc.an||{id:'',name:''},likes:sc.lk||0,liked:false,comments:[]};})};
+      var ci=dec.ci>=0?dec.ci:0;updOG(sa.cards[ci].title.text+' - '+sa.name,sa.cards[ci].desc.text,getOGImg(ci));setFav(sa.favicon);renderPublished(sa);
+      if(dec.ci>=0&&dec.ci<sa.cards.length){setTimeout(function(){var s=document.getElementById('publishedScroll'),cards=s.querySelectorAll('.feed-card-wrap');if(cards[dec.ci])cards[dec.ci].scrollIntoView({behavior:'smooth'});},500);}
       return true;
-    } catch(e) { console.error('Gagal memuat data album dari URL', e); }
+    }catch(e){console.error('Base64 parse error',e);return false;}
   }
+
+  // Format baru: load dari Firebase
+  if(slug&&fbReady){
+    loadFromCloud(slug,function(data){
+      if(!data){showToast('Album tidak ditemukan');return;}
+      var sa={id:uid(),name:data.name,favicon:data.favicon||'\uD83D\uDCF8',ogImage:data.ogImage||'',customDomain:data.customDomain||'',gaId:'',firebaseConfig:'',slug:data.slug||slug,cards:(data.cards||[]).map(function(sc){return{id:uid(),bgColor:sc.bgColor||'#1a1a2e',images:sc.images||[],title:sc.title||{text:'',font:'Poppins',size:22,color:'#fff',bold:true},desc:sc.desc||{text:'',font:'DM Sans',size:15,color:'#ccc'},cta:sc.cta||{text:'',url:'#',bgColor:'#e8572a',textColor:'#fff',radius:24},videoUrl:sc.videoUrl||'',analytics:sc.analytics||{id:'',name:''},likes:sc.likes||0,liked:false,comments:[]};})};
+      var ci=0;if(cardSlug){for(var i=0;i<sa.cards.length;i++){if(slugify(sa.cards[i].title.text)===cardSlug){ci=i;break;}}}
+      updOG(getOGTitle(ci),getOGDesc(ci),getOGImg(ci));setFav(sa.favicon);renderPublished(sa);
+      if(ci>0){setTimeout(function(){var s=document.getElementById('publishedScroll'),cards=s.querySelectorAll('.feed-card-wrap');if(cards[ci])cards[ci].scrollIntoView({behavior:'smooth'});},500);}
+    });
+    return true;
+  }
+
   return false;
 }
 
-// ============================
-// ALBUM NAME LISTENER
-// ============================
-document.getElementById('albumNameInput').addEventListener('input', function() {
-  album.name = this.value; saveAlbum(); document.title = album.name + ' - Editor';
-});
+// Album name listener
+document.getElementById('albumNameInput').addEventListener('input',function(){album.name=this.value;saveLocal();document.title=album.name+' - Editor';});
 
-// ============================
 // INIT
-// ============================
-(function init() {
-  if (checkPublishedView()) return;
-  loadAlbum();
-  setFavicon(album.favicon);
-  document.title = album.name + ' - Editor';
+(function(){
+  loadLocal();
+  if(album.firebaseConfig)initFB(album.firebaseConfig);
+  if(checkPublished())return;
+  setFav(album.favicon);
+  document.title=album.name+' - Editor';
   renderEditor();
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveAlbum(); showToast('Disimpan!'); }
-    if (e.key === 'Escape' && currentView === 'preview') toggleView('editor');
-  });
+  document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveLocal();showToast('Disimpan lokal!');}if(e.key==='Escape'&&currentView==='preview')toggleView('editor');});
 })();
 </script>
 </body>
