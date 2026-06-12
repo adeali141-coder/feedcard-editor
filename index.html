@@ -360,7 +360,7 @@ function delCmt(ci,mi){album.cards[commentCardIdx].comments.splice(mi,1);saveLoc
 function delReply(ci,mi,rid){var cmt=album.cards[commentCardIdx].comments[mi];if(cmt&&cmt.replies){cmt.replies=cmt.replies.filter(function(r){return r.id!==rid;});saveLocal();renderCmts();}}
 
 // ============================
-// SHARE SYSTEM (DIPERBAIKI)
+// SHARE SYSTEM
 // ============================
 function openShareModal(cardIdx){
   shareTargetCard=cardIdx;
@@ -369,10 +369,9 @@ function openShareModal(cardIdx){
   var mTitle=cardIdx>=0?'Bagikan Card '+(cardIdx+1):'Bagikan Album';
   document.getElementById('shareModalTitle').textContent=mTitle;
 
-  // Generate share link
   var link='';
-  var note=document.getElementById('shareLinkNote');
   var linkContainer=document.getElementById('shareLinkContainer');
+  var note=document.getElementById('shareLinkNote');
 
   if(album.slug && fbReady){
     if(cardIdx>=0){
@@ -381,14 +380,14 @@ function openShareModal(cardIdx){
     }else{
       link=getBaseUrl()+'#'+album.slug;
     }
-    linkContainer.style.display='block';
-    linkContainer.innerHTML='<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link pendek siap dibagikan!';
-    note.style.display='none';
+    if(linkContainer)linkContainer.style.display='block';
+    if(linkContainer)linkContainer.innerHTML='<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link pendek siap dibagikan!';
+    if(note)note.style.display='none';
   }else{
     link=generateLongLink(cardIdx);
-    linkContainer.style.display='block';
-    linkContainer.innerHTML='<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik tombol awan hijau dulu untuk simpan ke Cloud & dapatkan link pendek.';
-    note.style.display='block';
+    if(linkContainer)linkContainer.style.display='block';
+    if(linkContainer)linkContainer.innerHTML='<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik awan hijau dulu untuk dapat link pendek.';
+    if(note)note.style.display='block';
   }
 
   document.getElementById('shareLinkInput').value=link;
@@ -399,26 +398,26 @@ function openShareModal(cardIdx){
   if(img){pi.innerHTML='<img src="'+escA(img)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';}else{pi.innerHTML='<i class="fas fa-image" style="font-size:32px;color:#444"></i>';}
   document.getElementById('shareModal').classList.add('show');
 }
+
 function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
 
 function generateLongLink(ci){
-  try{var d={n:album.name,f:album.favicon,og:album.ogImage,cd:album.customDomain,ci:ci>=0?ci:-1,c:album.cards.map(function(c){return{bg:c.bgColor,im:c.images.filter(function(i){return i.url;}).map(function(i){return{u:i.url,a:i.aspectRatio};}),t:{x:c.title.text,f:c.title.font,s:c.title.size,c:c.title.color,b:c.title.bold?1:0},d:{x:c.desc.text,f:c.desc.font,s:c.desc.size,c:c.desc.color},ct:{x:c.cta.text,u:c.cta.url,b:c.cta.bgColor,t:c.cta.textColor,r:c.cta.radius},v:c.videoUrl,lk:c.likes,an:c.analytics};})};var e=btoa(unescape(encodeURIComponent(JSON.stringify(d))));return getBaseUrl()+'#album='+e;}catch(er){return window.location.href;}
+  try{var d={n:album.name,f:album.favicon,og:album.ogImage,cd:album.customDomain,ci:ci>=0?ci:-1,c:album.cards.map(function(c){return{bg:c.bgColor,im:c.images.filter(function(i){return i.url;}).map(function(i){return{u:i.url,a:i.aspectRatio};}),t:{x:c.title.text,f:c.title.font,s:c.title.size,c:c.title.color,b:c.title.bold?1:0},d:{x:c.desc.text,f:c.desc.font,s:c.desc.size,c:c.desc.color},ct:{x:c.cta.text,u:c.cta.url,b:c.cta.bgColor,t:c.cta.textColor,r:c.cta.radius},v:c.videoUrl,lk:c.likes,an:c.analytics};})};var e=btoa(unescape(encodeURIComponent(JSON.stringify(d))));return getBaseUrl()+'#album='+e;}catch(er){return getBaseUrl();}
 }
 
-// PERBAIKAN: Semua share sekarang HANYA mengirim 1 link, tanpa tambahan teks
 function shareToFacebook(){
   var link=document.getElementById('shareLinkInput').value;
-  if(!link){showToast('Link belum tersedia');return;}
+  if(!link||link.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(link),'_blank','width=600,height=400');
 }
 function shareToWhatsApp(){
   var link=document.getElementById('shareLinkInput').value;
-  if(!link){showToast('Link belum tersedia');return;}
+  if(!link||link.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   window.open('https://wa.me/?text='+encodeURIComponent(link),'_blank');
 }
 function shareToThreads(){
   var link=document.getElementById('shareLinkInput').value;
-  if(!link){showToast('Link belum tersedia');return;}
+  if(!link||link.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   window.open('https://www.threads.net/intent/post?text='+encodeURIComponent(link),'_blank');
 }
 function shareToInstagram(){
@@ -427,21 +426,22 @@ function shareToInstagram(){
 }
 function shareToTelegram(){
   var link=document.getElementById('shareLinkInput').value;
-  if(!link){showToast('Link belum tersedia');return;}
+  if(!link||link.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   window.open('https://t.me/share/url?url='+encodeURIComponent(link),'_blank');
 }
 function shareToTwitter(){
   var link=document.getElementById('shareLinkInput').value;
-  if(!link){showToast('Link belum tersedia');return;}
+  if(!link||link.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   window.open('https://twitter.com/intent/tweet?url='+encodeURIComponent(link),'_blank');
 }
 function copyShareLink(){
   var input=document.getElementById('shareLinkInput');
-  if(!input.value){showToast('Link belum tersedia');return;}
+  if(!input.value||input.value.indexOf('http')!==0){showToast('Link belum tersedia');return;}
   input.select();
   if(navigator.clipboard){navigator.clipboard.writeText(input.value).then(function(){showToast('Link disalin!');});}
   else{document.execCommand('copy');showToast('Link disalin!');}
 }
+
 // Settings
 function openSettingsModal(){document.getElementById('settingsFavicon').value=album.favicon||'';document.getElementById('settingsOGImage').value=album.ogImage||'';document.getElementById('settingsDomain').value=album.customDomain||'';document.getElementById('settingsFirebase').value=album.firebaseConfig||'';document.getElementById('settingsGA').value=album.gaId||'';document.getElementById('settingsModal').classList.add('show');}
 function closeSettingsModal(){document.getElementById('settingsModal').classList.remove('show');}
@@ -462,47 +462,37 @@ function trackClick(i){var c=album.cards[i];if(c.analytics.id&&album.gaId&&typeo
 function checkPublished(){
   var hash=window.location.hash;
   if(!hash||hash.length<2)return false;
-
   var slug='',cardSlug='';
-
-  // Format baru: #slug atau #slug/card-slug
   if(hash.indexOf('#album=')!==0){
     var clean=hash.slice(1);
     var parts=clean.split('/');
     slug=parts[0];
     cardSlug=parts[1]||'';
   }
-
-  // Format lama: #album=base64...
   if(hash.indexOf('#album=')===0){
     try{
       var enc=hash.slice(7);var dec=JSON.parse(decodeURIComponent(escape(atob(enc))));
       var sa={id:uid(),name:dec.n||'Album Feed',favicon:dec.f||'\uD83D\uDCF8',ogImage:dec.og||'',customDomain:dec.cd||'',gaId:'',firebaseConfig:'',slug:'',cards:(dec.c||[]).map(function(sc){return{id:uid(),bgColor:sc.bg||'#1a1a2e',images:(sc.im||[]).map(function(i){return{url:i.u,aspectRatio:i.a||'16/9'};}),title:{text:sc.t?sc.t.x:'',font:sc.t?sc.t.f:'Poppins',size:sc.t?sc.t.s:22,color:sc.t?sc.t.c:'#fff',bold:!!(sc.t&&sc.t.b)},desc:{text:sc.d?sc.d.x:'',font:sc.d?sc.d.f:'DM Sans',size:sc.d?sc.d.s:15,color:sc.d?sc.d.c:'#ccc'},cta:{text:sc.ct?sc.ct.x:'',url:sc.ct?sc.ct.u:'#',bgColor:sc.ct?sc.ct.b:'#e8572a',textColor:sc.ct?sc.ct.t:'#fff',radius:sc.ct?sc.ct.r:24},videoUrl:sc.v||'',analytics:sc.an||{id:'',name:''},likes:sc.lk||0,liked:false,comments:[]};})};
-      var ci=dec.ci>=0?dec.ci:0;updOG(sa.cards[ci].title.text+' - '+sa.name,sa.cards[ci].desc.text,getOGImg(ci));setFav(sa.favicon);renderPublished(sa);
+      var ci=dec.ci>=0?dec.ci:0;updOG(sa.cards[ci].title.text+' - '+sa.name,sa.cards[ci].desc.text,getOGImageUrl(ci));setFav(sa.favicon);renderPublished(sa);
       if(dec.ci>=0&&dec.ci<sa.cards.length){setTimeout(function(){var s=document.getElementById('publishedScroll'),cards=s.querySelectorAll('.feed-card-wrap');if(cards[dec.ci])cards[dec.ci].scrollIntoView({behavior:'smooth'});},500);}
       return true;
     }catch(e){console.error('Base64 parse error',e);return false;}
   }
-
-  // Format baru: load dari Firebase
   if(slug&&fbReady){
     loadFromCloud(slug,function(data){
       if(!data){showToast('Album tidak ditemukan');return;}
       var sa={id:uid(),name:data.name,favicon:data.favicon||'\uD83D\uDCF8',ogImage:data.ogImage||'',customDomain:data.customDomain||'',gaId:'',firebaseConfig:'',slug:data.slug||slug,cards:(data.cards||[]).map(function(sc){return{id:uid(),bgColor:sc.bgColor||'#1a1a2e',images:sc.images||[],title:sc.title||{text:'',font:'Poppins',size:22,color:'#fff',bold:true},desc:sc.desc||{text:'',font:'DM Sans',size:15,color:'#ccc'},cta:sc.cta||{text:'',url:'#',bgColor:'#e8572a',textColor:'#fff',radius:24},videoUrl:sc.videoUrl||'',analytics:sc.analytics||{id:'',name:''},likes:sc.likes||0,liked:false,comments:[]};})};
       var ci=0;if(cardSlug){for(var i=0;i<sa.cards.length;i++){if(slugify(sa.cards[i].title.text)===cardSlug){ci=i;break;}}}
-      updOG(getOGTitle(ci),getOGDesc(ci),getOGImg(ci));setFav(sa.favicon);renderPublished(sa);
+      updOG(getOGTitle(ci),getOGDesc(ci),getOGImageUrl(ci));setFav(sa.favicon);renderPublished(sa);
       if(ci>0){setTimeout(function(){var s=document.getElementById('publishedScroll'),cards=s.querySelectorAll('.feed-card-wrap');if(cards[ci])cards[ci].scrollIntoView({behavior:'smooth'});},500);}
     });
     return true;
   }
-
   return false;
 }
 
-// Album name listener
 document.getElementById('albumNameInput').addEventListener('input',function(){album.name=this.value;saveLocal();document.title=album.name+' - Editor';});
 
-// INIT
 (function(){
   loadLocal();
   if(album.firebaseConfig)initFB(album.firebaseConfig);
