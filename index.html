@@ -208,9 +208,9 @@ var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',cus
 var currentCardIdx=0,currentView='editor',commentCardIdx=-1,replyTo=null,sliderStates={},shareTargetCard=-1;
 
 function updOG(t,d,img){var m=[['og:title',t],['og:description',d],['og:image',img],['twitter:title',t],['twitter:description',d],['twitter:image',img]];for(var i=0;i<m.length;i++){var el=document.querySelector('[property="'+m[i][0]+'"]')||document.querySelector('[name="'+m[i][0]+'"]');if(el)el.content=m[i][1];}document.title=t;}
-function getOGImg(ci){if(album.ogImage)return album.ogImage;var c=ci>=0?album.cards[ci]:album.cards[0];if(!c)return'';for(var i=0;i<c.images.length;i++){if(c.images[i].url)return c.images[i].url;}return'';}
+function getOGImg(ci){var c=ci>=0?album.cards[ci]:album.cards[0];if(!c)return'';for(var i=0;i<c.images.length;i++){if(c.images[i].url)return c.images[i].url;}if(album.ogImage)return album.ogImage;return'';}
 function getOGTitle(ci){return ci>=0?album.cards[ci].title.text+' - '+album.name:album.name;}
-function getOGDesc(ci){return(ci>=0?album.cards[ci].desc.text:(album.cards[0]?album.cards[0].desc.text:'')).slice(0,200);}
+function getOGDesc(ci){if(ci>=0)return album.cards[ci].desc.text.slice(0,200);return'';}
 
 function saveLocal(){try{localStorage.setItem('acf_album',JSON.stringify(album));}catch(e){}}
 function loadLocal(){try{var d=localStorage.getItem('acf_album');if(d){album=JSON.parse(d);if(!album.cards||!album.cards.length)album.cards=[defCard()];if(!album.slug)album.slug='';if(!album.customDomain)album.customDomain='';if(!album.ogImage)album.ogImage='';if(album.monetagEnabled===undefined)album.monetagEnabled=false;if(!album.monetagZoneId)album.monetagZoneId='';for(var i=0;i<album.cards.length;i++){if(!album.cards[i].price)album.cards[i].price={text:'',font:'Poppins',size:20,color:'#4ade80',bold:true};}}}catch(e){}document.getElementById('albumNameInput').value=album.name;}
