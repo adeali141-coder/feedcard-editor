@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Album Feed Editor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+    body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
+    .inp { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; color: #fff; width: 100%; margin-bottom: 12px; outline: none; }
+    .inp:focus { border-color: #e8572a; }
+    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<div class="w-full max-w-md">
+    <div class="text-center mb-8">
+        <span class="text-4xl">📸</span>
+        <h1 class="text-2xl font-bold mt-2">Album Feed Editor</h1>
+        <p class="text-gray-400 text-sm" id="subTitle">Masuk untuk melanjutkan</p>
+    </div>
+
+    <!-- Form Register -->
+    <div id="registerForm" style="display:none;">
+        <input type="email" id="regEmail" class="inp" placeholder="Email">
+        <input type="password" id="regPass" class="inp" placeholder="Password (min 6 karakter)">
+        <input type="text" id="regWa" class="inp" placeholder="Nomor WhatsApp (cth: 0812...)" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <button onclick="doRegister()" class="btn-a">Daftar Sekarang</button>
+        <p class="text-center text-sm text-gray-400 mt-4">Sudah punya akun? <span class="text-orange-500 cursor-pointer" onclick="toggleForm('login')">Masuk di sini</span></p>
+    </div>
+
+    <!-- Form Login -->
+    <div id="loginForm">
+        <input type="email" id="loginEmail" class="inp" placeholder="Email">
+        <input type="password" id="loginPass" class="inp" placeholder="Password">
+        <button onclick="doLogin()" class="btn-a mb-3">Masuk</button>
+        <button onclick="doGoogleLogin()" class="btn-a" style="background:#fff; color:#000;">
+            <i class="fab fa-google mr-2"></i> Masuk dengan Google
+        </button>
+        <p class="text-center text-sm text-gray-400 mt-4">Belum punya akun? <span class="text-orange-500 cursor-pointer" onclick="toggleForm('register')">Daftar di sini</span></p>
+    </div>
+
+    <p class="text-center text-xs text-gray-600 mt-8">Admin? <a href="admin-login.html" class="underline">Klik di sini</a></p>
+</div>
+
+<script>
+    // PASTIKAN MENGGUNAKAN CONFIG FIREBASE ANDA
+    const firebaseConfig = {
+      apiKey: "API_KEY_ANDA",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function toggleForm(type) {
+        if(type === 'register') {
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('subTitle').innerText = 'Buat akun baru';
+        } else {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('subTitle').innerText = 'Masuk untuk melanjutkan';
+        }
+    }
+
+    // LOGIKA REGISTER
+    function doRegister() {
+        const email = document.getElementById('regEmail').value;
+        const pass = document.getElementById('regPass').value;
+        const wa = document.getElementById('regWa').value;
+
+        if(!email || !pass || !wa) { alert('Mohon isi semua kolom'); return; }
+
+        auth.createUserWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                // Simpan data tambahan ke Firestore
+                return db.collection('users').doc(userCredential.user.uid).set({
+                    email: email,
+                    whatsapp: wa,
+                    role: 'user',
+                    status: 'active',
+                    monetagEnabled: false, // Default false, dikontrol admin
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                alert('Pendaftaran berhasil! Silakan masuk.');
+                toggleForm('login');
+            })
+            .catch((error) => {
+                alert('Error: ' + error.message);
+            });
+    }
+
+    // LOGIKA LOGIN EMAIL/PASS
+    function doLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+
+        auth.signInWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                // Cek apakah akun disuspend admin
+                return db.collection('users').doc(userCredential.user.uid).get();
+            })
+            .then((doc) => {
+                if(doc.exists && doc.data().status === 'suspended') {
+                    alert('Akun Anda telah dinonaktifkan oleh Admin.');
+                    auth.signOut();
+                } else {
+                    window.location.href = "dashboard.html"; // Arahkan ke dashboard
+                }
+            })
+            .catch((error) => {
+                alert('Login gagal: ' + error.message);
+            });
+    }
+
+    // LOGIKA LOGIN GOOGLE
+    function doGoogleLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                const userRef = db.collection('users').doc(result.user.uid);
+                userRef.get().then((doc) => {
+                    if (!doc.exists) {
+                        // Jika user Google baru, simpan datanya
+                        userRef.set({
+                            email: result.user.email,
+                            whatsapp: '', // Google tidak menyediakan WA, biarkan kosong
+                            role: 'user',
+                            status: 'active',
+                            monetagEnabled: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => window.location.href = "dashboard.html");
+                    } else if (doc.data().status === 'suspended') {
+                        alert('Akun Anda telah dinonaktifkan oleh Admin.');
+                        auth.signOut();
+                    } else {
+                        window.location.href = "dashboard.html";
+                    }
+                });
+            })
+            .catch((error) => {
+                alert('Login Google gagal: ' + error.message);
+            });
+    }
+
+    // Jika sudah login, langsung redirect
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if(doc.exists && doc.data().status !== 'suspended') {
+                    window.location.href = "dashboard.html";
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
