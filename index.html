@@ -386,7 +386,7 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
         });
     }
 
-        // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Cara Aman)
+            // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Cara Aman)
     var originalAddCard = window.addCard; // Simpan fungsi asli Fase 1
     window.addCard = function() {
         if (typeof album !== 'undefined' && album.cards.length >= 50) {
