@@ -386,22 +386,23 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
         });
     }
 
-    // 3. OVERRIDE: Logika 50 Feed Card Maksimal
-    // Kita timpa fungsi addCard bawaan Fase 1
-    var oldAddCard = window.addCard;
+        // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Cara Aman)
+    var originalAddCard = window.addCard; // Simpan fungsi asli Fase 1
     window.addCard = function() {
-        if (album.cards.length >= 50) {
+        if (typeof album !== 'undefined' && album.cards.length >= 50) {
             // Hapus card paling lama (indeks 0)
             let removedCard = album.cards.shift();
             showToast('Feed Card terlama ("' + removedCard.title.text + '") otomatis dihapus karena batas 50 tercapai.');
-            currentCardIdx = 0; // Reset ke card pertama
-        } else {
-            currentCardIdx = album.cards.length;
+            
+            // Update UI card selector agar card lama hilang dari layar
+            if (typeof renderCardSelector === 'function') renderCardSelector();
+            
+            // Set currentCardIdx ke 0 agar user fokus ke card pertama (yang baru digeser)
+            currentCardIdx = 0; 
         }
-        album.cards.push(defCard());
-        if (typeof renderEditor === 'function') renderEditor();
-        if (typeof renderCardSelector === 'function') renderCardSelector();
-        saveLocal();
+        
+        // Panggil fungsi asli Fase 1 untuk membuat card baru dan merender UI
+        originalAddCard();
     };
 
     // 4. OVERRIDE: Logika Simpan ke Cloud (Save)
