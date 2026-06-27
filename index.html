@@ -386,8 +386,7 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
         });
     }
 
-    // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Satpam Mutlak)
-    // Fungsi satpam yang akan memotong kelebihan card
+        // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Satpam Mutlak)
     function enforceCardLimit50() {
         if (typeof album !== 'undefined' && album.cards.length > 50) {
             let removedCount = album.cards.length - 50;
@@ -409,19 +408,13 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
         enforceCardLimit50();
     };
 
-    // Intai fungsi duplikat (jika ada namanya duplicateCard, duplicate, dll)
-    // Kita cek semua fungsi yang ada di window
-    setTimeout(function() {
-        for (var key in window) {
-            if (typeof window[key] === 'function' && key.toLowerCase().indexOf('duplicate') !== -1) {
-                var origDup = window[key];
-                window[key] = function() {
-                    origDup.apply(this, arguments);
-                    enforceCardLimit50();
-                };
-            }
-        }
-    }, 500);
+    // Intai fungsi dupCard asli (ini yang lolos sebelumnya)
+    var originalDupCard = window.dupCard;
+    window.dupCard = function(i) {
+        originalDupCard(i);
+        enforceCardLimit50();
+    };
+  
     // 4. OVERRIDE: Logika Simpan ke Cloud (Save)
     // Kita timpa fungsi saveToCloud bawaan Fase 1
     window.saveToCloud = function() {
