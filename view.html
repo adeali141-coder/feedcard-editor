@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Album Feed</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#333 transparent}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
+    body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;}
+    .feed-scroll{scroll-snap-type:y mandatory;overflow-y:scroll;height:100vh}
+    .feed-card-wrap{scroll-snap-align:start;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
+    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.modal-ov.show{opacity:1;pointer-events:all}
+    .modal-ct{background:#111;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px}
+    .modal-ov.show .modal-ct{transform:translateY(0)}
+    @media(min-width:640px){.modal-ct{border-radius:20px;margin-bottom:10%;max-height:70vh}}
+    .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
+    .inp:focus{border-color:#e8572a}
+    .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<div id="appLoad" class="h-screen flex items-center justify-center">
+    <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
+</div>
+
+<div id="feedContainer" class="feed-scroll hidden"></div>
+
+<!-- Modal Pelaporan -->
+<div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()">
+    <div class="modal-ct">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold">Laporkan Feed Ini</h3>
+            <button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau. Laporan akan dikirim langsung ke email Admin.</p>
+        <textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea>
+        <button onclick="submitReport()" class="btn-a">Kirim Laporan</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "API_KEY_ANDA",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentAlbum = null;
+    let currentReportFeedIdx = -1;
+
+    // Ambil Album ID dari URL (?albumId=xxx)
+    const urlParams = new URLSearchParams(window.location.search);
+    const albumId = urlParams.get('albumId');
+
+    if (!albumId) {
+        document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>';
+    } else {
+        loadAlbum();
+    }
+
+    function loadAlbum() {
+        db.collection('albums').doc(albumId).get().then((doc) => {
+            if (!doc.exists) {
+                document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan di Cloud.</p>';
+                return;
+            }
+            
+            currentAlbum = doc.data();
+            
+            // Cek jika album disuspend admin
+            if(currentAlbum.status === 'suspended') {
+                document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>';
+                return;
+            }
+
+            document.title = currentAlbum.name;
+            document.getElementById('appLoad').classList.add('hidden');
+            document.getElementById('feedContainer').classList.remove('hidden');
+            renderFeeds();
+        }).catch((error) => {
+            document.getElementById('appLoad').innerHTML = '<p class="text-red-500">Error: ' + error.message + '</p>';
+        });
+    }
+
+    function renderFeeds() {
+        let html = '';
+        const cards = currentAlbum.cards || [];
+        
+        // Logika Sliding Banner nanti disisipkan di sini
+        // Untuk sekarang, kita render card saja
+
+        for(let i=0; i<cards.length; i++) {
+            let c = cards[i];
+            let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
+            let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
+            
+            // Gambar pertama
+            let imgHtml = '';
+            if(c.images && c.images.length > 0 && c.images[0].url) {
+                imgHtml = `<img src="${c.images[0].url}" style="width:100%;aspect-ratio:${c.images[0].aspectRatio||'16/9'};object-fit:cover;display:block;border-radius:16px" />`;
+            }
+
+            // CTA
+            let ctaHtml = '';
+            if(c.cta && c.cta.text) {
+                // Integrasi Monetag ada di sini nanti
+                ctaHtml = `<a href="${c.cta.url}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px"><button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:${c.cta.radius}px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer">${c.cta.text}</button></a>`;
+            }
+
+            html += `
+                <div class="feed-card-wrap">
+                    <div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};position:relative">
+                        ${imgHtml}
+                        <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${c.title.text}</h2>
+                        ${c.price && c.price.text ? `<p style="margin-top:6px;font-size:${c.price.size}px;color:${c.price.color};font-weight:700">${c.price.text}</p>` : ''}
+                        <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${c.desc.text}</p>
+                        ${ctaHtml}
+                        
+                        <div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
+                            <button style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer">
+                                <i class="fas fa-heart"></i> <span>${c.likes||0}</span>
+                            </button>
+                            <button style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer">
+                                <i class="fas fa-comment"></i> <span>${c.comments?c.comments.length:0}</span>
+                            </button>
+                            <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto">
+                                <i class="fas fa-flag"></i> Laporkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if(cards.length === 0) {
+            html = '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album ini masih kosong.</p></div>';
+        }
+
+        document.getElementById('feedContainer').innerHTML = html;
+    }
+
+    // SISTEM PELAPORAN
+    function openReportModal(idx) {
+        currentReportFeedIdx = idx;
+        document.getElementById('reportModal').classList.add('show');
+    }
+    function closeReportModal() {
+        document.getElementById('reportModal').classList.remove('show');
+    }
+
+    function submitReport() {
+        let reason = document.getElementById('reportReason').value.trim();
+        if(!reason) { showToast('Mohon isi alasan pelaporan'); return; }
+        if(currentReportFeedIdx < 0) return;
+
+        let reportedCard = currentAlbum.cards[currentReportFeedIdx];
+        
+        // Simpan laporan ke Firestore
+        db.collection('reports').add({
+            albumId: albumId,
+            albumName: currentAlbum.name,
+            feedId: reportedCard.id,
+            feedTitle: reportedCard.title.text,
+            reason: reason,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            showToast('Laporan terkirim! Admin akan meninjau feed ini.');
+            closeReportModal();
+            document.getElementById('reportReason').value = '';
+            
+            // TODO di Langkah 5: Trigger Firebase Cloud Function untuk kirim Email ke Admin
+        }).catch((error) => {
+            showToast('Gagal mengirim laporan: ' + error.message);
+        });
+    }
+
+    function showToast(msg) {
+        var t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        setTimeout(function(){ t.classList.remove('show'); }, 3000);
+    }
+</script>
+</body>
+</html>
