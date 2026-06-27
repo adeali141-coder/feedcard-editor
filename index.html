@@ -386,25 +386,42 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
         });
     }
 
-            // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Cara Aman)
-    var originalAddCard = window.addCard; // Simpan fungsi asli Fase 1
-    window.addCard = function() {
-        if (typeof album !== 'undefined' && album.cards.length >= 50) {
-            // Hapus card paling lama (indeks 0)
-            let removedCard = album.cards.shift();
-            showToast('Feed Card terlama ("' + removedCard.title.text + '") otomatis dihapus karena batas 50 tercapai.');
+    // 3. OVERRIDE: Logika 50 Feed Card Maksimal (Satpam Mutlak)
+    // Fungsi satpam yang akan memotong kelebihan card
+    function enforceCardLimit50() {
+        if (typeof album !== 'undefined' && album.cards.length > 50) {
+            let removedCount = album.cards.length - 50;
+            let removedCards = album.cards.splice(0, removedCount); // Potong dari depan (card terlama)
             
-            // Update UI card selector agar card lama hilang dari layar
+            showToast(removedCount + ' Feed Card terlama otomatis dihapus karena melebihi batas 50.');
+            
+            // Update UI
             if (typeof renderCardSelector === 'function') renderCardSelector();
-            
-            // Set currentCardIdx ke 0 agar user fokus ke card pertama (yang baru digeser)
-            currentCardIdx = 0; 
+            currentCardIdx = 0; // Fokus ke card pertama
+            if (typeof renderEditor === 'function') renderEditor();
         }
-        
-        // Panggil fungsi asli Fase 1 untuk membuat card baru dan merender UI
+    }
+
+    // Intai fungsi addCard asli
+    var originalAddCard = window.addCard; 
+    window.addCard = function() {
         originalAddCard();
+        enforceCardLimit50();
     };
 
+    // Intai fungsi duplikat (jika ada namanya duplicateCard, duplicate, dll)
+    // Kita cek semua fungsi yang ada di window
+    setTimeout(function() {
+        for (var key in window) {
+            if (typeof window[key] === 'function' && key.toLowerCase().indexOf('duplicate') !== -1) {
+                var origDup = window[key];
+                window[key] = function() {
+                    origDup.apply(this, arguments);
+                    enforceCardLimit50();
+                };
+            }
+        }
+    }, 500);
     // 4. OVERRIDE: Logika Simpan ke Cloud (Save)
     // Kita timpa fungsi saveToCloud bawaan Fase 1
     window.saveToCloud = function() {
