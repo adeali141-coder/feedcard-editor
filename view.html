@@ -23,17 +23,41 @@
     .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
     .inp:focus{border-color:#e8572a}
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
+    .slider-track{display:flex;transition:transform .4s cubic-bezier(.25,.8,.25,1)}.slide{min-width:100%;position:relative}
+    .slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer}.slider-dot.active{background:#fff;transform:scale(1.3)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+    .heart-pop{animation:heartPop .3s ease}.like-btn.liked{color:#ef4444}
 </style>
 </head>
 <body>
 
 <div id="toast" class="toast"></div>
-
 <div id="appLoad" class="h-screen flex items-center justify-center">
     <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
 </div>
-
 <div id="feedContainer" class="feed-scroll hidden"></div>
+
+<!-- Modal Komentar -->
+<div id="commentModal" class="modal-ov" onclick="if(event.target===this)closeCommentModal()">
+  <div class="modal-ct">
+    <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold" id="commentModalTitle">Komentar</h3><button onclick="closeCommentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
+    <div id="commentList" class="space-y-3 mb-4" style="max-height:50vh;overflow-y:auto"></div>
+    <div class="border-t pt-3" style="border-color:#222"><div class="flex gap-2 mb-2"><input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" /></div><div class="flex gap-2"><input id="commentText" class="inp flex-1" style="padding:6px 10px" placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter')submitComment()" /><button onclick="submitComment()" class="btn-a" style="padding:6px 14px;width:auto"><i class="fas fa-paper-plane"></i></button></div></div>
+  </div>
+</div>
+
+<!-- Modal Share -->
+<div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal-ct">
+    <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
+    <div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Link</label><div class="flex gap-2"><input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly /><button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px;width:auto"><i class="fas fa-copy"></i></button></div></div>
+    <div class="space-y-2">
+      <button onclick="shareToFacebook()" class="btn-a flex items-center gap-2" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button>
+      <button onclick="shareToWhatsApp()" class="btn-a flex items-center gap-2" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Pelaporan -->
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()">
@@ -42,7 +66,7 @@
             <h3 class="text-lg font-bold">Laporkan Feed Ini</h3>
             <button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button>
         </div>
-        <p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau. Laporan akan dikirim langsung ke email Admin.</p>
+        <p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau.</p>
         <textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea>
         <button onclick="submitReport()" class="btn-a">Kirim Laporan</button>
     </div>
@@ -50,152 +74,141 @@
 
 <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
-      authDomain: "feed-editor-93db1.firebaseapp.com",
-      projectId: "feed-editor-93db1",
-      storageBucket: "feed-editor-93db1.firebasestorage.app",
-      messagingSenderId: "249842615247",
-      appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
+      apiKey: "API_KEY_ANDA",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     let currentAlbum = null;
-    let currentReportFeedIdx = -1;
+    let currentAlbumId = null;
+    let commentCardIdx = -1, replyTo = null, sliderStates = {}, currentReportFeedIdx = -1;
 
-    // Ambil Album ID dari URL (?albumId=xxx)
     const urlParams = new URLSearchParams(window.location.search);
-    const albumId = urlParams.get('albumId');
+    currentAlbumId = urlParams.get('albumId');
 
-    if (!albumId) {
+    if (!currentAlbumId) {
         document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>';
     } else {
         loadAlbum();
     }
 
     function loadAlbum() {
-        db.collection('albums').doc(albumId).get().then((doc) => {
-            if (!doc.exists) {
-                document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan di Cloud.</p>';
-                return;
-            }
-            
+        db.collection('albums').doc(currentAlbumId).get().then((doc) => {
+            if (!doc.exists) { document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>'; return; }
             currentAlbum = doc.data();
-            
-            // Cek jika album disuspend admin
-            if(currentAlbum.status === 'suspended') {
-                document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>';
-                return;
-            }
+            if(currentAlbum.status === 'suspended') { document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>'; return; }
 
             document.title = currentAlbum.name;
             document.getElementById('appLoad').classList.add('hidden');
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
-        }).catch((error) => {
-            document.getElementById('appLoad').innerHTML = '<p class="text-red-500">Error: ' + error.message + '</p>';
+            
+            // Auto scroll jika share link card spesifik (?card=2)
+            const cardParams = new URLSearchParams(window.location.search);
+            const cardIdx = cardParams.get('card');
+            if(cardIdx !== null) {
+                setTimeout(() => {
+                    let targetCard = document.querySelectorAll('.feed-card-wrap')[parseInt(cardIdx)];
+                    if(targetCard) targetCard.scrollIntoView({behavior: 'smooth'});
+                }, 500);
+            }
         });
     }
+
+    function escA(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+    function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function escHbr(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
     function renderFeeds() {
         let html = '';
         const cards = currentAlbum.cards || [];
-        
-        // Logika Sliding Banner nanti disisipkan di sini
-        // Untuk sekarang, kita render card saja
-
         for(let i=0; i<cards.length; i++) {
             let c = cards[i];
             let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
             let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
+            let sid = 'slider_'+i;
+            sliderStates[sid] = 0;
             
-            // Gambar pertama
-            let imgHtml = '';
-            if(c.images && c.images.length > 0 && c.images[0].url) {
-                imgHtml = `<img src="${c.images[0].url}" style="width:100%;aspect-ratio:${c.images[0].aspectRatio||'16/9'};object-fit:cover;display:block;border-radius:16px" />`;
+            let vi = c.images.filter(img => img.url);
+            let sh = '', dh = '';
+            for(let s=0; s<vi.length; s++){
+                sh += `<div class="slide"><img src="${escA(vi[s].url)}" style="width:100%;aspect-ratio:${vi[s].aspectRatio||'16/9'};object-fit:cover;display:block;border-radius:16px" /></div>`;
+                dh += `<div class="slider-dot${s===0?' active':''}" onclick="goSlide('${sid}',${s})"></div>`;
             }
 
-            // CTA
             let ctaHtml = '';
             if(c.cta && c.cta.text) {
-                // Integrasi Monetag ada di sini nanti
-                ctaHtml = `<a href="${c.cta.url}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px"><button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:${c.cta.radius}px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer">${c.cta.text}</button></a>`;
+                ctaHtml = `<a href="${escA(c.cta.url)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px"><button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:${c.cta.radius}px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer">${escH(c.cta.text)}</button></a>`;
             }
 
             html += `
-                <div class="feed-card-wrap">
-                    <div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};position:relative">
-                        ${imgHtml}
-                        <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${c.title.text}</h2>
-                        ${c.price && c.price.text ? `<p style="margin-top:6px;font-size:${c.price.size}px;color:${c.price.color};font-weight:700">${c.price.text}</p>` : ''}
-                        <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${c.desc.text}</p>
-                        ${ctaHtml}
-                        
-                        <div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
-                            <button style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer">
-                                <i class="fas fa-heart"></i> <span>${c.likes||0}</span>
-                            </button>
-                            <button style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer">
-                                <i class="fas fa-comment"></i> <span>${c.comments?c.comments.length:0}</span>
-                            </button>
-                            <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto">
-                                <i class="fas fa-flag"></i> Laporkan
-                            </button>
-                        </div>
+                <div class="feed-card-wrap"><div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};animation:fadeUp .5s ease ${i*0.1}s both;position:relative">
+                    ${sh ? `<div style="position:relative;overflow:hidden;border-radius:16px" id="${sid}"><div class="slider-track" id="track_${sid}">${sh}</div>${vi.length>1?`<button onclick="slideNav('${sid}',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-left"></i></button><button onclick="slideNav('${sid}',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-right"></i></button><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_${sid}">${dh}</div>`:''}</div>`:''}
+                    
+                    <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${escH(c.title.text)}</h2>
+                    ${c.price && c.price.text ? `<p style="margin-top:6px;font-size:${c.price.size}px;color:${c.price.color};font-weight:700">${escH(c.price.text)}</p>` : ''}
+                    <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${escHbr(c.desc.text)}</p>
+                    ${ctaHtml}
+                    
+                    <div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
+                        <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#aaa'};cursor:pointer"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
+                        <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-comment"></i> <span>${c.comments?c.comments.length:0}</span></button>
+                        <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto"><i class="fas fa-share-from-square"></i></button>
+                        <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-flag"></i></button>
                     </div>
-                </div>
+                </div></div>
             `;
         }
-        
-        if(cards.length === 0) {
-            html = '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album ini masih kosong.</p></div>';
+        document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
+    }
+
+    // SLIDER
+    function goSlide(sid,idx){var tr=document.getElementById('track_'+sid),dc=document.getElementById('dots_'+sid);if(!tr)return;var total=tr.children.length;if(idx<0)idx=total-1;if(idx>=total)idx=0;sliderStates[sid]=idx;tr.style.transform='translateX(-'+(idx*100)+'%)';if(dc){for(var i=0;i<dc.children.length;i++){if(i===idx)dc.children[i].classList.add('active');else dc.children[i].classList.remove('active');}}}
+    function slideNav(sid,dir){goSlide(sid,(sliderStates[sid]||0)+dir);}
+    document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
+    document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
+
+    // LIKE
+    function toggleLike(i){var c=currentAlbum.cards[i];c.liked=!c.liked;c.likes=Math.max(0,(c.likes||0)+(c.liked?1:-1));var b=document.getElementById('likeBtn_'+i),ct=document.getElementById('likeCount_'+i);if(b){b.classList.toggle('liked',c.liked);b.style.color=c.liked?'#ef4444':'#aaa';b.classList.add('heart-pop');setTimeout(function(){b.classList.remove('heart-pop');},300);}if(ct)ct.textContent=c.likes;}
+
+    // KOMENTAR
+    function openCommentModal(i){commentCardIdx=i;replyTo=null;document.getElementById('commentModalTitle').textContent='Komentar ('+(currentAlbum.cards[i].comments?currentAlbum.cards[i].comments.length:0)+')';document.getElementById('commentAuthor').value=localStorage.getItem('acf_userName')||'';renderCmts();document.getElementById('commentModal').classList.add('show');}
+    function closeCommentModal(){document.getElementById('commentModal').classList.remove('show');commentCardIdx=-1;replyTo=null;}
+    function renderCmts(){var c=currentAlbum.cards[commentCardIdx];if(!c)return;var el=document.getElementById('commentList');if(!c.comments||!c.comments.length){el.innerHTML='<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';return;}var h='';for(var ci=0;ci<c.comments.length;ci++){var cm=c.comments[ci];h+=`<div style="padding:12px;border-radius:12px;background:#1a1a1a"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author)}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p></div>`;}el.innerHTML=h;}
+    function submitComment(){var a=document.getElementById('commentAuthor').value.trim()||'Anonim',t=document.getElementById('commentText').value.trim();if(!t)return;localStorage.setItem('acf_userName',a);var c=currentAlbum.cards[commentCardIdx];if(!c.comments)c.comments=[];c.comments.push({author:a,text:t});document.getElementById('commentText').value='';document.getElementById('commentModalTitle').textContent='Komentar ('+c.comments.length+')';renderCmts();showToast('Komentar ditambahkan (lokal)');}
+
+    // SHARE (Album atau per Card)
+    function openShareModal(cardIdx = -1) {
+        let baseUrl = window.location.origin + window.location.pathname + '?albumId=' + currentAlbumId;
+        if(cardIdx >= 0) {
+            baseUrl += '&card=' + cardIdx;
         }
+        document.getElementById('shareLinkInput').value = baseUrl;
+        document.getElementById('shareModal').classList.add('show');
+    }
+    function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
+    function copyShareLink(){var i=document.getElementById('shareLinkInput');i.select();navigator.clipboard.writeText(i.value).then(function(){showToast('Link disalin!');});}
+    function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank','width=600,height=400');}
+    function shareToWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank');}
 
-        document.getElementById('feedContainer').innerHTML = html;
+    // LAPOR
+    function openReportModal(idx){currentReportFeedIdx=idx;document.getElementById('reportModal').classList.add('show');}
+    function closeReportModal(){document.getElementById('reportModal').classList.remove('show');}
+    function submitReport(){
+        let reason=document.getElementById('reportReason').value.trim();
+        if(!reason){showToast('Mohon isi alasan');return;}
+        let reportedCard=currentAlbum.cards[currentReportFeedIdx];
+        db.collection('reports').add({albumId:currentAlbumId,albumName:currentAlbum.name,feedId:reportedCard.id,feedTitle:reportedCard.title.text,reason:reason,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()})
+        .then(()=>{showToast('Laporan terkirim! Admin akan meninjau.');closeReportModal();document.getElementById('reportReason').value='';})
+        .catch(e=>showToast('Gagal: '+e.message));
     }
 
-    // SISTEM PELAPORAN
-    function openReportModal(idx) {
-        currentReportFeedIdx = idx;
-        document.getElementById('reportModal').classList.add('show');
-    }
-    function closeReportModal() {
-        document.getElementById('reportModal').classList.remove('show');
-    }
-
-    function submitReport() {
-        let reason = document.getElementById('reportReason').value.trim();
-        if(!reason) { showToast('Mohon isi alasan pelaporan'); return; }
-        if(currentReportFeedIdx < 0) return;
-
-        let reportedCard = currentAlbum.cards[currentReportFeedIdx];
-        
-        // Simpan laporan ke Firestore
-        db.collection('reports').add({
-            albumId: albumId,
-            albumName: currentAlbum.name,
-            feedId: reportedCard.id,
-            feedTitle: reportedCard.title.text,
-            reason: reason,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            showToast('Laporan terkirim! Admin akan meninjau feed ini.');
-            closeReportModal();
-            document.getElementById('reportReason').value = '';
-            
-            // TODO di Langkah 5: Trigger Firebase Cloud Function untuk kirim Email ke Admin
-        }).catch((error) => {
-            showToast('Gagal mengirim laporan: ' + error.message);
-        });
-    }
-
-    function showToast(msg) {
-        var t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(function(){ t.classList.remove('show'); }, 3000);
-    }
+    function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 </script>
 </body>
 </html>
