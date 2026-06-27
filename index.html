@@ -74,7 +74,9 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
     </button>
     <span class="text-xl" id="headerLogo">&#x1F4F8;</span>
     <input id="albumNameInput" class="inp flex-1" style="padding:6px 12px;font-size:15px;font-weight:600" placeholder="Nama Album" />
-    <button onclick="toggleView('preview')" class="btn-g flex items-center gap-2"><i class="fas fa-eye text-xs"></i><span class="hidden sm:inline">Preview</span></button>
+    <a href="#" id="liveViewLink" target="_blank" class="btn-g flex items-center gap-2" style="text-decoration:none">
+    <i class="fas fa-external-link-alt text-xs"></i><span class="hidden sm:inline">Lihat Publik</span>
+</a>
     <button onclick="openShareModal(-1)" class="btn-a flex items-center gap-2" style="padding:6px 12px"><i class="fas fa-share-nodes text-xs"></i><span class="hidden sm:inline">Bagikan</span></button>
   </header>
   <div class="flex items-center gap-2 px-4 py-3 border-b shrink-0 overflow-x-auto" style="border-color:#1a1a1a;background:#111" id="cardSelector"></div>
