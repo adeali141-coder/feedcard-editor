@@ -265,20 +265,40 @@ function delCmt(ci,mi){album.cards[commentCardIdx].comments.splice(mi,1);saveLoc
 function delReply(ci,mi,rid){var cmt=album.cards[commentCardIdx].comments[mi];if(cmt&&cmt.replies){cmt.replies=cmt.replies.filter(function(r){return r.id!==rid;});saveLocal();renderCmts();}}
 
 // ====== SHARE SYSTEM ======
-function openShareModal(cardIdx){
-  shareTargetCard=cardIdx;
-  var title=getOGTitle(cardIdx),desc=getOGDesc(cardIdx),img=getOGImg(cardIdx);
-  updOG(title,desc,img);
-  var mTitle=cardIdx>=0?'Bagikan Card '+(cardIdx+1):'Bagikan Album';
-  document.getElementById('shareModalTitle').textContent=mTitle;
-  var link='',lc=document.getElementById('shareLinkContainer'),nt=document.getElementById('shareLinkNote');
-  if(album.slug&&fbReady){if(cardIdx>=0){var cs=slugify(album.cards[cardIdx].title.text);link=getBaseUrl()+'#'+album.slug+'/'+cs;}else{link=getBaseUrl()+'#'+album.slug;}if(lc){lc.style.display='block';lc.innerHTML='<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link pendek siap dibagikan!';}if(nt)nt.style.display='none';}else{link=getBaseUrl();if(lc){lc.style.display='block';lc.innerHTML='<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik awan hijau dulu untuk dapat link pendek.';}if(nt)nt.style.display='block';}
-  document.getElementById('shareLinkInput').value=link;
-  document.getElementById('sharePreviewDomain').textContent=getDomain();
-  document.getElementById('sharePreviewTitle').textContent=title;
-  document.getElementById('sharePreviewDesc').textContent=desc.slice(0,100)+(desc.length>100?'...':'');
-  var pi=document.getElementById('sharePreviewImg');
-  if(img){pi.innerHTML='<img src="'+escA(img)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';}else{pi.innerHTML='<i class="fas fa-image" style="font-size:32px;color:#444"></i>';}
+function openShareModal(cardIdx) {
+  shareTargetCard = cardIdx;
+  var title = getOGTitle(cardIdx), desc = getOGDesc(cardIdx), img = getOGImg(cardIdx);
+  updOG(title, desc, img);
+  var mTitle = cardIdx >= 0 ? 'Bagikan Card ' + (cardIdx + 1) : 'Bagikan Album';
+  document.getElementById('shareModalTitle').textContent = mTitle;
+  
+  var link = '', lc = document.getElementById('shareLinkContainer'), nt = document.getElementById('shareLinkNote');
+  
+  // --- LOGIKA BARU FASE 2 ---
+  if (currentAlbumId) {
+    link = 'https://feed.novavariety.store/view.html?albumId=' + currentAlbumId;
+    if (cardIdx >= 0) {
+      link += '&card=' + cardIdx; // Tambahkan parameter card jika spesifik
+    }
+    if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link publik siap dibagikan!'; }
+    if (nt) { nt.style.display = 'none'; }
+  } else {
+    link = getBaseUrl();
+    if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik awan hijau dulu untuk menyimpan.'; }
+    if (nt) { nt.style.display = 'block'; }
+  }
+  // ---------------------------
+
+  document.getElementById('shareLinkInput').value = link;
+  document.getElementById('sharePreviewDomain').textContent = getDomain();
+  document.getElementById('sharePreviewTitle').textContent = title;
+  document.getElementById('sharePreviewDesc').textContent = desc.slice(0, 100) + (desc.length > 100 ? '...' : '');
+  var pi = document.getElementById('sharePreviewImg');
+  if (img) {
+    pi.innerHTML = '<img src="' + escA(img) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';
+  } else {
+    pi.innerHTML = '<i class="fas fa-image" style="font-size:32px;color:#444"></i>';
+  }
   document.getElementById('shareModal').classList.add('show');
 }
 function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
