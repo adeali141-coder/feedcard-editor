@@ -87,6 +87,7 @@
     let currentAlbum = null;
     let currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderStates = {}, currentReportFeedIdx = -1;
+    let currentAlbumComments = []; // Penampung komentar dari Cloud
 
     const urlParams = new URLSearchParams(window.location.search);
     currentAlbumId = urlParams.get('albumId');
@@ -108,6 +109,13 @@
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
             
+            // Muat komentar dari Cloud secara real-time
+            db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
+                currentAlbumComments = [];
+                snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
+                updateCommentCounts();
+            });
+
             // Auto scroll jika share link card spesifik (?card=2)
             const cardParams = new URLSearchParams(window.location.search);
             const cardIdx = cardParams.get('card');
@@ -157,7 +165,7 @@
                     
                     <div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
                         <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#aaa'};cursor:pointer"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
-                        <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-comment"></i> <span>${c.comments?c.comments.length:0}</span></button>
+                        <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-comment"></i> <span>0</span></button>
                         <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto"><i class="fas fa-share-from-square"></i></button>
                         <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-flag"></i></button>
                     </div>
@@ -176,43 +184,68 @@
     // LIKE
     function toggleLike(i){var c=currentAlbum.cards[i];c.liked=!c.liked;c.likes=Math.max(0,(c.likes||0)+(c.liked?1:-1));var b=document.getElementById('likeBtn_'+i),ct=document.getElementById('likeCount_'+i);if(b){b.classList.toggle('liked',c.liked);b.style.color=c.liked?'#ef4444':'#aaa';b.classList.add('heart-pop');setTimeout(function(){b.classList.remove('heart-pop');},300);}if(ct)ct.textContent=c.likes;}
 
-    // KOMENTAR
-    function openCommentModal(i){commentCardIdx=i;replyTo=null;document.getElementById('commentModalTitle').textContent='Komentar ('+(currentAlbum.cards[i].comments?currentAlbum.cards[i].comments.length:0)+')';document.getElementById('commentAuthor').value=localStorage.getItem('acf_userName')||'';renderCmts();document.getElementById('commentModal').classList.add('show');}
-    function closeCommentModal(){document.getElementById('commentModal').classList.remove('show');commentCardIdx=-1;replyTo=null;}
-     function renderCmts() {
-        var c = currentAlbum.cards[commentCardIdx];
-        if (!c) return;
+    // KOMENTAR (Cloud Sync ke Koleksi Terpisah)
+    function updateCommentCounts() {
+        for(let i=0; i<currentAlbum.cards.length; i++) {
+            let count = currentAlbumComments.filter(c => c.cardIdx == i && !c.parentId).length;
+            let btn = document.querySelector(`button[onclick="openCommentModal(${i})"] span`);
+            if(btn) btn.innerText = count;
+        }
+    }
+
+    function openCommentModal(i) {
+        commentCardIdx = i;
+        replyTo = null;
+        document.getElementById('commentModalTitle').textContent = 'Komentar';
+        document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || '';
+        document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>';
+        document.getElementById('commentModal').classList.add('show');
+        renderCmts();
+    }
+
+    function closeCommentModal() {
+        document.getElementById('commentModal').classList.remove('show');
+        commentCardIdx = -1;
+        replyTo = null;
+    }
+
+    function renderCmts() {
         var el = document.getElementById('commentList');
-        if (!c.comments || !c.comments.length) {
+        let parents = currentAlbumComments.filter(c => c.cardIdx == commentCardIdx && !c.parentId);
+        
+        if (!parents.length) {
             el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';
+            document.getElementById('commentModalTitle').textContent = 'Komentar (0)';
             return;
         }
+        
+        document.getElementById('commentModalTitle').textContent = 'Komentar (' + parents.length + ')';
+        
         var h = '';
-        for (var ci = 0; ci < c.comments.length; ci++) {
-            var cm = c.comments[ci];
-            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a">
+        for (var ci = 0; ci < parents.length; ci++) {
+            var cm = parents[ci];
+            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px">
                     <div style="display:flex;justify-content:space-between">
                         <span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span>
                     </div>
                     <p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p>
-                    <button onclick="setReply(${ci},'${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
+                    <button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
             
-            if (cm.replies && cm.replies.length) {
-                for (var ri = 0; ri < cm.replies.length; ri++) {
-                    var r = cm.replies[ri];
-                    h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222">
-                            <span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span>
-                            <p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p>
-                          </div>`;
-                }
+            let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
+            for (var ri = 0; ri < replies.length; ri++) {
+                var r = replies[ri];
+                h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222">
+                        <span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span>
+                        <p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p>
+                      </div>`;
             }
             h += `</div>`;
         }
         el.innerHTML = h;
     }
 
-    function setReply(ci, a) {
-        replyTo = ci;
+    function setReply(commentId, a) {
+        replyTo = commentId;
         document.getElementById('commentText').placeholder = 'Membalas ' + a + '...';
         document.getElementById('commentText').focus();
     }
@@ -223,35 +256,28 @@
         if (!t) return;
         
         localStorage.setItem('acf_userName', a);
-        var c = currentAlbum.cards[commentCardIdx];
-        if (!c.comments) c.comments = [];
-
-        if (replyTo !== null && c.comments[replyTo]) {
-            if (!c.comments[replyTo].replies) c.comments[replyTo].replies = [];
-            c.comments[replyTo].replies.push({ author: a, text: t });
-        } else {
-            c.comments.push({ author: a, text: t, replies: [] });
-        }
-
-        document.getElementById('commentText').value = '';
-        document.getElementById('commentText').placeholder = 'Tulis komentar...';
-        document.getElementById('commentModalTitle').textContent = 'Komentar (' + c.comments.length + ')';
         
-        renderCmts();
-        showToast('Menyimpan komentar ke Cloud...');
+        var newCommentId = db.collection('comments').doc().id;
+        var commentData = {
+            commentId: newCommentId,
+            albumId: currentAlbumId,
+            cardIdx: commentCardIdx,
+            author: a,
+            text: t,
+            parentId: replyTo || null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-        // Simpan ke Cloud Firestore
-        db.collection('albums').doc(currentAlbumId).update({
-            cards: currentAlbum.cards
-        }).then(() => {
+        db.collection('comments').doc(newCommentId).set(commentData)
+        .then(() => {
+            document.getElementById('commentText').value = '';
+            document.getElementById('commentText').placeholder = 'Tulis komentar...';
+            replyTo = null;
             showToast('Komentar berhasil terkirim!');
         }).catch((e) => {
             showToast('Gagal simpan komentar: ' + e.message);
         });
-        
-        replyTo = null;
     }
-    
 
     // SHARE (Album atau per Card)
     function openShareModal(cardIdx = -1) {
