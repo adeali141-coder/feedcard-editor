@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Album Feed Editor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
+    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .btn-g { background: transparent; color: #aaa; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; }
+    .btn-g:hover { color: #fff; border-color: #555; }
+    .card { background: #111; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .tab-btn { padding: 12px 20px; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: #666; }
+    .tab-btn.active { color: #e8572a; border-color: #e8572a; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <h1 class="text-lg font-bold text-orange-500">🛡️ Admin Dashboard</h1>
+        <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
+    </div>
+</header>
+
+<div class="container mx-auto px-4 py-6">
+    <div class="flex border-b border-[#1a1a1a] mb-6">
+        <div class="tab-btn active" onclick="switchTab('users')">Manajemen User</div>
+        <div class="tab-btn" onclick="switchTab('reports')">Laporan Masuk</div>
+    </div>
+
+    <!-- TAB USER -->
+    <div id="tab-users">
+        <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- TAB LAPORAN -->
+    <div id="tab-reports" style="display:none;">
+        <div id="reportList"></div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
+      authDomain: "feed-editor-93db1.firebaseapp.com",
+      projectId: "feed-editor-93db1",
+      storageBucket: "feed-editor-93db1.firebasestorage.app",
+      messagingSenderId: "249842615247",
+      appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            // Verifikasi Admin Sekali Lagi
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if(!doc.exists || doc.data().role !== 'admin') {
+                    alert("Akses ditolak!");
+                    window.location.href = "admin-login.html";
+                } else {
+                    loadUsers();
+                    loadReports();
+                }
+            });
+        } else {
+            window.location.href = "admin-login.html";
+        }
+    });
+
+    function switchTab(tab) {
+        document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
+        document.getElementById('tab-reports').style.display = tab === 'reports' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach((el, i) => {
+            el.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'reports' && i === 1));
+        });
+    }
+
+    // LOAD USERS
+    function loadUsers() {
+        db.collection('users').onSnapshot((snapshot) => {
+            let html = '';
+            snapshot.forEach((doc) => {
+                let u = doc.data();
+                let uid = doc.id;
+                let isSuspended = u.status === 'suspended';
+                
+                html += `
+                <div class="card">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
+                            <p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p>
+                            <p class="text-xs text-gray-500">Daftar: ${u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID') : '-'}</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
+                            ${isSuspended ? 'Suspended' : 'Active'}
+                        </span>
+                    </div>
+                    <div class="flex gap-2 mt-4 border-t border-[#222] pt-3">
+                        <button onclick="toggleSuspend('${uid}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}" style="flex:1">
+                            <i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}
+                        </button>
+                        <button onclick="toggleMonetag('${uid}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
+                            <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">Belum ada user.</p>';
+        });
+    }
+
+    function toggleSuspend(uid, isCurrentlySuspended) {
+        db.collection('users').doc(uid).update({
+            status: isCurrentlySuspended ? 'active' : 'suspended'
+        });
+    }
+
+    function toggleMonetag(uid, turnOn) {
+        db.collection('users').doc(uid).update({
+            monetagEnabled: turnOn
+        });
+    }
+
+    // LOAD REPORTS
+    function loadReports() {
+        db.collection('reports').where('status', '==', 'pending').onSnapshot((snapshot) => {
+            let html = '';
+            if(snapshot.empty) {
+                html = '<div class="card text-center text-gray-500">Tidak ada laporan pending.</div>';
+            } else {
+                snapshot.forEach((doc) => {
+                    let r = doc.data();
+                    let rid = doc.id;
+                    html += `
+                    <div class="card">
+                        <div class="flex justify-between mb-2">
+                            <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
+                            <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></p>
+                        <p class="text-sm text-gray-400 mb-4">Alasan: "${r.reason}"</p>
+                        <div class="flex gap-2">
+                            <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
+                                <i class="fas fa-eye"></i> Tinjau Feed
+                            </a>
+                            <button onclick="resolveReport('${rid}')" class="btn-g text-green-400">
+                                <i class="fas fa-check"></i> Tandai Selesai
+                            </button>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('reportList').innerHTML = html;
+        });
+    }
+
+    function resolveReport(rid) {
+        db.collection('reports').doc(rid).update({ status: 'resolved' });
+    }
+
+    function logout() {
+        auth.signOut().then(() => window.location.href = "admin-login.html");
+    }
+</script>
+</body>
+</html>
