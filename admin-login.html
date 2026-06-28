@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login - Album Feed Editor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+    body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
+    .inp { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; color: #fff; width: 100%; margin-bottom: 12px; outline: none; }
+    .inp:focus { border-color: #e8572a; }
+    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<div class="w-full max-w-md">
+    <div class="text-center mb-8">
+        <span class="text-4xl">🛡️</span>
+        <h1 class="text-2xl font-bold mt-2">Admin Panel</h1>
+        <p class="text-gray-400 text-sm">Akses Terbatas. Dobel Keamanan Aktif.</p>
+    </div>
+
+    <!-- Tahap 1: Email & Password -->
+    <div id="passForm">
+        <input type="email" id="adminEmail" class="inp" placeholder="Email Admin">
+        <input type="password" id="adminPass" class="inp" placeholder="Password">
+        <button onclick="verifyPassword()" class="btn-a">Lanjutkan</button>
+    </div>
+
+    <!-- Tahap 2: Input OTP -->
+    <div id="otpForm" style="display:none;">
+        <p class="text-sm text-gray-400 mb-2">Kode OTP 6 digit telah dikirim ke email Anda. <br><span class="text-yellow-500">(Simulasi: Lihat kode di bawah)</span></p>
+        <div id="otpDisplay" class="bg-yellow-900 border border-yellow-700 text-yellow-300 text-center text-2xl font-bold p-2 rounded-lg mb-4"></div>
+        <input type="text" id="otpInput" class="inp text-center text-2xl tracking-widest" placeholder="------" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <button onclick="verifyOtp()" class="btn-a">Masuk Dashboard</button>
+        <button onclick="resetOtp()" class="text-gray-500 text-sm mt-4 w-full">Kembali</button>
+    </div>
+
+    <p class="text-center text-xs text-gray-600 mt-8"><a href="login.html" class="underline">Kembali ke Login User</a></p>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
+      authDomain: "feed-editor-93db1.firebaseapp.com",
+      projectId: "feed-editor-93db1",
+      storageBucket: "feed-editor-93db1.firebasestorage.app",
+      messagingSenderId: "249842615247",
+      appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let pendingAdminUid = null;
+    let generatedOtp = null;
+
+    function verifyPassword() {
+        const email = document.getElementById('adminEmail').value;
+        const pass = document.getElementById('adminPass').value;
+
+        if(!email || !pass) { alert('Isi email dan password'); return; }
+
+        // 1. Login biasa ke Firebase Auth
+        auth.signInWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                // 2. Cek apakah user ini Admin di Database
+                return db.collection('users').doc(userCredential.user.uid).get();
+            })
+            .then((doc) => {
+                if (doc.exists && doc.data().role === 'admin') {
+                    // 3. Jika Admin, generate OTP
+                    pendingAdminUid = doc.id;
+                    generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+                    
+                    // Simpan OTP ke database dengan masa berlaku 5 menit
+                    return db.collection('admin_otps').doc(pendingAdminUid).set({
+                        code: generatedOtp,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Jika BUKAN Admin, tendang
+                    auth.signOut();
+                    alert('Akses Ditolak! Anda bukan Admin.');
+                }
+            })
+            .then(() => {
+                if(generatedOtp) {
+                    // Pindah ke form OTP
+                    document.getElementById('passForm').style.display = 'none';
+                    document.getElementById('otpForm').style.display = 'block';
+                    document.getElementById('otpDisplay').innerText = generatedOtp; // Simulasi email
+                }
+            })
+            .catch((error) => {
+                alert('Login gagal: ' + error.message);
+            });
+    }
+
+    function verifyOtp() {
+        const inputOtp = document.getElementById('otpInput').value;
+        if(inputOtp.length !== 6) { alert('OTP harus 6 digit'); return; }
+
+        // Cek OTP di database
+        db.collection('admin_otps').doc(pendingAdminUid).get().then((doc) => {
+            if(doc.exists && doc.data().code === inputOtp) {
+                // OTP Benar, arahkan ke Dashboard
+                window.location.href = "admin-dashboard.html";
+            } else {
+                alert('Kode OTP salah atau sudah kadaluarsa.');
+            }
+        });
+    }
+
+    function resetOtp() {
+        document.getElementById('otpForm').style.display = 'none';
+        document.getElementById('passForm').style.display = 'block';
+        document.getElementById('otpInput').value = '';
+        generatedOtp = null;
+        auth.signOut(); // Logout dari sesi sementara tadi
+    }
+</script>
+</body>
+</html>
