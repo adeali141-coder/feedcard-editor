@@ -498,5 +498,154 @@ document.getElementById('albumNameInput').addEventListener('input',function(){al
     }
 </script>
 
+<!-- SKRIP FASE 2: JANGAN DIHAPUS -->
+<script>
+    // --- KONEKSI FASE 2 KE EDITOR FASE 1 ---
+    const firebaseConfigV2 = {
+      apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
+      authDomain: "feed-editor-93db1.firebaseapp.com",
+      projectId: "feed-editor-93db1",
+      storageBucket: "feed-editor-93db1.firebasestorage.app",
+      messagingSenderId: "249842615247",
+      appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfigV2);
+    const authV2 = firebase.auth();
+    const dbV2 = firebase.firestore();
+
+    let currentUserId = null;
+    let currentAlbumId = null;
+
+    // 1. Cek Auth: Harus Login
+    authV2.onAuthStateChanged((user) => {
+        if (!user) {
+            window.location.href = "login.html";
+        } else {
+            currentUserId = user.uid;
+            const urlParams = new URLSearchParams(window.location.search);
+            currentAlbumId = urlParams.get('albumId');
+            
+            if (currentAlbumId) {
+                let liveLink = document.getElementById('liveViewLink');
+                if(liveLink) {
+                    liveLink.href = 'view.html?albumId=' + currentAlbumId;
+                }
+                loadAlbumData();
+            } else {
+                window.location.href = "dashboard.html";
+            }
+        }
+    });
+
+    // 2. Load Data Album dari Cloud
+    function loadAlbumData() {
+        dbV2.collection('albums').doc(currentAlbumId).get().then((doc) => {
+            if (doc.exists) {
+                let data = doc.data();
+                if (data.userId !== currentUserId) {
+                    alert("Akses ditolak! Ini bukan album Anda.");
+                    window.location.href = "dashboard.html";
+                    return;
+                }
+                
+                album.id = doc.id;
+                album.name = data.name || 'Album Feed Saya';
+                album.favicon = data.favicon || '📸';
+                album.ogImage = data.ogImage || '';
+                album.customDomain = data.customDomain || 'feed.novavariety.store';
+                album.gaId = data.gaId || '';
+                album.slug = data.slug || '';
+                album.monetagEnabled = data.monetagEnabled || false;
+                album.monetagZoneId = data.monetagZoneId || '';
+                album.cards = data.cards && data.cards.length > 0 ? data.cards : [defCard()];
+                album.banners = data.banners || [];
+                
+                document.getElementById('albumNameInput').value = album.name;
+                setFav(album.favicon);
+                currentCardIdx = 0;
+                
+                if (typeof renderEditor === 'function') renderEditor();
+                if (typeof renderCardSelector === 'function') renderCardSelector();
+            } else {
+                alert("Album tidak ditemukan.");
+                window.location.href = "dashboard.html";
+            }
+        });
+    }
+
+    // 3. Logika 50 Feed Card Maksimal (Satpam Mutlak)
+    function enforceCardLimit50() {
+        if (typeof album !== 'undefined' && album.cards.length > 50) {
+            let removedCount = album.cards.length - 50;
+            let removedCards = album.cards.splice(0, removedCount);
+            showToast(removedCount + ' Feed Card terlama otomatis dihapus karena melebihi batas 50.');
+            if (typeof renderCardSelector === 'function') renderCardSelector();
+            currentCardIdx = 0;
+            if (typeof renderEditor === 'function') renderEditor();
+        }
+    }
+
+    var originalAddCard = window.addCard; 
+    window.addCard = function() {
+        originalAddCard();
+        enforceCardLimit50();
+    };
+
+    var originalDupCard = window.dupCard;
+    window.dupCard = function(i) {
+        originalDupCard(i);
+        enforceCardLimit50();
+    };
+
+    // 4. Override Save to Cloud
+    window.saveToCloud = function() {
+        if(!currentAlbumId || !currentUserId) {
+            showToast('Sesi berakhir, silakan login ulang.');
+            return;
+        }
+        document.getElementById('savingOverlay').style.display = 'flex';
+        album.name = document.getElementById('albumNameInput').value || 'Tanpa Nama';
+        
+        let dataToSave = {
+            name: album.name,
+            favicon: album.favicon,
+            ogImage: album.ogImage,
+            customDomain: album.customDomain,
+            slug: album.slug || album.name.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/[\s_]+/g,'-').slice(0,60),
+            monetagEnabled: album.monetagEnabled || false,
+            monetagZoneId: album.monetagZoneId || '',
+            cards: album.cards,
+            banners: album.banners || [],
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        dbV2.collection('albums').doc(currentAlbumId).set(dataToSave, {merge: true})
+        .then(() => {
+            document.getElementById('savingOverlay').style.display = 'none';
+            showToast('Album berhasil disimpan ke Cloud!');
+        })
+        .catch((error) => {
+            document.getElementById('savingOverlay').style.display = 'none';
+            showToast('Gagal simpan: ' + error.message);
+        });
+    };
+
+    function goToDashboard() {
+        if(confirm('Kembali ke Dashboard? Pastikan perubahan Anda sudah disimpan.')) {
+            window.location.href = "dashboard.html";
+        }
+    }
+    
+    if (typeof showToast !== 'function') {
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if(!t) return;
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(function(){ t.classList.remove('show'); }, 3000);
+        }
+    }
+</script>
+
 </body>
 </html>
