@@ -179,8 +179,79 @@
     // KOMENTAR
     function openCommentModal(i){commentCardIdx=i;replyTo=null;document.getElementById('commentModalTitle').textContent='Komentar ('+(currentAlbum.cards[i].comments?currentAlbum.cards[i].comments.length:0)+')';document.getElementById('commentAuthor').value=localStorage.getItem('acf_userName')||'';renderCmts();document.getElementById('commentModal').classList.add('show');}
     function closeCommentModal(){document.getElementById('commentModal').classList.remove('show');commentCardIdx=-1;replyTo=null;}
-    function renderCmts(){var c=currentAlbum.cards[commentCardIdx];if(!c)return;var el=document.getElementById('commentList');if(!c.comments||!c.comments.length){el.innerHTML='<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';return;}var h='';for(var ci=0;ci<c.comments.length;ci++){var cm=c.comments[ci];h+=`<div style="padding:12px;border-radius:12px;background:#1a1a1a"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author)}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p></div>`;}el.innerHTML=h;}
-    function submitComment(){var a=document.getElementById('commentAuthor').value.trim()||'Anonim',t=document.getElementById('commentText').value.trim();if(!t)return;localStorage.setItem('acf_userName',a);var c=currentAlbum.cards[commentCardIdx];if(!c.comments)c.comments=[];c.comments.push({author:a,text:t});document.getElementById('commentText').value='';document.getElementById('commentModalTitle').textContent='Komentar ('+c.comments.length+')';renderCmts();showToast('Komentar ditambahkan (lokal)');}
+     function renderCmts() {
+        var c = currentAlbum.cards[commentCardIdx];
+        if (!c) return;
+        var el = document.getElementById('commentList');
+        if (!c.comments || !c.comments.length) {
+            el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';
+            return;
+        }
+        var h = '';
+        for (var ci = 0; ci < c.comments.length; ci++) {
+            var cm = c.comments[ci];
+            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a">
+                    <div style="display:flex;justify-content:space-between">
+                        <span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span>
+                    </div>
+                    <p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p>
+                    <button onclick="setReply(${ci},'${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
+            
+            if (cm.replies && cm.replies.length) {
+                for (var ri = 0; ri < cm.replies.length; ri++) {
+                    var r = cm.replies[ri];
+                    h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222">
+                            <span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span>
+                            <p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p>
+                          </div>`;
+                }
+            }
+            h += `</div>`;
+        }
+        el.innerHTML = h;
+    }
+
+    function setReply(ci, a) {
+        replyTo = ci;
+        document.getElementById('commentText').placeholder = 'Membalas ' + a + '...';
+        document.getElementById('commentText').focus();
+    }
+
+    function submitComment() {
+        var a = document.getElementById('commentAuthor').value.trim() || 'Anonim';
+        var t = document.getElementById('commentText').value.trim();
+        if (!t) return;
+        
+        localStorage.setItem('acf_userName', a);
+        var c = currentAlbum.cards[commentCardIdx];
+        if (!c.comments) c.comments = [];
+
+        if (replyTo !== null && c.comments[replyTo]) {
+            if (!c.comments[replyTo].replies) c.comments[replyTo].replies = [];
+            c.comments[replyTo].replies.push({ author: a, text: t });
+        } else {
+            c.comments.push({ author: a, text: t, replies: [] });
+        }
+
+        document.getElementById('commentText').value = '';
+        document.getElementById('commentText').placeholder = 'Tulis komentar...';
+        document.getElementById('commentModalTitle').textContent = 'Komentar (' + c.comments.length + ')';
+        
+        renderCmts();
+        showToast('Menyimpan komentar ke Cloud...');
+
+        // Simpan ke Cloud Firestore
+        db.collection('albums').doc(currentAlbumId).update({
+            cards: currentAlbum.cards
+        }).then(() => {
+            showToast('Komentar berhasil terkirim!');
+        }).catch((e) => {
+            showToast('Gagal simpan komentar: ' + e.message);
+        });
+        
+        replyTo = null;
+    }
+    
 
     // SHARE (Album atau per Card)
     function openShareModal(cardIdx = -1) {
