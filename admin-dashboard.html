@@ -17,6 +17,7 @@
     .card { background: #111; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
     .tab-btn { padding: 12px 20px; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: #666; }
     .tab-btn.active { color: #e8572a; border-color: #e8572a; }
+    .inp { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; color: #fff; width: 100%; outline: none; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -24,7 +25,10 @@
 <header class="border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-10">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <h1 class="text-lg font-bold text-orange-500">🛡️ Admin Dashboard</h1>
-        <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        <div class="flex gap-4 items-center">
+            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> Monetag Settings</button>
+            <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        </div>
     </div>
 </header>
 
@@ -36,12 +40,24 @@
 
     <!-- TAB USER -->
     <div id="tab-users">
+        <input type="text" id="searchUser" class="inp mb-4" placeholder="Cari email, nomor WA, atau status..." oninput="renderUsers()">
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
     <!-- TAB LAPORAN -->
     <div id="tab-reports" style="display:none;">
+        <input type="text" id="searchReport" class="inp mb-4" placeholder="Cari judul feed, album, atau alasan..." oninput="renderReports()">
         <div id="reportList"></div>
+    </div>
+</div>
+
+<!-- Modal Monetag Global -->
+<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+        <h3 class="text-lg font-bold mb-4">Pengaturan Monetag Global</h3>
+        <p class="text-xs text-gray-400 mb-2">Masukkan URL Smartlink Monetag. Ini akan dipakai untuk semua user yang diaktifkan.</p>
+        <input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="https://monetag.com/...">
+        <button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button>
     </div>
 </div>
 
@@ -58,19 +74,19 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    let currentUser = null;
+    let allUsers = [];
+    let allReports = [];
+    let globalMonetagLink = '';
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            currentUser = user;
-            // Verifikasi Admin Sekali Lagi
             db.collection('users').doc(user.uid).get().then((doc) => {
                 if(!doc.exists || doc.data().role !== 'admin') {
-                    alert("Akses ditolak!");
                     window.location.href = "admin-login.html";
                 } else {
                     loadUsers();
                     loadReports();
+                    loadGlobalSettings();
                 }
             });
         } else {
@@ -86,84 +102,143 @@
         });
     }
 
-    // LOAD USERS
+    // --- GLOBAL SETTINGS ---
+    function loadGlobalSettings() {
+        db.collection('settings').doc('monetag').onSnapshot((doc) => {
+            if(doc.exists) {
+                globalMonetagLink = doc.data().url || '';
+                document.getElementById('globalMonetagUrl').value = globalMonetagLink;
+            }
+        });
+    }
+    function openMonetagSettings() { document.getElementById('monetagModal').style.display = 'flex'; }
+    function closeMonetagSettings() { document.getElementById('monetagModal').style.display = 'none'; }
+    function saveGlobalMonetag() {
+        let url = document.getElementById('globalMonetagUrl').value;
+        db.collection('settings').doc('monetag').set({ url: url });
+        closeMonetagSettings();
+    }
+
+    // --- MANAJEMEN USER ---
     function loadUsers() {
         db.collection('users').onSnapshot((snapshot) => {
-            let html = '';
-            snapshot.forEach((doc) => {
-                let u = doc.data();
-                let uid = doc.id;
-                let isSuspended = u.status === 'suspended';
-                
-                html += `
-                <div class="card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
-                            <p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p>
-                            <p class="text-xs text-gray-500">Daftar: ${u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID') : '-'}</p>
-                        </div>
-                        <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
-                            ${isSuspended ? 'Suspended' : 'Active'}
-                        </span>
-                    </div>
-                    <div class="flex gap-2 mt-4 border-t border-[#222] pt-3">
-                        <button onclick="toggleSuspend('${uid}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}" style="flex:1">
-                            <i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}
-                        </button>
-                        <button onclick="toggleMonetag('${uid}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
-                            <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
-                        </button>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">Belum ada user.</p>';
+            allUsers = [];
+            snapshot.forEach(doc => allUsers.push({id: doc.id, ...doc.data()}));
+            renderUsers();
         });
+    }
+
+    function renderUsers() {
+        let q = document.getElementById('searchUser').value.toLowerCase();
+        let filtered = allUsers.filter(u => 
+            (u.email && u.email.toLowerCase().includes(q)) || 
+            (u.whatsapp && u.whatsapp.includes(q)) || 
+            (u.status && u.status.toLowerCase().includes(q))
+        );
+
+        let html = '';
+        filtered.forEach((u) => {
+            let isSuspended = u.status === 'suspended';
+            html += `
+            <div class="card">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
+                        <p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
+                        ${isSuspended ? 'Suspended' : 'Active'}
+                    </span>
+                </div>
+                <div class="flex gap-2 mt-4 border-t border-[#222] pt-3">
+                    <button onclick="toggleSuspend('${u.id}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}" style="flex:1">
+                        <i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}
+                    </button>
+                    <button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
+                        <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
+                    </button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
     }
 
     function toggleSuspend(uid, isCurrentlySuspended) {
-        db.collection('users').doc(uid).update({
-            status: isCurrentlySuspended ? 'active' : 'suspended'
-        });
+        db.collection('users').doc(uid).update({ status: isCurrentlySuspended ? 'active' : 'suspended' });
     }
-
     function toggleMonetag(uid, turnOn) {
-        db.collection('users').doc(uid).update({
-            monetagEnabled: turnOn
+        db.collection('users').doc(uid).update({ monetagEnabled: turnOn });
+    }
+
+    // --- LAPORAN & MODERASI ---
+    function loadReports() {
+        db.collection('reports').onSnapshot((snapshot) => {
+            allReports = [];
+            snapshot.forEach(doc => allReports.push({id: doc.id, ...doc.data()}));
+            renderReports();
         });
     }
 
-    // LOAD REPORTS
-    function loadReports() {
-        db.collection('reports').where('status', '==', 'pending').onSnapshot((snapshot) => {
-            let html = '';
-            if(snapshot.empty) {
-                html = '<div class="card text-center text-gray-500">Tidak ada laporan pending.</div>';
-            } else {
-                snapshot.forEach((doc) => {
-                    let r = doc.data();
-                    let rid = doc.id;
-                    html += `
-                    <div class="card">
-                        <div class="flex justify-between mb-2">
-                            <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
-                            <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
-                        </div>
-                        <p class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></p>
-                        <p class="text-sm text-gray-400 mb-4">Alasan: "${r.reason}"</p>
-                        <div class="flex gap-2">
-                            <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
-                                <i class="fas fa-eye"></i> Tinjau Feed
-                            </a>
-                            <button onclick="resolveReport('${rid}')" class="btn-g text-green-400">
-                                <i class="fas fa-check"></i> Tandai Selesai
-                            </button>
-                        </div>
-                    </div>`;
-                });
+    function renderReports() {
+        let q = document.getElementById('searchReport').value.toLowerCase();
+        let filtered = allReports.filter(r => 
+            (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || 
+            (r.albumName && r.albumName.toLowerCase().includes(q)) || 
+            (r.reason && r.reason.toLowerCase().includes(q)) ||
+            (r.status && r.status.toLowerCase().includes(q))
+        );
+
+        let html = '';
+        if(filtered.length === 0) {
+            html = '<div class="card text-center text-gray-500">Tidak ada laporan ditemukan.</div>';
+        } else {
+            filtered.forEach((r) => {
+                let isPending = r.status === 'pending';
+                html += `
+                <div class="card">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
+                        <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
+                    </div>
+                    <p class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></p>
+                    <p class="text-sm text-gray-400 mb-4">Alasan: "${r.reason}"</p>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
+                            <i class="fas fa-eye"></i> Tinjau
+                        </a>
+                        <button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400">
+                            <i class="fas fa-eye-slash"></i> Tangguhkan Feed
+                        </button>
+                        <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400">
+                            <i class="fas fa-folder-minus"></i> Tangguhkan Album
+                        </button>
+                        ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">Selesai</span>`}
+                    </div>
+                </div>`;
+            });
+        }
+        document.getElementById('reportList').innerHTML = html;
+    }
+
+    async function suspendFeed(albumId, feedId) {
+        if(!confirm('Yakin tangguhkan feed ini? Feed akan hilang dari publik.')) return;
+        let albumRef = db.collection('albums').doc(albumId);
+        let doc = await albumRef.get();
+        if(doc.exists) {
+            let cards = doc.data().cards || [];
+            let card = cards.find(c => c.id === feedId);
+            if(card) {
+                card.status = 'suspended';
+                await albumRef.update({ cards: cards });
+                alert('Feed berhasil ditangguhkan!');
             }
-            document.getElementById('reportList').innerHTML = html;
-        });
+        }
+    }
+
+    async function suspendAlbum(albumId) {
+        if(!confirm('Yakin tangguhkan seluruh album ini?')) return;
+        await db.collection('albums').doc(albumId).update({ status: 'suspended' });
+        alert('Album berhasil ditangguhkan!');
     }
 
     function resolveReport(rid) {
