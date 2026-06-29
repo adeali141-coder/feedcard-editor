@@ -313,7 +313,15 @@ function copyShareLink(){var i=document.getElementById('shareLinkInput');if(!i.v
 // ====== SETTINGS ======
 function openSettingsModal(){document.getElementById('settingsFavicon').value=album.favicon||'';document.getElementById('settingsOGImage').value=album.ogImage||'';document.getElementById('settingsDomain').value=album.customDomain||'';document.getElementById('settingsFirebase').value=album.firebaseConfig||'';document.getElementById('settingsGA').value=album.gaId||'';document.getElementById('settingsMonetagEnabled').checked=album.monetagEnabled||false;document.getElementById('settingsMonetagZoneId').value=album.monetagZoneId||'';document.getElementById('settingsModal').classList.add('show');}
 function closeSettingsModal(){document.getElementById('settingsModal').classList.remove('show');}
-function saveSettings(){album.favicon=document.getElementById('settingsFavicon').value||'\uD83D\uDCF8';album.ogImage=document.getElementById('settingsOGImage').value||'';album.customDomain=document.getElementById('settingsDomain').value||'';album.firebaseConfig=document.getElementById('settingsFirebase').value||'';album.gaId=document.getElementById('settingsGA').value;album.monetagEnabled=document.getElementById('settingsMonetagEnabled').checked;album.monetagZoneId=document.getElementById('settingsMonetagZoneId').value||'';setFav(album.favicon);if(album.firebaseConfig)initFB(album.firebaseConfig);saveLocal();closeSettingsModal();showToast('Pengaturan disimpan');}
+function saveSettings(){
+  album.favicon=document.getElementById('settingsFavicon').value||'\uD83D\uDCF8';
+  album.ogImage=document.getElementById('settingsOGImage').value||'';
+  album.gaId=document.getElementById('settingsGA').value||'';
+  setFav(album.favicon);
+  saveLocal();
+  closeSettingsModal();
+  showToast('Pengaturan disimpan');
+}
 function trackClick(i){var c=album.cards[i];if(c.analytics.id&&album.gaId&&typeof gtag==='function')gtag('event','cta_click',{event_category:c.analytics.name||'album_card',event_label:c.cta.text});}
 
 // ====== PUBLISHED VIEW ======
