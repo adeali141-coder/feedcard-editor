@@ -300,7 +300,20 @@
         let reason=document.getElementById('reportReason').value.trim();
         if(!reason){showToast('Mohon isi alasan');return;}
         let reportedCard=currentAlbum.cards[currentReportFeedIdx];
-        db.collection('reports').add({albumId:currentAlbumId,albumName:currentAlbum.name,feedId:reportedCard.id,feedTitle:reportedCard.title.text,reason:reason,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()})
+        
+        // Sertakan ID pemilik album agar Admin tahu siapa yang dilaporkan
+        let ownerId = currentAlbum.userId || null;
+
+        db.collection('reports').add({
+            albumId:currentAlbumId,
+            albumName:currentAlbum.name,
+            ownerId: ownerId, // <-- BARIS BARU
+            feedId:reportedCard.id,
+            feedTitle:reportedCard.title.text,
+            reason:reason,
+            status:'pending',
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        })
         .then(()=>{showToast('Laporan terkirim! Admin akan meninjau.');closeReportModal();document.getElementById('reportReason').value='';})
         .catch(e=>showToast('Gagal: '+e.message));
     }
