@@ -18,6 +18,7 @@
     .tab-btn { padding: 12px 20px; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: #666; }
     .tab-btn.active { color: #e8572a; border-color: #e8572a; }
     .inp { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; color: #fff; width: 100%; outline: none; }
+    .contact-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -26,7 +27,7 @@
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <h1 class="text-lg font-bold text-orange-500">🛡️ Admin Dashboard</h1>
         <div class="flex gap-4 items-center">
-            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> Monetag Settings</button>
+            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> Monetag</button>
             <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
         </div>
     </div>
@@ -40,13 +41,13 @@
 
     <!-- TAB USER -->
     <div id="tab-users">
-        <input type="text" id="searchUser" class="inp mb-4" placeholder="Cari email, nomor WA, atau status..." oninput="renderUsers()">
+        <input type="text" id="searchUser" class="inp mb-4" placeholder="Cari email, WA, status, atau tanggal register..." oninput="renderUsers()">
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
     <!-- TAB LAPORAN -->
     <div id="tab-reports" style="display:none;">
-        <input type="text" id="searchReport" class="inp mb-4" placeholder="Cari judul feed, album, atau alasan..." oninput="renderReports()">
+        <input type="text" id="searchReport" class="inp mb-4" placeholder="Cari judul feed, album, email pemilik, atau alasan..." oninput="renderReports()">
         <div id="reportList"></div>
     </div>
 </div>
@@ -76,7 +77,6 @@
 
     let allUsers = [];
     let allReports = [];
-    let globalMonetagLink = '';
 
     auth.onAuthStateChanged((user) => {
         if (user) {
@@ -106,8 +106,7 @@
     function loadGlobalSettings() {
         db.collection('settings').doc('monetag').onSnapshot((doc) => {
             if(doc.exists) {
-                globalMonetagLink = doc.data().url || '';
-                document.getElementById('globalMonetagUrl').value = globalMonetagLink;
+                document.getElementById('globalMonetagUrl').value = doc.data().url || '';
             }
         });
     }
@@ -130,25 +129,37 @@
 
     function renderUsers() {
         let q = document.getElementById('searchUser').value.toLowerCase();
-        let filtered = allUsers.filter(u => 
-            (u.email && u.email.toLowerCase().includes(q)) || 
-            (u.whatsapp && u.whatsapp.includes(q)) || 
-            (u.status && u.status.toLowerCase().includes(q))
-        );
+        let filtered = allUsers.filter(u => {
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID') : '';
+            return (u.email && u.email.toLowerCase().includes(q)) || 
+                   (u.whatsapp && u.whatsapp.includes(q)) || 
+                   (u.status && u.status.toLowerCase().includes(q)) ||
+                   (dateStr.includes(q));
+        });
 
         let html = '';
         filtered.forEach((u) => {
             let isSuspended = u.status === 'suspended';
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+            let waLink = u.whatsapp ? `https://wa.me/${u.whatsapp.replace(/[^0-9]/g, '')}` : '#';
+            
             html += `
             <div class="card">
                 <div class="flex justify-between items-start mb-3">
                     <div>
                         <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
                         <p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p>
+                        <p class="text-xs text-gray-500"><i class="far fa-calendar mr-1"></i> Daftar: ${dateStr}</p>
                     </div>
-                    <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
-                        ${isSuspended ? 'Suspended' : 'Active'}
-                    </span>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
+                            ${isSuspended ? 'Suspended' : 'Active'}
+                        </span>
+                        <div class="flex gap-1">
+                            <a href="mailto:${u.email}" class="contact-btn bg-blue-900 text-blue-300"><i class="fas fa-envelope"></i></a>
+                            ${u.whatsapp ? `<a href="${waLink}" target="_blank" class="contact-btn bg-green-900 text-green-300"><i class="fab fa-whatsapp"></i></a>` : ''}
+                        </div>
+                    </div>
                 </div>
                 <div class="flex gap-2 mt-4 border-t border-[#222] pt-3">
                     <button onclick="toggleSuspend('${u.id}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}" style="flex:1">
@@ -181,27 +192,47 @@
 
     function renderReports() {
         let q = document.getElementById('searchReport').value.toLowerCase();
-        let filtered = allReports.filter(r => 
-            (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || 
-            (r.albumName && r.albumName.toLowerCase().includes(q)) || 
-            (r.reason && r.reason.toLowerCase().includes(q)) ||
-            (r.status && r.status.toLowerCase().includes(q))
-        );
-
+        
+        // Cross-reference data pemilik dari allUsers
         let html = '';
+        let filtered = allReports.filter(r => {
+            let owner = allUsers.find(u => u.id === r.ownerId);
+            let ownerEmail = owner ? owner.email.toLowerCase() : '';
+            return (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || 
+                   (r.albumName && r.albumName.toLowerCase().includes(q)) || 
+                   (r.reason && r.reason.toLowerCase().includes(q)) ||
+                   (r.status && r.status.toLowerCase().includes(q)) ||
+                   (ownerEmail.includes(q));
+        });
+
         if(filtered.length === 0) {
             html = '<div class="card text-center text-gray-500">Tidak ada laporan ditemukan.</div>';
         } else {
             filtered.forEach((r) => {
                 let isPending = r.status === 'pending';
+                let owner = allUsers.find(u => u.id === r.ownerId);
+                let ownerSuspended = owner && owner.status === 'suspended';
+                
+                let waLink = owner && owner.whatsapp ? `https://wa.me/${owner.whatsapp.replace(/[^0-9]/g, '')}` : '#';
+                
                 html += `
-                <div class="card">
+                <div class="card ${isPending ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-green-500'}">
                     <div class="flex justify-between mb-2">
                         <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
                         <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
                     </div>
-                    <p class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></p>
-                    <p class="text-sm text-gray-400 mb-4">Alasan: "${r.reason}"</p>
+                    
+                    <div class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></div>
+                    
+                    <div class="text-sm text-gray-400 mb-2">Pemilik: 
+                        <span class="text-white">${owner ? owner.email : 'Tidak diketahui'}</span> 
+                        ${ownerSuspended ? '<span class="text-red-500 text-xs ml-1">(Akun Disuspend)</span>' : ''}
+                        ${owner ? `<a href="mailto:${owner.email}" class="ml-2 text-blue-400"><i class="fas fa-envelope"></i></a>` : ''}
+                        ${owner && owner.whatsapp ? `<a href="${waLink}" target="_blank" class="ml-1 text-green-400"><i class="fab fa-whatsapp"></i></a>` : ''}
+                    </div>
+                    
+                    <p class="text-sm text-gray-400 mb-4 bg-[#0a0a0a] p-2 rounded">Alasan: "${r.reason}"</p>
+                    
                     <div class="flex flex-wrap gap-2">
                         <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
                             <i class="fas fa-eye"></i> Tinjau
@@ -212,7 +243,7 @@
                         <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400">
                             <i class="fas fa-folder-minus"></i> Tangguhkan Album
                         </button>
-                        ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">Selesai</span>`}
+                        ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}
                     </div>
                 </div>`;
             });
