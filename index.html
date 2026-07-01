@@ -130,14 +130,17 @@ body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;overflow:
 
 <div id="settingsModal" class="modal-ov" onclick="if(event.target===this)closeSettingsModal()">
   <div class="modal-ct">
-    <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Pengaturan</h3><button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
+    <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Pengaturan Album</h3><button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
     <div class="space-y-4">
-      <div><label class="text-xs text-gray-400 mb-1 block">Favicon</label><input id="settingsFavicon" class="inp" placeholder="Emoji atau URL" /></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">OG Image URL</label><input id="settingsOGImage" class="inp" placeholder="https://..." /></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">Domain</label><input id="settingsDomain" class="inp" placeholder="feed.novavariety.store" /></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">Firebase Config</label><textarea id="settingsFirebase" class="inp" style="height:120px;resize:none;font-family:monospace;font-size:11px" placeholder='Paste Firebase config di sini'></textarea></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
-      <div style="border-top:1px solid #2a2a2a;padding-top:16px;margin-top:8px"><p style="font-size:13px;font-weight:600;margin-bottom:12px"><i class="fas fa-coins" style="color:#fbbf24;margin-right:6px"></i>Monetisasi Monetag</p><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><label style="font-size:13px;flex:1">Aktifkan Monetag</label><input type="checkbox" id="settingsMonetagEnabled" style="width:20px;height:20px;cursor:pointer" /></div><div><label class="text-xs text-gray-400 mb-1 block">Monetag Zone ID / Smart Link URL</label><input id="settingsMonetagZoneId" class="inp" placeholder="Zone ID atau URL Monetag" /><p class="text-xs text-gray-500 mt-1">Jika diisi, klik CTA akan melewati halaman safelink terlebih dahulu.</p></div></div>
+      <div><label class="text-xs text-gray-400 mb-1 block">Favicon Album (Emoji/URL)</label><input id="settingsFavicon" class="inp" placeholder="📸" /></div>
+      <div><label class="text-xs text-gray-400 mb-1 block">OG Image Album (URL Gambar Default)</label><input id="settingsOGImage" class="inp" placeholder="https://..." /></div>
+      <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID (G-XXXX)</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
+      
+      <div style="border-top:1px solid #2a2a2a;padding-top:16px;margin-top:8px">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px"><i class="fas fa-images" style="color:#fbbf24;margin-right:6px"></i>Grup Sliding Banner (1000x300)</p>
+        <div id="bannerEditorContainer"></div>
+      </div>
+      
       <button onclick="saveSettings()" class="btn-a w-full">Simpan Pengaturan</button>
     </div>
   </div>
