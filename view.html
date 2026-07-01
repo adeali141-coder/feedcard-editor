@@ -296,7 +296,7 @@
     // LAPOR
     function openReportModal(idx){currentReportFeedIdx=idx;document.getElementById('reportModal').classList.add('show');}
     function closeReportModal(){document.getElementById('reportModal').classList.remove('show');}
-        function submitReport(){
+    function submitReport(){
         let reason=document.getElementById('reportReason').value.trim();
         if(!reason){showToast('Mohon isi alasan');return;}
         let reportedCard=currentAlbum.cards[currentReportFeedIdx];
