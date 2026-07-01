@@ -132,12 +132,15 @@
     function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function escHbr(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
-    function renderFeeds() {
+        function renderFeeds() {
         let html = '';
         const cards = currentAlbum.cards || [];
         for(let i=0; i<cards.length; i++) {
             let c = cards[i];
+            if(c.status === 'suspended') continue; // <-- TAMBAHKAN BARIS INI AGAR FEED DISUSPEND HILANG DARI PUBLIK
+            
             let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
+            // ... sisa kode renderFeeds tidak berubah ...
             let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
             let sid = 'slider_'+i;
             sliderStates[sid] = 0;
