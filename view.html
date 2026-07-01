@@ -13,8 +13,8 @@
     *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#333 transparent}
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
     body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;}
-    .feed-scroll{scroll-snap-type:y mandatory;overflow-y:scroll;height:100vh}
-    .feed-card-wrap{scroll-snap-align:start;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+    .feed-scroll{scroll-snap-type: y proximity; overflow-y:scroll; height:100vh}
+    .feed-card-wrap{scroll-snap-align: start; min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 16px 16px 80px 16px;}
     .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
     .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.modal-ov.show{opacity:1;pointer-events:all}
     .modal-ct{background:#111;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px}
@@ -38,7 +38,6 @@
 </div>
 <div id="feedContainer" class="feed-scroll hidden"></div>
 
-<!-- Modal Komentar -->
 <div id="commentModal" class="modal-ov" onclick="if(event.target===this)closeCommentModal()">
   <div class="modal-ct">
     <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold" id="commentModalTitle">Komentar</h3><button onclick="closeCommentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
@@ -47,7 +46,6 @@
   </div>
 </div>
 
-<!-- Modal Share -->
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()">
   <div class="modal-ct">
     <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
@@ -59,7 +57,6 @@
   </div>
 </div>
 
-<!-- Modal Pelaporan -->
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()">
     <div class="modal-ct">
         <div class="flex items-center justify-between mb-5">
@@ -87,7 +84,7 @@
     let currentAlbum = null;
     let currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderStates = {}, currentReportFeedIdx = -1;
-    let currentAlbumComments = []; // Penampung komentar dari Cloud
+    let currentAlbumComments = []; 
 
     const urlParams = new URLSearchParams(window.location.search);
     currentAlbumId = urlParams.get('albumId');
@@ -109,14 +106,12 @@
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
             
-            // Muat komentar dari Cloud secara real-time
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
                 updateCommentCounts();
             });
 
-            // Auto scroll jika share link card spesifik (?card=2)
             const cardParams = new URLSearchParams(window.location.search);
             const cardIdx = cardParams.get('card');
             if(cardIdx !== null) {
@@ -132,15 +127,25 @@
     function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function escHbr(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
-        function renderFeeds() {
+    function renderFeeds() {
+        let cards = currentAlbum.cards || [];
         let html = '';
-        const cards = currentAlbum.cards || [];
+        let activeCardCount = 0;
+        let bannerIdx = 0;
+        
         for(let i=0; i<cards.length; i++) {
             let c = cards[i];
-            if(c.status === 'suspended') continue; // <-- TAMBAHKAN BARIS INI AGAR FEED DISUSPEND HILANG DARI PUBLIK
+            if(c.status === 'suspended') continue; 
+            
+            if(activeCardCount % 10 === 0 && currentAlbum.banners && currentAlbum.banners[bannerIdx]) {
+                let b = currentAlbum.banners[bannerIdx];
+                if(b.images && b.images.filter(img => img.url).length > 0) {
+                   html += renderBannerHTML(b, bannerIdx);
+                }
+                bannerIdx++;
+            }
             
             let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
-            // ... sisa kode renderFeeds tidak berubah ...
             let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
             let sid = 'slider_'+i;
             sliderStates[sid] = 0;
@@ -174,20 +179,65 @@
                     </div>
                 </div></div>
             `;
+            activeCardCount++;
         }
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
+        startBannerAutoSlide();
     }
 
-    // SLIDER
+    function renderBannerHTML(b, idx) {
+      let sh = '', dh = '';
+      let validImgs = b.images.filter(img => img.url);
+      for(let s=0; s<validImgs.length; s++){
+        sh += `<div class="slide"><a href="${escA(validImgs[s].link || '#')}" target="_blank"><img src="${escA(validImgs[s].url)}" style="width:100%;aspect-ratio:1000/300;object-fit:cover;display:block;border-radius:16px" /></a></div>`;
+        dh += `<div class="slider-dot${s===0?' active':''}" onclick="goSlide('ban_${idx}',${s})"></div>`;
+      }
+      return `
+        <div class="feed-card-wrap" style="min-height:auto; padding:20px 16px;">
+          <div style="width:100%;max-width:420px;position:relative;overflow:hidden;border-radius:16px" id="ban_${idx}">
+            <div class="slider-track" id="track_ban_${idx}">${sh}</div>
+            ${validImgs.length > 1 ? `
+              <button onclick="slideNav('ban_${idx}',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-left"></i></button>
+              <button onclick="slideNav('ban_${idx}',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fas fa-chevron-right"></i></button>
+              <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_ban_${idx}">${dh}</div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    let bannerTimers = {};
+    function startBannerAutoSlide() {
+        setInterval(() => {
+            for(let key in sliderStates) {
+                if(key.startsWith('ban_')) {
+                    let tr = document.getElementById('track_'+key);
+                    if(tr && tr.children.length > 1) {
+                        let idx = parseInt(key.split('_')[1]);
+                        let b = currentAlbum.banners[idx];
+                        let time = b && b.slideTime ? b.slideTime * 1000 : 3000;
+                        if(time === 0) continue;
+                        bannerTimers[key] = (bannerTimers[key] || 0) + 1000;
+                        if(bannerTimers[key] >= time) {
+                            bannerTimers[key] = 0;
+                            let total = tr.children.length;
+                            let next = (sliderStates[key] || 0) + 1;
+                            if(next >= total) next = 0;
+                            goSlide(key, next);
+                        }
+                    }
+                }
+            }
+        }, 1000);
+    }
+
     function goSlide(sid,idx){var tr=document.getElementById('track_'+sid),dc=document.getElementById('dots_'+sid);if(!tr)return;var total=tr.children.length;if(idx<0)idx=total-1;if(idx>=total)idx=0;sliderStates[sid]=idx;tr.style.transform='translateX(-'+(idx*100)+'%)';if(dc){for(var i=0;i<dc.children.length;i++){if(i===idx)dc.children[i].classList.add('active');else dc.children[i].classList.remove('active');}}}
     function slideNav(sid,dir){goSlide(sid,(sliderStates[sid]||0)+dir);}
-    document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
-    document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
+    document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
+    document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
 
-    // LIKE
     function toggleLike(i){var c=currentAlbum.cards[i];c.liked=!c.liked;c.likes=Math.max(0,(c.likes||0)+(c.liked?1:-1));var b=document.getElementById('likeBtn_'+i),ct=document.getElementById('likeCount_'+i);if(b){b.classList.toggle('liked',c.liked);b.style.color=c.liked?'#ef4444':'#aaa';b.classList.add('heart-pop');setTimeout(function(){b.classList.remove('heart-pop');},300);}if(ct)ct.textContent=c.likes;}
 
-    // KOMENTAR (Cloud Sync ke Koleksi Terpisah)
     function updateCommentCounts() {
         for(let i=0; i<currentAlbum.cards.length; i++) {
             let count = currentAlbumComments.filter(c => c.cardIdx == i && !c.parentId).length;
@@ -195,99 +245,52 @@
             if(btn) btn.innerText = count;
         }
     }
-
     function openCommentModal(i) {
-        commentCardIdx = i;
-        replyTo = null;
+        commentCardIdx = i; replyTo = null;
         document.getElementById('commentModalTitle').textContent = 'Komentar';
         document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || '';
         document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>';
         document.getElementById('commentModal').classList.add('show');
         renderCmts();
     }
-
-    function closeCommentModal() {
-        document.getElementById('commentModal').classList.remove('show');
-        commentCardIdx = -1;
-        replyTo = null;
-    }
-
+    function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
     function renderCmts() {
         var el = document.getElementById('commentList');
         let parents = currentAlbumComments.filter(c => c.cardIdx == commentCardIdx && !c.parentId);
-        
-        if (!parents.length) {
-            el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>';
-            document.getElementById('commentModalTitle').textContent = 'Komentar (0)';
-            return;
-        }
-        
+        if (!parents.length) { el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>'; document.getElementById('commentModalTitle').textContent = 'Komentar (0)'; return; }
         document.getElementById('commentModalTitle').textContent = 'Komentar (' + parents.length + ')';
-        
         var h = '';
         for (var ci = 0; ci < parents.length; ci++) {
             var cm = parents[ci];
-            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px">
-                    <div style="display:flex;justify-content:space-between">
-                        <span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span>
-                    </div>
-                    <p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p>
-                    <button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
-            
+            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p><button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
             let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
             for (var ri = 0; ri < replies.length; ri++) {
                 var r = replies[ri];
-                h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222">
-                        <span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span>
-                        <p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p>
-                      </div>`;
+                h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222"><span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span><p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p></div>`;
             }
             h += `</div>`;
         }
         el.innerHTML = h;
     }
-
-    function setReply(commentId, a) {
-        replyTo = commentId;
-        document.getElementById('commentText').placeholder = 'Membalas ' + a + '...';
-        document.getElementById('commentText').focus();
-    }
-
+    function setReply(commentId, a) { replyTo = commentId; document.getElementById('commentText').placeholder = 'Membalas ' + a + '...'; document.getElementById('commentText').focus(); }
     function submitComment() {
         var a = document.getElementById('commentAuthor').value.trim() || 'Anonim';
         var t = document.getElementById('commentText').value.trim();
         if (!t) return;
-        
         localStorage.setItem('acf_userName', a);
-        
         var newCommentId = db.collection('comments').doc().id;
-        var commentData = {
-            commentId: newCommentId,
-            albumId: currentAlbumId,
-            cardIdx: commentCardIdx,
-            author: a,
-            text: t,
-            parentId: replyTo || null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        db.collection('comments').doc(newCommentId).set(commentData)
+        db.collection('comments').doc(newCommentId).set({ commentId: newCommentId, albumId: currentAlbumId, cardIdx: commentCardIdx, author: a, text: t, parentId: replyTo || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
         .then(() => {
             document.getElementById('commentText').value = '';
             document.getElementById('commentText').placeholder = 'Tulis komentar...';
             replyTo = null;
             showToast('Komentar berhasil terkirim!');
-        }).catch((e) => {
-            showToast('Gagal simpan komentar: ' + e.message);
-        });
+        }).catch((e) => { showToast('Gagal simpan komentar: ' + e.message); });
     }
 
-    // SHARE (Album atau per Card)
     function openShareModal(cardIdx = -1) {
         let baseUrl = window.location.origin + window.location.pathname + '?albumId=' + currentAlbumId;
-        if(cardIdx >= 0) {
-            baseUrl += '&card=' + cardIdx;
-        }
+        if(cardIdx >= 0) { baseUrl += '&card=' + cardIdx; }
         document.getElementById('shareLinkInput').value = baseUrl;
         document.getElementById('shareModal').classList.add('show');
     }
@@ -296,27 +299,14 @@
     function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank','width=600,height=400');}
     function shareToWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank');}
 
-    // LAPOR
     function openReportModal(idx){currentReportFeedIdx=idx;document.getElementById('reportModal').classList.add('show');}
     function closeReportModal(){document.getElementById('reportModal').classList.remove('show');}
     function submitReport(){
         let reason=document.getElementById('reportReason').value.trim();
         if(!reason){showToast('Mohon isi alasan');return;}
         let reportedCard=currentAlbum.cards[currentReportFeedIdx];
-        
-        // Sertakan ID pemilik album agar Admin tahu siapa yang dilaporkan
         let ownerId = currentAlbum.userId || null;
-
-        db.collection('reports').add({
-            albumId:currentAlbumId,
-            albumName:currentAlbum.name,
-            ownerId: ownerId, // <-- BARIS BARU
-            feedId:reportedCard.id,
-            feedTitle:reportedCard.title.text,
-            reason:reason,
-            status:'pending',
-            createdAt:firebase.firestore.FieldValue.serverTimestamp()
-        })
+        db.collection('reports').add({albumId:currentAlbumId,albumName:currentAlbum.name,ownerId: ownerId,feedId:reportedCard.id,feedTitle:reportedCard.title.text,reason:reason,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()})
         .then(()=>{showToast('Laporan terkirim! Admin akan meninjau.');closeReportModal();document.getElementById('reportReason').value='';})
         .catch(e=>showToast('Gagal: '+e.message));
     }
