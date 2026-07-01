@@ -15,6 +15,7 @@
     .btn-g { background: transparent; color: #aaa; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; }
     .btn-g:hover { color: #fff; border-color: #555; }
     .card { background: #111; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .card-suspended { border-left: 4px solid #ef4444; background: #1a0a0a; }
     .tab-btn { padding: 12px 20px; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: #666; }
     .tab-btn.active { color: #e8572a; border-color: #e8572a; }
     .inp { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; color: #fff; width: 100%; outline: none; }
@@ -41,13 +42,15 @@
 
     <!-- TAB USER -->
     <div id="tab-users">
-        <input type="text" id="searchUser" class="inp mb-4" placeholder="Cari email, WA, status, atau tanggal register..." oninput="renderUsers()">
+        <input type="text" id="searchUser" class="inp mb-2" placeholder="Cari email, WA, status, atau bulan/tahun register..." oninput="renderUsers()">
+        <p id="userCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
     <!-- TAB LAPORAN -->
     <div id="tab-reports" style="display:none;">
-        <input type="text" id="searchReport" class="inp mb-4" placeholder="Cari judul feed, album, email pemilik, atau alasan..." oninput="renderReports()">
+        <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari judul feed, album, email pemilik, atau alasan..." oninput="renderReports()">
+        <p id="reportCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="reportList"></div>
     </div>
 </div>
@@ -130,12 +133,16 @@
     function renderUsers() {
         let q = document.getElementById('searchUser').value.toLowerCase();
         let filtered = allUsers.filter(u => {
-            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID') : '';
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+            let dateStrLower = dateStr.toLowerCase(); // FIX PENCARIAN BULAN
+            
             return (u.email && u.email.toLowerCase().includes(q)) || 
                    (u.whatsapp && u.whatsapp.includes(q)) || 
                    (u.status && u.status.toLowerCase().includes(q)) ||
-                   (dateStr.includes(q));
+                   (dateStrLower.includes(q));
         });
+
+        document.getElementById('userCounter').innerText = `Menampilkan ${filtered.length} dari ${allUsers.length} user`;
 
         let html = '';
         filtered.forEach((u) => {
@@ -144,7 +151,7 @@
             let waLink = u.whatsapp ? `https://wa.me/${u.whatsapp.replace(/[^0-9]/g, '')}` : '#';
             
             html += `
-            <div class="card">
+            <div class="card ${isSuspended ? 'card-suspended' : ''}">
                 <div class="flex justify-between items-start mb-3">
                     <div>
                         <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
@@ -193,7 +200,6 @@
     function renderReports() {
         let q = document.getElementById('searchReport').value.toLowerCase();
         
-        // Cross-reference data pemilik dari allUsers
         let html = '';
         let filtered = allReports.filter(r => {
             let owner = allUsers.find(u => u.id === r.ownerId);
@@ -205,6 +211,8 @@
                    (ownerEmail.includes(q));
         });
 
+        document.getElementById('reportCounter').innerText = `Menampilkan ${filtered.length} dari ${allReports.length} laporan`;
+
         if(filtered.length === 0) {
             html = '<div class="card text-center text-gray-500">Tidak ada laporan ditemukan.</div>';
         } else {
@@ -212,7 +220,6 @@
                 let isPending = r.status === 'pending';
                 let owner = allUsers.find(u => u.id === r.ownerId);
                 let ownerSuspended = owner && owner.status === 'suspended';
-                
                 let waLink = owner && owner.whatsapp ? `https://wa.me/${owner.whatsapp.replace(/[^0-9]/g, '')}` : '#';
                 
                 html += `
@@ -240,8 +247,14 @@
                         <button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400">
                             <i class="fas fa-eye-slash"></i> Tangguhkan Feed
                         </button>
+                        <button onclick="restoreFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-green-400">
+                            <i class="fas fa-eye"></i> Aktifkan Feed
+                        </button>
                         <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400">
                             <i class="fas fa-folder-minus"></i> Tangguhkan Album
+                        </button>
+                        <button onclick="restoreAlbum('${r.albumId}')" class="btn-g text-green-400">
+                            <i class="fas fa-folder-open"></i> Aktifkan Album
                         </button>
                         ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}
                     </div>
@@ -266,10 +279,31 @@
         }
     }
 
+    async function restoreFeed(albumId, feedId) {
+        if(!confirm('Aktifkan kembali feed ini?')) return;
+        let albumRef = db.collection('albums').doc(albumId);
+        let doc = await albumRef.get();
+        if(doc.exists) {
+            let cards = doc.data().cards || [];
+            let card = cards.find(c => c.id === feedId);
+            if(card) {
+                card.status = 'active';
+                await albumRef.update({ cards: cards });
+                alert('Feed berhasil diaktifkan kembali!');
+            }
+        }
+    }
+
     async function suspendAlbum(albumId) {
         if(!confirm('Yakin tangguhkan seluruh album ini?')) return;
         await db.collection('albums').doc(albumId).update({ status: 'suspended' });
         alert('Album berhasil ditangguhkan!');
+    }
+
+    async function restoreAlbum(albumId) {
+        if(!confirm('Aktifkan kembali album ini?')) return;
+        await db.collection('albums').doc(albumId).update({ status: 'active' });
+        alert('Album berhasil diaktifkan kembali!');
     }
 
     function resolveReport(rid) {
