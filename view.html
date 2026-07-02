@@ -153,7 +153,7 @@
             let vi = c.images.filter(img => img.url);
             let sh = '', dh = '';
             for(let s=0; s<vi.length; s++){
-                sh += `<div class="slide"><img src="${escA(vi[s].url)}" style="width:100%;aspect-ratio:${vi[s].aspectRatio||'16/9'};object-fit:cover;display:block;border-radius:16px" /></div>`;
+                sh += `<div class="slide"><img src="${escA(vi[s].url)}" style="width:100%;aspect-ratio:${vi[s].aspectRatio||'16/9'};object-fit:cover;display:block;border-radius:16px" loading="lazy" /></div>`;
                 dh += `<div class="slider-dot${s===0?' active':''}" onclick="goSlide('${sid}',${s})"></div>`;
             }
 
@@ -189,7 +189,7 @@
       let sh = '', dh = '';
       let validImgs = b.images.filter(img => img.url);
       for(let s=0; s<validImgs.length; s++){
-        sh += `<div class="slide"><a href="${escA(validImgs[s].link || '#')}" target="_blank"><img src="${escA(validImgs[s].url)}" style="width:100%;aspect-ratio:1000/300;object-fit:cover;display:block;border-radius:16px" /></a></div>`;
+        sh += `<div class="slide"><a href="${escA(validImgs[s].link || '#')}" target="_blank"><img src="${escA(validImgs[s].url)}" style="width:100%;aspect-ratio:1000/300;object-fit:cover;display:block;border-radius:16px" loading="lazy" /></a></div>`;
         dh += `<div class="slider-dot${s===0?' active':''}" onclick="goSlide('ban_${idx}',${s})"></div>`;
       }
       return `
