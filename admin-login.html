@@ -65,35 +65,29 @@
 
         if(!email || !pass) { alert('Isi email dan password'); return; }
 
-        // 1. Login biasa ke Firebase Auth
         auth.signInWithEmailAndPassword(email, pass)
             .then((userCredential) => {
-                // 2. Cek apakah user ini Admin di Database
                 return db.collection('users').doc(userCredential.user.uid).get();
             })
             .then((doc) => {
                 if (doc.exists && doc.data().role === 'admin') {
-                    // 3. Jika Admin, generate OTP
                     pendingAdminUid = doc.id;
                     generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
                     
-                    // Simpan OTP ke database dengan masa berlaku 5 menit
                     return db.collection('admin_otps').doc(pendingAdminUid).set({
                         code: generatedOtp,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // Jika BUKAN Admin, tendang
                     auth.signOut();
                     alert('Akses Ditolak! Anda bukan Admin.');
                 }
             })
             .then(() => {
                 if(generatedOtp) {
-                    // Pindah ke form OTP
                     document.getElementById('passForm').style.display = 'none';
                     document.getElementById('otpForm').style.display = 'block';
-                    document.getElementById('otpDisplay').innerText = generatedOtp; // Simulasi email
+                    document.getElementById('otpDisplay').innerText = generatedOtp;
                 }
             })
             .catch((error) => {
@@ -105,14 +99,14 @@
         const inputOtp = document.getElementById('otpInput').value;
         if(inputOtp.length !== 6) { alert('OTP harus 6 digit'); return; }
 
-        // Cek OTP di database
         db.collection('admin_otps').doc(pendingAdminUid).get().then((doc) => {
             if(doc.exists && doc.data().code === inputOtp) {
-                // OTP Benar, arahkan ke Dashboard
                 window.location.href = "admin-dashboard.html";
             } else {
                 alert('Kode OTP salah atau sudah kadaluarsa.');
             }
+        }).catch((error) => {
+            alert('Terjadi error saat verifikasi OTP: ' + error.message);
         });
     }
 
@@ -121,7 +115,7 @@
         document.getElementById('passForm').style.display = 'block';
         document.getElementById('otpInput').value = '';
         generatedOtp = null;
-        auth.signOut(); // Logout dari sesi sementara tadi
+        auth.signOut();
     }
 </script>
 </body>
