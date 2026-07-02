@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Album Feed Editor</title>
+<title>Admin Dashboard - Album Feed Editor</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -11,51 +11,59 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
     body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
-    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; cursor: pointer; transition: all .2s; }
-    .btn-a:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(232,87,42,0.3); }
-    .btn-g { background: transparent; color: #aaa; border: 1px solid #2a2a2a; border-radius: 10px; padding: 8px 16px; cursor: pointer; transition: all .2s; }
-    .btn-g:hover { color: #f0f0f0; border-color: #555; }
-    .album-card { background: #111; border: 1px solid #2a2a2a; border-radius: 16px; overflow: hidden; transition: transform .2s, border-color .2s; }
-    .album-card:hover { transform: translateY(-4px); border-color: #e8572a; }
-    .empty-state { border: 2px dashed #2a2a2a; border-radius: 16px; padding: 40px; text-align: center; color: #666; }
+    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .btn-g { background: transparent; color: #aaa; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; }
+    .btn-g:hover { color: #fff; border-color: #555; }
+    .card { background: #111; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .card-suspended { border-left: 4px solid #ef4444; background: #1a0a0a; }
+    .tab-btn { padding: 12px 20px; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: #666; }
+    .tab-btn.active { color: #e8572a; border-color: #e8572a; }
+    .inp { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; color: #fff; width: 100%; outline: none; }
+    .contact-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; }
 </style>
 </head>
 <body class="min-h-screen">
 
 <header class="border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-10">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <span class="text-xl">📸</span>
-            <h1 class="text-lg font-bold">Dashboard Saya</h1>
+        <h1 class="text-lg font-bold text-orange-500">🛡️ Admin Dashboard</h1>
+        <div class="flex gap-4 items-center">
+            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> Monetag</button>
+            <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
         </div>
-        <button onclick="logout()" class="btn-g flex items-center gap-2">
-            <i class="fas fa-right-from-bracket text-xs"></i> Logout
-        </button>
     </div>
 </header>
 
-<main class="container mx-auto px-4 py-8">
-    <div class="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Akun Aktif</p>
-            <h2 id="userEmail" class="text-xl font-bold text-white">Loading...</h2>
-            <p class="text-sm text-gray-400 mt-1"><i class="fab fa-whatsapp text-green-500 mr-1"></i><span id="userWa">-</span></p>
-        </div>
-        <button onclick="createNewAlbum()" class="btn-a flex items-center gap-2">
-            <i class="fas fa-plus"></i> Buat Album Baru
-        </button>
+<div class="container mx-auto px-4 py-6">
+    <div class="flex border-b border-[#1a1a1a] mb-6">
+        <div class="tab-btn active" onclick="switchTab('users')">Manajemen User</div>
+        <div class="tab-btn" onclick="switchTab('reports')">Laporan Masuk</div>
     </div>
 
-    <div>
-        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Album Saya</h3>
-        <div id="albumList" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div class="col-span-full text-center text-gray-500 py-10">
-                <i class="fas fa-spinner fa-spin text-2xl mb-3"></i>
-                <p>Memuat album...</p>
-            </div>
-        </div>
+    <!-- TAB USER -->
+    <div id="tab-users">
+        <input type="text" id="searchUser" class="inp mb-2" placeholder="Cari email, WA, status, atau bulan/tahun register..." oninput="renderUsers()">
+        <p id="userCounter" class="text-xs text-gray-500 mb-4"></p>
+        <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
-</main>
+
+    <!-- TAB LAPORAN -->
+    <div id="tab-reports" style="display:none;">
+        <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari judul feed, album, email pemilik, atau alasan..." oninput="renderReports()">
+        <p id="reportCounter" class="text-xs text-gray-500 mb-4"></p>
+        <div id="reportList"></div>
+    </div>
+</div>
+
+<!-- Modal Monetag Global -->
+<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+        <h3 class="text-lg font-bold mb-4">Pengaturan Monetag Global</h3>
+        <p class="text-xs text-gray-400 mb-2">Masukkan URL Smartlink Monetag. Ini akan dipakai untuk semua user yang diaktifkan.</p>
+        <input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="https://monetag.com/...">
+        <button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button>
+    </div>
+</div>
 
 <script>
     const firebaseConfig = {
@@ -66,113 +74,249 @@
       messagingSenderId: "249842615247",
       appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    let currentUser = null;
+    let allUsers = [];
+    let allReports = [];
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            currentUser = user;
-            loadUserData(user.uid);
-            loadAlbums(user.uid);
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if(!doc.exists || doc.data().role !== 'admin') {
+                    alert("Akses ditolak!");
+                    window.location.href = "admin-login.html";
+                } else {
+                    loadUsers();
+                    loadReports();
+                    loadGlobalSettings();
+                }
+            }).catch((error) => {
+                alert("Error cek admin: " + error.message);
+                window.location.href = "admin-login.html";
+            });
         } else {
-            window.location.href = "login.html";
+            window.location.href = "admin-login.html";
         }
     });
 
-    function loadUserData(uid) {
-        db.collection('users').doc(uid).get().then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('userEmail').innerText = data.email;
-                document.getElementById('userWa').innerText = data.whatsapp || 'Belum diisi';
-                if(data.status === 'suspended') {
-                    alert('Akun Anda dinonaktifkan oleh Admin.');
-                    logout();
-                }
-            }
+    function switchTab(tab) {
+        document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
+        document.getElementById('tab-reports').style.display = tab === 'reports' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach((el, i) => {
+            el.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'reports' && i === 1));
         });
     }
 
-    function loadAlbums(uid) {
-        db.collection('albums').where('userId', '==', uid).onSnapshot((snapshot) => {
-            const listContainer = document.getElementById('albumList');
-            if (snapshot.empty) {
-                listContainer.innerHTML = `
-                    <div class="col-span-full empty-state">
-                        <i class="fas fa-images text-4xl mb-4"></i>
-                        <h4 class="text-lg font-bold text-gray-300 mb-2">Belum ada Album</h4>
-                        <p class="mb-4">Mulai buat Album Feed pertama Anda sekarang!</p>
-                        <button onclick="createNewAlbum()" class="btn-a">+ Buat Album Baru</button>
-                    </div>
-                `;
-                return;
+    // --- GLOBAL SETTINGS ---
+    function loadGlobalSettings() {
+        db.collection('settings').doc('monetag').onSnapshot((doc) => {
+            if(doc.exists) {
+                document.getElementById('globalMonetagUrl').value = doc.data().url || '';
             }
+        });
+    }
+    function openMonetagSettings() { document.getElementById('monetagModal').style.display = 'flex'; }
+    function closeMonetagSettings() { document.getElementById('monetagModal').style.display = 'none'; }
+    function saveGlobalMonetag() {
+        let url = document.getElementById('globalMonetagUrl').value;
+        db.collection('settings').doc('monetag').set({ url: url });
+        closeMonetagSettings();
+    }
 
-            let html = '';
-            snapshot.forEach((doc) => {
-                const album = doc.data();
-                const albumId = doc.id;
-                const cardCount = album.cards ? album.cards.length : 0;
-                const ogImg = album.ogImage || (album.cards && album.cards[0] && album.cards[0].images[0] ? album.cards[0].images[0].url : 'https://via.placeholder.com/400x225/111/333?text=No+Image');
+    // --- MANAJEMEN USER ---
+    function loadUsers() {
+        db.collection('users').onSnapshot((snapshot) => {
+            allUsers = [];
+            snapshot.forEach(doc => allUsers.push({id: doc.id, ...doc.data()}));
+            renderUsers();
+        });
+    }
+
+    function renderUsers() {
+        let q = document.getElementById('searchUser').value.toLowerCase();
+        let filtered = allUsers.filter(u => {
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+            let dateStrLower = dateStr.toLowerCase();
+            
+            return (u.email && u.email.toLowerCase().includes(q)) || 
+                   (u.whatsapp && u.whatsapp.includes(q)) || 
+                   (u.status && u.status.toLowerCase().includes(q)) ||
+                   (dateStrLower.includes(q));
+        });
+
+        document.getElementById('userCounter').innerText = `Menampilkan ${filtered.length} dari ${allUsers.length} user`;
+
+        let html = '';
+        filtered.forEach((u) => {
+            let isSuspended = u.status === 'suspended';
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+            let waLink = u.whatsapp ? `https://wa.me/${u.whatsapp.replace(/[^0-9]/g, '')}` : '#';
+            
+            html += `
+            <div class="card ${isSuspended ? 'card-suspended' : ''}">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4>
+                        <p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p>
+                        <p class="text-xs text-gray-500"><i class="far fa-calendar mr-1"></i> Daftar: ${dateStr}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">
+                            ${isSuspended ? 'Suspended' : 'Active'}
+                        </span>
+                        <div class="flex gap-1">
+                            <a href="mailto:${u.email}" class="contact-btn bg-blue-900 text-blue-300"><i class="fas fa-envelope"></i></a>
+                            ${u.whatsapp ? `<a href="${waLink}" target="_blank" class="contact-btn bg-green-900 text-green-300"><i class="fab fa-whatsapp"></i></a>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4 border-t border-[#222] pt-3">
+                    <button onclick="toggleSuspend('${u.id}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}" style="flex:1">
+                        <i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}
+                    </button>
+                    <button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
+                        <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
+                    </button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
+    }
+
+    function toggleSuspend(uid, isCurrentlySuspended) {
+        db.collection('users').doc(uid).update({ status: isCurrentlySuspended ? 'active' : 'suspended' });
+    }
+    function toggleMonetag(uid, turnOn) {
+        db.collection('users').doc(uid).update({ monetagEnabled: turnOn });
+    }
+
+    // --- LAPORAN & MODERASI ---
+    function loadReports() {
+        db.collection('reports').onSnapshot((snapshot) => {
+            allReports = [];
+            snapshot.forEach(doc => allReports.push({id: doc.id, ...doc.data()}));
+            renderReports();
+        });
+    }
+
+    function renderReports() {
+        let q = document.getElementById('searchReport').value.toLowerCase();
+        
+        let html = '';
+        let filtered = allReports.filter(r => {
+            let owner = allUsers.find(u => u.id === r.ownerId);
+            let ownerEmail = owner ? owner.email.toLowerCase() : '';
+            return (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || 
+                   (r.albumName && r.albumName.toLowerCase().includes(q)) || 
+                   (r.reason && r.reason.toLowerCase().includes(q)) ||
+                   (r.status && r.status.toLowerCase().includes(q)) ||
+                   (ownerEmail.includes(q));
+        });
+
+        document.getElementById('reportCounter').innerText = `Menampilkan ${filtered.length} dari ${allReports.length} laporan`;
+
+        if(filtered.length === 0) {
+            html = '<div class="card text-center text-gray-500">Tidak ada laporan ditemukan.</div>';
+        } else {
+            filtered.forEach((r) => {
+                let isPending = r.status === 'pending';
+                let owner = allUsers.find(u => u.id === r.ownerId);
+                let ownerSuspended = owner && owner.status === 'suspended';
+                let waLink = owner && owner.whatsapp ? `https://wa.me/${owner.whatsapp.replace(/[^0-9]/g, '')}` : '#';
                 
                 html += `
-                    <div class="album-card flex flex-col">
-                        <div class="aspect-video bg-[#0a0a0a] overflow-hidden">
-                            <img src="${ogImg}" alt="${album.name}" class="w-full h-full object-cover opacity-90">
-                        </div>
-                        <div class="p-4 flex-1 flex flex-col">
-                            <h4 class="font-bold text-white truncate mb-1">${album.name}</h4>
-                            <p class="text-xs text-gray-500 mb-3"><i class="fas fa-layer-group mr-1"></i> ${cardCount} Feed Card</p>
-                            <div class="flex gap-2 mt-auto">
-                                <button onclick="editAlbum('${albumId}')" class="btn-a flex-1 text-sm" style="padding:8px 12px;">
-                                    <i class="fas fa-pen mr-1"></i> Buka Album
-                                </button>
-                                <button onclick="deleteAlbum('${albumId}', '${album.name.replace(/'/g, "\\'")}')" class="btn-g text-sm text-red-500" style="padding:8px 12px;" title="Hapus Album">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                <div class="card ${isPending ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-green-500'}">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
+                        <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
                     </div>
-                `;
+                    
+                    <div class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></div>
+                    
+                    <div class="text-sm text-gray-400 mb-2">Pemilik: 
+                        <span class="text-white">${owner ? owner.email : 'Tidak diketahui'}</span> 
+                        ${ownerSuspended ? '<span class="text-red-500 text-xs ml-1">(Akun Disuspend)</span>' : ''}
+                        ${owner ? `<a href="mailto:${owner.email}" class="ml-2 text-blue-400"><i class="fas fa-envelope"></i></a>` : ''}
+                        ${owner && owner.whatsapp ? `<a href="${waLink}" target="_blank" class="ml-1 text-green-400"><i class="fab fa-whatsapp"></i></a>` : ''}
+                    </div>
+                    
+                    <p class="text-sm text-gray-400 mb-4 bg-[#0a0a0a] p-2 rounded">Alasan: "${r.reason}"</p>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
+                            <i class="fas fa-eye"></i> Tinjau
+                        </a>
+                        <button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400">
+                            <i class="fas fa-eye-slash"></i> Tangguhkan Feed
+                        </button>
+                        <button onclick="restoreFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-green-400">
+                            <i class="fas fa-eye"></i> Aktifkan Feed
+                        </button>
+                        <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400">
+                            <i class="fas fa-folder-minus"></i> Tangguhkan Album
+                        </button>
+                        <button onclick="restoreAlbum('${r.albumId}')" class="btn-g text-green-400">
+                            <i class="fas fa-folder-open"></i> Aktifkan Album
+                        </button>
+                        ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}
+                    </div>
+                </div>`;
             });
-            listContainer.innerHTML = html;
-        });
+        }
+        document.getElementById('reportList').innerHTML = html;
     }
 
-    function createNewAlbum() {
-        const name = prompt("Masukkan nama album baru:", "Album Feed Saya");
-        if (!name) return;
-        db.collection('albums').add({
-            name: name,
-            userId: currentUser.uid,
-            status: 'active',
-            bgColor: '#1a1a2e',
-            ogImage: '',
-            gaId: '',
-            gaName: '',
-            slug: name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').slice(0,60) || 'album-' + Date.now(),
-            monetagEnabled: false, 
-            cards: [], 
-            banners: [], 
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then((docRef) => {
-            window.location.href = `index.html?albumId=${docRef.id}`;
-        }).catch((error) => {
-            alert("Gagal membuat album: " + error.message);
-        });
-    }
-
-    function editAlbum(albumId) { window.location.href = `index.html?albumId=${albumId}`; }
-    function deleteAlbum(albumId, albumName) {
-        if (confirm(`Yakin ingin menghapus album "${albumName}"? Semua Feed Card di dalamnya akan hilang.`)) {
-            db.collection('albums').doc(albumId).delete().catch((error) => alert("Gagal menghapus: " + error.message));
+    async function suspendFeed(albumId, feedId) {
+        if(!confirm('Yakin tangguhkan feed ini? Feed akan hilang dari publik.')) return;
+        let albumRef = db.collection('albums').doc(albumId);
+        let doc = await albumRef.get();
+        if(doc.exists) {
+            let cards = doc.data().cards || [];
+            let card = cards.find(c => c.id === feedId);
+            if(card) {
+                card.status = 'suspended';
+                await albumRef.update({ cards: cards });
+                alert('Feed berhasil ditangguhkan!');
+            }
         }
     }
-    function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
+
+    async function restoreFeed(albumId, feedId) {
+        if(!confirm('Aktifkan kembali feed ini?')) return;
+        let albumRef = db.collection('albums').doc(albumId);
+        let doc = await albumRef.get();
+        if(doc.exists) {
+            let cards = doc.data().cards || [];
+            let card = cards.find(c => c.id === feedId);
+            if(card) {
+                card.status = 'active';
+                await albumRef.update({ cards: cards });
+                alert('Feed berhasil diaktifkan kembali!');
+            }
+        }
+    }
+
+    async function suspendAlbum(albumId) {
+        if(!confirm('Yakin tangguhkan seluruh album ini?')) return;
+        await db.collection('albums').doc(albumId).update({ status: 'suspended' });
+        alert('Album berhasil ditangguhkan!');
+    }
+
+    async function restoreAlbum(albumId) {
+        if(!confirm('Aktifkan kembali album ini?')) return;
+        await db.collection('albums').doc(albumId).update({ status: 'active' });
+        alert('Album berhasil diaktifkan kembali!');
+    }
+
+    function resolveReport(rid) {
+        db.collection('reports').doc(rid).update({ status: 'resolved' });
+    }
+
+    function logout() {
+        auth.signOut().then(() => window.location.href = "admin-login.html");
+    }
 </script>
 </body>
 </html>
