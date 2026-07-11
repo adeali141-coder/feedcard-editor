@@ -179,12 +179,21 @@
                     <button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
                         <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
                     </button>
+                    <button onclick="toggleAlbumLimit('${u.id}', ${u.albumLimit || 2})" class="btn-g ${u.albumLimit === 5 ? 'text-green-400' : ''}" style="flex:1">
+                        <i class="fas fa-layer-group"></i> Limit: ${u.albumLimit || 2} Album
+                    </button>
                 </div>
             </div>`;
         });
         document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
     }
 
+    function toggleAlbumLimit(uid, currentLimit) {
+        // Jika 2, ubah jadi 5. Jika 5, kembalikan ke 2.
+        let newLimit = currentLimit === 2 ? 5 : 2;
+        db.collection('users').doc(uid).update({ albumLimit: newLimit });
+    }
+    
     function toggleSuspend(uid, isCurrentlySuspended) {
         db.collection('users').doc(uid).update({ status: isCurrentlySuspended ? 'active' : 'suspended' });
     }
