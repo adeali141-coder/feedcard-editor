@@ -361,7 +361,7 @@ function updBannerTime(bIdx, val){
 
     function enforceCardLimit50() {
         if (typeof album !== 'undefined' && album.cards.length > 50) {
-            let removedCount = album.cards.length - 50;
+            let removedCount = album.cards.length - 30;
             album.cards.splice(0, removedCount);
             showToast(removedCount + ' Feed Card terlama otomatis dihapus karena melebihi batas 50.');
             if (typeof renderSel === 'function') renderSel();
