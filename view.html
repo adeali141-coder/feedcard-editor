@@ -126,7 +126,15 @@
     function escA(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
     function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function escHbr(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
-
+    function parseDesc(text) {
+        let t = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        // 1. Parse Markdown Link [Teks](URL)
+        t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
+        // 2. Parse Raw URL (jika user hanya paste link biasa)
+        t = t.replace(/(?<!&quot;)(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
+        return t.replace(/\n/g,'<br>');
+    }
+   
     function renderFeeds() {
         let cards = currentAlbum.cards || [];
         let html = '';
@@ -168,7 +176,7 @@
                     
                     <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${escH(c.title.text)}</h2>
                     ${c.price && c.price.text ? `<p style="margin-top:6px;font-size:${c.price.size}px;color:${c.price.color};font-weight:700">${escH(c.price.text)}</p>` : ''}
-                    <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${escHbr(c.desc.text)}</p>
+                    <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${parseDesc(c.desc.text)}</p>
                     ${ctaHtml}
                     
                      <div style="background:#f5f5dc; border-radius:12px; padding:12px; margin-top:20px; display:flex; align-items:center; gap:16px; justify-content: space-between;">
