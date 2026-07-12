@@ -14,7 +14,7 @@
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
     body{font-family:'DM Sans',sans-serif;background:#060606;color:#f0f0f0;}
     .feed-scroll{scroll-snap-type: y proximity; overflow-y:scroll; height:100vh}
-    .feed-card-wrap{scroll-snap-align: start; min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 16px 16px 80px 16px;}
+    .feed-card-wrap{scroll-snap-align: start; min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 16px 16px 140px 16px;}
     .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
     .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.modal-ov.show{opacity:1;pointer-events:all}
     .modal-ct{background:#111;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px}
@@ -171,11 +171,11 @@
                     <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${escHbr(c.desc.text)}</p>
                     ${ctaHtml}
                     
-                    <div style="display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
-                        <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#aaa'};cursor:pointer"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
-                        <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-comment"></i> <span>0</span></button>
-                        <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer;margin-left:auto"><i class="fas fa-share-from-square"></i></button>
-                        <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#aaa;cursor:pointer"><i class="fas fa-flag"></i></button>
+                     <div style="background:#f5f5dc; border-radius:12px; padding:12px; margin-top:20px; display:flex; align-items:center; gap:16px; justify-content: space-between;">
+                        <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#333'};cursor:pointer;font-weight:600;"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
+                        <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;font-weight:600;"><i class="fas fa-comment"></i> <span>0</span></button>
+                        <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;"><i class="fas fa-share-from-square"></i></button>
+                        <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;"><i class="fas fa-flag"></i></button>
                     </div>
                 </div></div>
             `;
