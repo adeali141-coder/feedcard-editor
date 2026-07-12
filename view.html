@@ -186,6 +186,7 @@
     }
 
     function renderBannerHTML(b, idx) {
+      sliderStates['ban_'+idx] = 0;
       let sh = '', dh = '';
       let validImgs = b.images.filter(img => img.url);
       for(let s=0; s<validImgs.length; s++){
