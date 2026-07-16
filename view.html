@@ -126,12 +126,24 @@
     function escA(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
     function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function escHbr(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
-    function parseDesc(text) {
-        let t = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        // 1. Parse Markdown Link [Teks](URL)
-        t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
-        // 2. Parse Raw URL (jika user hanya paste link biasa)
-        t = t.replace(/(?<!&quot;)(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
+        function parseDesc(text) {
+        if(!text) return '';
+        let t = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        
+        // 1. Pisahkan Markdown Link [Teks](URL) ke dalam array sementara agar tidak ikut diproses
+        let links = [];
+        t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (match, p1, p2) => {
+            let linkHtml = `<a href="${p2}" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">${p1}</a>`;
+            links.push(linkHtml);
+            return `___LINK_PLACEHOLDER_${links.length-1}___`;
+        });
+
+        // 2. Parse Raw URL (link biasa yang di-paste langsung)
+        t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
+
+        // 3. Kembalikan Markdown Link dari array ke teks aslinya
+        t = t.replace(/___LINK_PLACEHOLDER_(\d+)___/g, (match, idx) => links[parseInt(idx)]);
+
         return t.replace(/\n/g,'<br>');
     }
    
