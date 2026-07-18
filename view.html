@@ -196,7 +196,7 @@
                      <div style="background:#f5f5dc; border-radius:12px; padding:12px; margin-top:20px; display:flex; align-items:center; gap:16px; justify-content: space-between;">
                         <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#333'};cursor:pointer;font-weight:600;"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
                         <button onclick="openCommentModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;font-weight:600;"><i class="fas fa-comment"></i> <span>0</span></button>
-                        <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;"><i class="fas fa-share-from-square"></i></button>
+                        <button onclick="openShareModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;"><i class="fas fa-share-from-square"></i> <span id="shareCount_${i}">${c.shares||0}</span></button>
                         <button onclick="openReportModal(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:#333;cursor:pointer;"><i class="fas fa-flag"></i></button>
                     </div>
                 </div></div>
@@ -346,17 +346,28 @@
         if(cardIdx >= 0) {
             baseUrl += '&card=' + cardIdx;
             
-            // --- TAMBAHKAN INI UNTUK TRACKING SHARE ---
+            // --- TRACKING SHARE & UPDATE UI ---
             if(currentAlbum.cards[cardIdx]) {
+                // Update UI langsung +1
+                let sc = document.getElementById('shareCount_' + cardIdx);
+                if(sc) {
+                    let currentShares = parseInt(sc.innerText) || 0;
+                    sc.innerText = currentShares + 1;
+                }
+
                 const incrementInteraction = functions.httpsCallable('incrementInteraction');
                 incrementInteraction({
                     albumId: currentAlbumId,
                     cardIdx: cardIdx,
                     type: 'share',
                     isDecrement: false
+                }).then((result) => {
+                    if(result.data.success && sc) {
+                        sc.innerText = result.data.newValue; // Samakan dengan data resmi dari server
+                    }
                 }).catch(e => console.error("Gagal track share:", e));
             }
-            // ------------------------------------------
+            // -----------------------------------
         }
         document.getElementById('shareLinkInput').value = baseUrl;
         document.getElementById('shareModal').classList.add('show');
