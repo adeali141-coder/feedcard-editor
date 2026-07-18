@@ -7,6 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -80,6 +81,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const functions = firebase.app().functions('us-central1');
 
     let currentAlbum = null;
     let currentAlbumId = null;
@@ -257,15 +259,45 @@
     document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
     document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
 
-    function toggleLike(i){var c=currentAlbum.cards[i];c.liked=!c.liked;c.likes=Math.max(0,(c.likes||0)+(c.liked?1:-1));var b=document.getElementById('likeBtn_'+i),ct=document.getElementById('likeCount_'+i);if(b){b.classList.toggle('liked',c.liked);b.style.color=c.liked?'#ef4444':'#aaa';b.classList.add('heart-pop');setTimeout(function(){b.classList.remove('heart-pop');},300);}if(ct)ct.textContent=c.likes;}
+        // LIKE (Cloud Sync via Cloud Functions)
+    function toggleLike(i) {
+        var c = currentAlbum.cards[i];
+        var wasLiked = c.liked || false;
+        var b = document.getElementById('likeBtn_' + i);
+        var ct = document.getElementById('likeCount_' + i);
 
-    function updateCommentCounts() {
-        for(let i=0; i<currentAlbum.cards.length; i++) {
-            let count = currentAlbumComments.filter(c => c.cardIdx == i && !c.parentId).length;
-            let btn = document.querySelector(`button[onclick="openCommentModal(${i})"] span`);
-            if(btn) btn.innerText = count;
+        // Optimistic UI Update (Langsung ubah tampilan dulu biar mulus)
+        c.liked = !wasLiked;
+        if (b) {
+            b.classList.toggle('liked', c.liked);
+            b.style.color = c.liked ? '#ef4444' : '#333';
+            b.classList.add('heart-pop');
+            setTimeout(function(){ b.classList.remove('heart-pop'); }, 300);
         }
+
+        // Panggil Cloud Function
+        const incrementInteraction = functions.httpsCallable('incrementInteraction');
+        incrementInteraction({
+            albumId: currentAlbumId,
+            cardIdx: i,
+            type: 'like',
+            isDecrement: wasLiked // Jika true, berarti un-like (kurangi -1)
+        }).then((result) => {
+            if(result.data.success && ct) {
+                ct.textContent = result.data.newValue;
+                c.likes = result.data.newValue;
+            }
+        }).catch((error) => {
+            // Jika gagal, kembalikan UI seperti semula
+            c.liked = wasLiked;
+            if (b) {
+                b.classList.toggle('liked', c.liked);
+                b.style.color = c.liked ? '#ef4444' : '#333';
+            }
+            showToast('Gagal menyimpan like');
+        });
     }
+   
     function openCommentModal(i) {
         commentCardIdx = i; replyTo = null;
         document.getElementById('commentModalTitle').textContent = 'Komentar';
@@ -311,10 +343,25 @@
 
     function openShareModal(cardIdx = -1) {
         let baseUrl = window.location.origin + window.location.pathname + '?albumId=' + currentAlbumId;
-        if(cardIdx >= 0) { baseUrl += '&card=' + cardIdx; }
+        if(cardIdx >= 0) {
+            baseUrl += '&card=' + cardIdx;
+            
+            // --- TAMBAHKAN INI UNTUK TRACKING SHARE ---
+            if(currentAlbum.cards[cardIdx]) {
+                const incrementInteraction = functions.httpsCallable('incrementInteraction');
+                incrementInteraction({
+                    albumId: currentAlbumId,
+                    cardIdx: cardIdx,
+                    type: 'share',
+                    isDecrement: false
+                }).catch(e => console.error("Gagal track share:", e));
+            }
+            // ------------------------------------------
+        }
         document.getElementById('shareLinkInput').value = baseUrl;
         document.getElementById('shareModal').classList.add('show');
     }
+   
     function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
     function copyShareLink(){var i=document.getElementById('shareLinkInput');i.select();navigator.clipboard.writeText(i.value).then(function(){showToast('Link disalin!');});}
     function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank','width=600,height=400');}
