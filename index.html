@@ -204,7 +204,6 @@ function openShareModal(cardIdx) {
   
   var link = '', lc = document.getElementById('shareLinkContainer'), nt = document.getElementById('shareLinkNote');
   
-  // --- LOGIKA CLOUD FUNCTION (OG-IMAGE) ---
   if (currentAlbumId) {
     link = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
     if (cardIdx >= 0) {
@@ -217,7 +216,6 @@ function openShareModal(cardIdx) {
     if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik awan hijau dulu untuk menyimpan.'; }
     if (nt) { nt.style.display = 'block'; }
   }
-  // ----------------------------------------
 
   document.getElementById('shareLinkInput').value = link;
   document.getElementById('sharePreviewDomain').textContent = getDomain();
@@ -232,7 +230,6 @@ function openShareModal(cardIdx) {
   }
   document.getElementById('shareModal').classList.add('show');
 }
-
 
 function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
 function shareToFacebook(){var l=document.getElementById('shareLinkInput').value;if(!l)return;window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(l),'_blank','width=600,height=400');}
