@@ -341,14 +341,14 @@
         }).catch((e) => { showToast('Gagal simpan komentar: ' + e.message); });
     }
 
+        // SHARE (Pakai Cloud Function agar OG-Image muncul)
     function openShareModal(cardIdx = -1) {
-        let baseUrl = window.location.origin + window.location.pathname + '?albumId=' + currentAlbumId;
+        let baseUrl = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
         if(cardIdx >= 0) {
             baseUrl += '&card=' + cardIdx;
             
-            // --- TRACKING SHARE & UPDATE UI ---
+            // --- TRACKING SHARE ---
             if(currentAlbum.cards[cardIdx]) {
-                // Update UI langsung +1
                 let sc = document.getElementById('shareCount_' + cardIdx);
                 if(sc) {
                     let currentShares = parseInt(sc.innerText) || 0;
@@ -363,7 +363,7 @@
                     isDecrement: false
                 }).then((result) => {
                     if(result.data.success && sc) {
-                        sc.innerText = result.data.newValue; // Samakan dengan data resmi dari server
+                        sc.innerText = result.data.newValue;
                     }
                 }).catch(e => console.error("Gagal track share:", e));
             }
