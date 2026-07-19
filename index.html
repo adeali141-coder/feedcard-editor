@@ -194,38 +194,46 @@ function updD(k,v){album.cards[currentCardIdx].desc[k]=v;saveLocal();}
 function updC(k,v){album.cards[currentCardIdx].cta[k]=v;saveLocal();renderEditor();}
 function updAn(k,v){album.cards[currentCardIdx].analytics[k]=v;saveLocal();}
 
+// ====== SHARE SYSTEM ======
 function openShareModal(cardIdx) {
   shareTargetCard = cardIdx;
   var title = getOGTitle(cardIdx), desc = getOGDesc(cardIdx), img = getOGImg(cardIdx);
   updOG(title, desc, img);
   var mTitle = cardIdx >= 0 ? 'Bagikan Card ' + (cardIdx + 1) : 'Bagikan Album';
   document.getElementById('shareModalTitle').textContent = mTitle;
+  
   var link = '', lc = document.getElementById('shareLinkContainer'), nt = document.getElementById('shareLinkNote');
-      if (currentAlbumId) {
-    // GUNAKAN URL CLOUD FUNCTION
+  
+  // --- LOGIKA CLOUD FUNCTION (OG-IMAGE) ---
+  if (currentAlbumId) {
     link = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
     if (cardIdx >= 0) {
-      link += '&card=' + cardIdx;
+      link += '&card=' + cardIdx; 
     }
     if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link publik siap dibagikan!'; }
     if (nt) { nt.style.display = 'none'; }
-  }
-    if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link publik siap dibagikan!'; }
-    if (nt) { nt.style.display = 'none'; }
   } else {
-    // ... kode else tetap sama ...
     link = getBaseUrl();
     if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#fbbf24;margin-right:6px"></i>Klik awan hijau dulu untuk menyimpan.'; }
     if (nt) { nt.style.display = 'block'; }
   }
+  // ----------------------------------------
+
   document.getElementById('shareLinkInput').value = link;
   document.getElementById('sharePreviewDomain').textContent = getDomain();
   document.getElementById('sharePreviewTitle').textContent = title;
   document.getElementById('sharePreviewDesc').textContent = desc.slice(0, 100) + (desc.length > 100 ? '...' : '');
+  
   var pi = document.getElementById('sharePreviewImg');
-  if (img) { pi.innerHTML = '<img src="' + escA(img) + '" style="width:100%;height:100%;object-fit:cover" />'; } else { pi.innerHTML = '<i class="fas fa-image" style="font-size:32px;color:#444"></i>'; }
+  if (img) {
+    pi.innerHTML = '<img src="' + escA(img) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:32px;color:#444\\\'></i>\'" />';
+  } else {
+    pi.innerHTML = '<i class="fas fa-image" style="font-size:32px;color:#444"></i>';
+  }
   document.getElementById('shareModal').classList.add('show');
 }
+
+
 function closeShareModal(){document.getElementById('shareModal').classList.remove('show');}
 function shareToFacebook(){var l=document.getElementById('shareLinkInput').value;if(!l)return;window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(l),'_blank','width=600,height=400');}
 function shareToWhatsApp(){var l=document.getElementById('shareLinkInput').value;if(!l)return;window.open('https://wa.me/?text='+encodeURIComponent(l),'_blank');}
