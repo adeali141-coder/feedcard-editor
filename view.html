@@ -108,17 +108,7 @@
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
 
-             // --- INJEKSI SCRIPT MONETAG (POPUNDER) ---
-            if (currentAlbum.monetagEnabled === true) {
-                let monetagScript = document.createElement('script');
-                monetagScript.src = "https://quge5.com/88/tag.min.js";
-                monetagScript.setAttribute('data-zone', '253705');
-                monetagScript.async = true;
-                monetagScript.setAttribute('data-cfasync', 'false');
-                document.head.appendChild(monetagScript);
-            }
-            // -----------------------------------------
-            
+           
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
