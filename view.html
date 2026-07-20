@@ -97,18 +97,23 @@
         loadAlbum();
     }
 
-    function loadAlbum() {
+            function loadAlbum() {
         db.collection('albums').doc(currentAlbumId).get().then((doc) => {
-            if (!doc.exists) { document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>'; return; }
+            if (!doc.exists) { 
+                document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>'; 
+                return; 
+            }
             currentAlbum = doc.data();
-            if(currentAlbum.status === 'suspended') { document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>'; return; }
+            if(currentAlbum.status === 'suspended') { 
+                document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>'; 
+                return; 
+            }
 
             document.title = currentAlbum.name;
             document.getElementById('appLoad').classList.add('hidden');
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
-
-           
+            
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
@@ -118,12 +123,16 @@
             const cardParams = new URLSearchParams(window.location.search);
             const cardHumanIdx = cardParams.get('card');
             if(cardHumanIdx !== null) {
-                const dbIdx = parseInt(cardHumanIdx) - 1; // Ubah 1,2,3 kembali ke 0,1,2 (index database)
+                const dbIdx = parseInt(cardHumanIdx) - 1;
                 setTimeout(() => {
                     let targetCard = document.getElementById('target-card-' + dbIdx);
                     if(targetCard) targetCard.scrollIntoView({behavior: 'smooth', block: 'center'});
                 }, 500);
             }
+        }).catch((error) => {
+            // Jika terjadi error (misal kuota habis), tampilkan pesannya!
+            console.error("Error loading album:", error);
+            document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Gagal memuat album.<br>' + error.message + '</p>';
         });
     }
 
