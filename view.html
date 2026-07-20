@@ -116,11 +116,12 @@
             });
 
             const cardParams = new URLSearchParams(window.location.search);
-            const cardIdx = cardParams.get('card');
-            if(cardIdx !== null) {
+            const cardHumanIdx = cardParams.get('card');
+            if(cardHumanIdx !== null) {
+                const dbIdx = parseInt(cardHumanIdx) - 1; // Ubah 1,2,3 kembali ke 0,1,2 (index database)
                 setTimeout(() => {
-                    let targetCard = document.querySelectorAll('.feed-card-wrap')[parseInt(cardIdx)];
-                    if(targetCard) targetCard.scrollIntoView({behavior: 'smooth'});
+                    let targetCard = document.getElementById('target-card-' + dbIdx);
+                    if(targetCard) targetCard.scrollIntoView({behavior: 'smooth', block: 'center'});
                 }, 500);
             }
         });
@@ -185,7 +186,8 @@
                 ctaHtml = `<a href="${escA(c.cta.url)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:16px"><button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:${c.cta.radius}px;padding:12px 28px;font-size:14px;font-weight:600;border:none;cursor:pointer">${escH(c.cta.text)}</button></a>`;
             }
             html += `
-                <div class="feed-card-wrap"><div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};animation:fadeUp .5s ease ${i*0.1}s both;position:relative">
+                            html += `
+                <div class="feed-card-wrap" id="target-card-${i}"><div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};animation:fadeUp .5s ease ${i*0.1}s both;position:relative">
                     ${sh ? `<div style="position:relative;overflow:hidden;border-radius:16px" id="${sid}"><div class="slider-track" id="track_${sid}">${sh}</div>${vi.length>1?`<button onclick="slideNav('${sid}',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-left"></i></button><button onclick="slideNav('${sid}',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-right"></i></button><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_${sid}">${dh}</div>`:''}</div>`:''}
                     
                     <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${escH(c.title.text)}</h2>
