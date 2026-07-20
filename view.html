@@ -344,8 +344,8 @@
         // SHARE (Pakai Cloud Function agar OG-Image muncul)
     function openShareModal(cardIdx = -1) {
         let baseUrl = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
-        if(cardIdx >= 0) {
-            baseUrl += '&card=' + cardIdx;
+                if(cardIdx >= 0) {
+            baseUrl += '&card=' + (cardIdx + 1); // Ubah agar dikirim sebagai 1, 2, 3
             
             // --- TRACKING SHARE ---
             if(currentAlbum.cards[cardIdx]) {
