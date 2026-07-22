@@ -65,6 +65,18 @@
     </div>
 </div>
 
+<!-- Modal Footer Global -->
+<div id="footerModal" class="modal-ov" onclick="if(event.target===this)closeFooterSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+        <h3 class="text-lg font-bold mb-4">Pengaturan Footer Publik</h3>
+        <p class="text-xs text-gray-400 mb-2">Footer ini akan muncul di semua album publik. Kosongkan jika tidak ingin menggunakan.</p>
+        <input type="text" id="footerText" class="inp mb-3" placeholder="Teks Footer (misal: Dibuat dengan Nova Variety)">
+        <input type="text" id="footerImage" class="inp mb-3" placeholder="URL Gambar Footer (opsional)">
+        <input type="text" id="footerLink" class="inp mb-4" placeholder="URL Tujuan Link Footer">
+        <button onclick="saveGlobalFooter()" class="btn-a w-full">Simpan Footer</button>
+    </div>
+</div>
+    
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -323,6 +335,26 @@
         db.collection('reports').doc(rid).update({ status: 'resolved' });
     }
 
+        // --- FOOTTER SETTINGS ---
+    function loadFooterSettings() {
+        db.collection('settings').doc('footer').onSnapshot((doc) => {
+            if(doc.exists) {
+                document.getElementById('footerText').value = doc.data().text || '';
+                document.getElementById('footerImage').value = doc.data().imageUrl || '';
+                document.getElementById('footerLink').value = doc.data().linkUrl || '';
+            }
+        });
+    }
+    function openFooterSettings() { document.getElementById('footerModal').style.display = 'flex'; }
+    function closeFooterSettings() { document.getElementById('footerModal').style.display = 'none'; }
+    function saveGlobalFooter() {
+        let text = document.getElementById('footerText').value;
+        let imageUrl = document.getElementById('footerImage').value;
+        let linkUrl = document.getElementById('footerLink').value;
+        db.collection('settings').doc('footer').set({ text: text, imageUrl: imageUrl, linkUrl: linkUrl });
+        closeFooterSettings();
+    }
+    
     function logout() {
         auth.signOut().then(() => window.location.href = "admin-login.html");
     }
