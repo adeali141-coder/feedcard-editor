@@ -91,6 +91,7 @@
     let currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderState = {}, currentReportFeedIdx = -1;
     let currentAlbumComments = []; 
+    let globalFooterData = null; // <-- TARUH DI SINI
 
     const urlParams = new URLSearchParams(window.location.search);
     currentAlbumId = urlParams.get('albumId');
