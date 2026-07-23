@@ -27,9 +27,11 @@
 <header class="border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-10">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <h1 class="text-lg font-bold text-orange-500">🛡️ Admin Dashboard</h1>
-        <div class="flex gap-4 items-center">
-            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> Monetag</button>
-            <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        <div class="flex gap-2 md:gap-4 items-center">
+            <button onclick="openLandingSettings()" class="btn-g text-blue-400"><i class="fas fa-fire"></i> <span class="hidden md:inline">Landing</span></button>
+            <button onclick="openFooterSettings()" class="btn-g text-blue-400"><i class="fas fa-shoe-prints"></i> <span class="hidden md:inline">Footer</span></button>
+            <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> <span class="hidden md:inline">Monetag</span></button>
+            <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> <span class="hidden md:inline">Logout</span></button>
         </div>
     </div>
 </header>
@@ -40,14 +42,12 @@
         <div class="tab-btn" onclick="switchTab('reports')">Laporan Masuk</div>
     </div>
 
-    <!-- TAB USER -->
     <div id="tab-users">
         <input type="text" id="searchUser" class="inp mb-2" placeholder="Cari email, WA, status, atau bulan/tahun register..." oninput="renderUsers()">
         <p id="userCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
-    <!-- TAB LAPORAN -->
     <div id="tab-reports" style="display:none;">
         <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari judul feed, album, email pemilik, atau alasan..." oninput="renderReports()">
         <p id="reportCounter" class="text-xs text-gray-500 mb-4"></p>
@@ -55,13 +55,22 @@
     </div>
 </div>
 
-<!-- Modal Monetag Global -->
-<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
-    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:400px;">
-        <h3 class="text-lg font-bold mb-4">Pengaturan Monetag Global</h3>
-        <p class="text-xs text-gray-400 mb-2">Masukkan URL Smartlink Monetag. Ini akan dipakai untuk semua user yang diaktifkan.</p>
-        <input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="https://monetag.com/...">
-        <button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button>
+<!-- Modal Landing Page -->
+<div id="landingModal" class="modal-ov" onclick="if(event.target===this)closeLandingSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;">
+        <h3 class="text-lg font-bold mb-4">Pengaturan Landing Page (Login)</h3>
+        <div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Judul Utama (Hook)</label><input type="text" id="landingTitle" class="inp" placeholder="Buat Toko Online Interaktifmu Sekarang!"></div>
+        <div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Sub-Judul (Deskripsi Singkat)</label><textarea id="landingSubtitle" class="inp" rows="2" placeholder="Bagikan produkmu..."></textarea></div>
+        <div class="flex gap-2 mb-4">
+            <div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Teks Tombol CTA</label><input type="text" id="landingCtaText" class="inp" placeholder="Coba Gratis 7 Hari"></div>
+            <div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL Tujuan CTA</label><input type="text" id="landingCtaLink" class="inp" placeholder="https://wa.me/..."></div>
+        </div>
+        <div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">URL Gambar Banner (1:1 / Kotak)</label><input type="text" id="landingBanner" class="inp" placeholder="https://..."></div>
+        <div class="flex gap-2 mb-4">
+            <div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Warna Background (Hex)</label><input type="text" id="landingBgColor" class="inp" placeholder="#e8572a"></div>
+            <div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL Gambar Background (Opsional)</label><input type="text" id="landingBgImage" class="inp" placeholder="https://..."></div>
+        </div>
+        <button onclick="saveLandingSettings()" class="btn-a w-full">Simpan Pengaturan Landing</button>
     </div>
 </div>
 
@@ -76,7 +85,17 @@
         <button onclick="saveGlobalFooter()" class="btn-a w-full">Simpan Footer</button>
     </div>
 </div>
-    
+
+<!-- Modal Monetag Global -->
+<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#111;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+        <h3 class="text-lg font-bold mb-4">Pengaturan Monetag Global</h3>
+        <p class="text-xs text-gray-400 mb-2">Masukkan URL Smartlink Monetag.</p>
+        <input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="https://monetag.com/...">
+        <button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button>
+    </div>
+</div>
+
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -103,6 +122,8 @@
                     loadUsers();
                     loadReports();
                     loadGlobalSettings();
+                    loadFooterSettings();
+                    loadLandingSettings();
                 }
             }).catch((error) => {
                 alert("Error cek admin: " + error.message);
@@ -121,20 +142,67 @@
         });
     }
 
-    // --- GLOBAL SETTINGS ---
+    // --- GLOBAL SETTINGS (MONETAG) ---
     function loadGlobalSettings() {
         db.collection('settings').doc('monetag').onSnapshot((doc) => {
-            if(doc.exists) {
-                document.getElementById('globalMonetagUrl').value = doc.data().url || '';
-            }
+            if(doc.exists) { document.getElementById('globalMonetagUrl').value = doc.data().url || ''; }
         });
     }
     function openMonetagSettings() { document.getElementById('monetagModal').style.display = 'flex'; }
     function closeMonetagSettings() { document.getElementById('monetagModal').style.display = 'none'; }
     function saveGlobalMonetag() {
-        let url = document.getElementById('globalMonetagUrl').value;
-        db.collection('settings').doc('monetag').set({ url: url });
+        db.collection('settings').doc('monetag').set({ url: document.getElementById('globalMonetagUrl').value });
         closeMonetagSettings();
+    }
+
+    // --- LANDING PAGE SETTINGS ---
+    function loadLandingSettings() {
+        db.collection('settings').doc('landingPage').onSnapshot((doc) => {
+            if(doc.exists) {
+                document.getElementById('landingTitle').value = doc.data().hookTitle || '';
+                document.getElementById('landingSubtitle').value = doc.data().hookSubtitle || '';
+                document.getElementById('landingCtaText').value = doc.data().ctaText || '';
+                document.getElementById('landingCtaLink').value = doc.data().ctaLink || '';
+                document.getElementById('landingBanner').value = doc.data().bannerUrl || '';
+                document.getElementById('landingBgColor').value = doc.data().bgColor || '';
+                document.getElementById('landingBgImage').value = doc.data().bgImageUrl || '';
+            }
+        });
+    }
+    function openLandingSettings() { document.getElementById('landingModal').style.display = 'flex'; }
+    function closeLandingSettings() { document.getElementById('landingModal').style.display = 'none'; }
+    function saveLandingSettings() {
+        db.collection('settings').doc('landingPage').set({
+            hookTitle: document.getElementById('landingTitle').value,
+            hookSubtitle: document.getElementById('landingSubtitle').value,
+            ctaText: document.getElementById('landingCtaText').value,
+            ctaLink: document.getElementById('landingCtaLink').value,
+            bannerUrl: document.getElementById('landingBanner').value,
+            bgColor: document.getElementById('landingBgColor').value,
+            bgImageUrl: document.getElementById('landingBgImage').value
+        });
+        closeLandingSettings();
+    }
+
+    // --- FOOTER SETTINGS ---
+    function loadFooterSettings() {
+        db.collection('settings').doc('footer').onSnapshot((doc) => {
+            if(doc.exists) {
+                document.getElementById('footerText').value = doc.data().text || '';
+                document.getElementById('footerImage').value = doc.data().imageUrl || '';
+                document.getElementById('footerLink').value = doc.data().linkUrl || '';
+            }
+        });
+    }
+    function openFooterSettings() { document.getElementById('footerModal').style.display = 'flex'; }
+    function closeFooterSettings() { document.getElementById('footerModal').style.display = 'none'; }
+    function saveGlobalFooter() {
+        db.collection('settings').doc('footer').set({
+            text: document.getElementById('footerText').value,
+            imageUrl: document.getElementById('footerImage').value,
+            linkUrl: document.getElementById('footerLink').value
+        });
+        closeFooterSettings();
     }
 
     // --- MANAJEMEN USER ---
@@ -150,12 +218,10 @@
         let q = document.getElementById('searchUser').value.toLowerCase();
         let filtered = allUsers.filter(u => {
             let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-            let dateStrLower = dateStr.toLowerCase();
-            
             return (u.email && u.email.toLowerCase().includes(q)) || 
                    (u.whatsapp && u.whatsapp.includes(q)) || 
                    (u.status && u.status.toLowerCase().includes(q)) ||
-                   (dateStrLower.includes(q));
+                   (dateStr.toLowerCase().includes(q));
         });
 
         document.getElementById('userCounter').innerText = `Menampilkan ${filtered.length} dari ${allUsers.length} user`;
@@ -189,10 +255,10 @@
                         <i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}
                     </button>
                     <button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1">
-                        <i class="fas fa-coins"></i> Monetag: ${u.monetagEnabled ? 'ON' : 'OFF'}
+                        <i class="fas fa-coins"></i> Monetag
                     </button>
                     <button onclick="toggleAlbumLimit('${u.id}', ${u.albumLimit || 2})" class="btn-g ${u.albumLimit === 5 ? 'text-green-400' : ''}" style="flex:1">
-                        <i class="fas fa-layer-group"></i> Limit: ${u.albumLimit || 2} Album
+                        <i class="fas fa-layer-group"></i> Limit: ${u.albumLimit || 2}
                     </button>
                 </div>
             </div>`;
@@ -200,17 +266,19 @@
         document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
     }
 
-    function toggleAlbumLimit(uid, currentLimit) {
-        // Jika 2, ubah jadi 5. Jika 5, kembalikan ke 2.
-        let newLimit = currentLimit === 2 ? 5 : 2;
-        db.collection('users').doc(uid).update({ albumLimit: newLimit });
-    }
-    
     function toggleSuspend(uid, isCurrentlySuspended) {
         db.collection('users').doc(uid).update({ status: isCurrentlySuspended ? 'active' : 'suspended' });
     }
-    function toggleMonetag(uid, turnOn) {
+    
+    async function toggleMonetag(uid, turnOn) {
         db.collection('users').doc(uid).update({ monetagEnabled: turnOn });
+        const snapshot = await db.collection('albums').where('userId', '==', uid).get();
+        snapshot.forEach(doc => { doc.ref.update({ monetagEnabled: turnOn }); });
+    }
+
+    function toggleAlbumLimit(uid, currentLimit) {
+        let newLimit = currentLimit === 2 ? 5 : 2;
+        db.collection('users').doc(uid).update({ albumLimit: newLimit });
     }
 
     // --- LAPORAN & MODERASI ---
@@ -224,7 +292,6 @@
 
     function renderReports() {
         let q = document.getElementById('searchReport').value.toLowerCase();
-        
         let html = '';
         let filtered = allReports.filter(r => {
             let owner = allUsers.find(u => u.id === r.ownerId);
@@ -253,34 +320,22 @@
                         <h4 class="font-bold text-white">${r.feedTitle || 'Feed Tanpa Judul'}</h4>
                         <span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span>
                     </div>
-                    
                     <div class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></div>
-                    
                     <div class="text-sm text-gray-400 mb-2">Pemilik: 
                         <span class="text-white">${owner ? owner.email : 'Tidak diketahui'}</span> 
                         ${ownerSuspended ? '<span class="text-red-500 text-xs ml-1">(Akun Disuspend)</span>' : ''}
                         ${owner ? `<a href="mailto:${owner.email}" class="ml-2 text-blue-400"><i class="fas fa-envelope"></i></a>` : ''}
                         ${owner && owner.whatsapp ? `<a href="${waLink}" target="_blank" class="ml-1 text-green-400"><i class="fab fa-whatsapp"></i></a>` : ''}
                     </div>
-                    
                     <p class="text-sm text-gray-400 mb-4 bg-[#0a0a0a] p-2 rounded">Alasan: "${r.reason}"</p>
-                    
                     <div class="flex flex-wrap gap-2">
                         <a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6; text-decoration:none;">
                             <i class="fas fa-eye"></i> Tinjau
                         </a>
-                        <button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400">
-                            <i class="fas fa-eye-slash"></i> Tangguhkan Feed
-                        </button>
-                        <button onclick="restoreFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-green-400">
-                            <i class="fas fa-eye"></i> Aktifkan Feed
-                        </button>
-                        <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400">
-                            <i class="fas fa-folder-minus"></i> Tangguhkan Album
-                        </button>
-                        <button onclick="restoreAlbum('${r.albumId}')" class="btn-g text-green-400">
-                            <i class="fas fa-folder-open"></i> Aktifkan Album
-                        </button>
+                        <button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400"><i class="fas fa-eye-slash"></i> Tangguhkan Feed</button>
+                        <button onclick="restoreFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-green-400"><i class="fas fa-eye"></i> Aktifkan Feed</button>
+                        <button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400"><i class="fas fa-folder-minus"></i> Tangguhkan Album</button>
+                        <button onclick="restoreAlbum('${r.albumId}')" class="btn-g text-green-400"><i class="fas fa-folder-open"></i> Aktifkan Album</button>
                         ${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}
                     </div>
                 </div>`;
@@ -296,11 +351,7 @@
         if(doc.exists) {
             let cards = doc.data().cards || [];
             let card = cards.find(c => c.id === feedId);
-            if(card) {
-                card.status = 'suspended';
-                await albumRef.update({ cards: cards });
-                alert('Feed berhasil ditangguhkan!');
-            }
+            if(card) { card.status = 'suspended'; await albumRef.update({ cards: cards }); alert('Feed berhasil ditangguhkan!'); }
         }
     }
 
@@ -311,11 +362,7 @@
         if(doc.exists) {
             let cards = doc.data().cards || [];
             let card = cards.find(c => c.id === feedId);
-            if(card) {
-                card.status = 'active';
-                await albumRef.update({ cards: cards });
-                alert('Feed berhasil diaktifkan kembali!');
-            }
+            if(card) { card.status = 'active'; await albumRef.update({ cards: cards }); alert('Feed berhasil diaktifkan kembali!'); }
         }
     }
 
@@ -335,26 +382,6 @@
         db.collection('reports').doc(rid).update({ status: 'resolved' });
     }
 
-        // --- FOOTTER SETTINGS ---
-    function loadFooterSettings() {
-        db.collection('settings').doc('footer').onSnapshot((doc) => {
-            if(doc.exists) {
-                document.getElementById('footerText').value = doc.data().text || '';
-                document.getElementById('footerImage').value = doc.data().imageUrl || '';
-                document.getElementById('footerLink').value = doc.data().linkUrl || '';
-            }
-        });
-    }
-    function openFooterSettings() { document.getElementById('footerModal').style.display = 'flex'; }
-    function closeFooterSettings() { document.getElementById('footerModal').style.display = 'none'; }
-    function saveGlobalFooter() {
-        let text = document.getElementById('footerText').value;
-        let imageUrl = document.getElementById('footerImage').value;
-        let linkUrl = document.getElementById('footerLink').value;
-        db.collection('settings').doc('footer').set({ text: text, imageUrl: imageUrl, linkUrl: linkUrl });
-        closeFooterSettings();
-    }
-    
     function logout() {
         auth.signOut().then(() => window.location.href = "admin-login.html");
     }
