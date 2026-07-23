@@ -3,52 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Album Feed Editor</title>
+<title>Album Feed Editor - Buat Toko Online Interaktif</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
-    .inp { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; color: #fff; width: 100%; margin-bottom: 12px; outline: none; }
-    .inp:focus { border-color: #e8572a; }
-    .btn-a { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: 600; cursor: pointer; }
+    body { font-family: 'Poppins', sans-serif; background: #060606; color: #f0f0f0; margin: 0; }
+    .inp { background: rgba(255,255,255,0.05); border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px; color: #fff; width: 100%; margin-bottom: 12px; outline: none; transition: all .2s; }
+    .inp:focus { border-color: #e8572a; background: rgba(255,255,255,0.1); }
+    .btn-primary { background: linear-gradient(135deg, #e8572a, #ff7e47); color: #fff; border: none; border-radius: 10px; padding: 14px; width: 100%; font-weight: 600; cursor: pointer; font-size: 16px; transition: transform .2s; }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #333; border-radius: 10px; padding: 14px; width: 100%; font-weight: 600; cursor: pointer; font-size: 16px; }
+    .btn-google { background: #fff; color: #333; border: none; border-radius: 10px; padding: 14px; width: 100%; font-weight: 600; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .landing-left { background-size: cover; background-position: center; position: relative; }
+    .landing-left::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.6); } /* Overlay gelap agar teks terbaca */
+    .landing-content { position: relative; z-index: 10; }
 </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex flex-col md:flex-row min-h-screen">
 
-<div class="w-full max-w-md">
-    <div class="text-center mb-8">
-        <span class="text-4xl">📸</span>
-        <h1 class="text-2xl font-bold mt-2">Album Feed Editor</h1>
-        <p class="text-gray-400 text-sm" id="subTitle">Masuk untuk melanjutkan</p>
+<!-- KIRI: MARKETING / HOOK (Dinamis dari Admin) -->
+<div id="landingLeft" class="landing-left w-full md:w-1/2 flex flex-col justify-center p-8 md:p-16" style="background-color: #e8572a;">
+    <div class="landing-content">
+        <h1 id="hookTitle" class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Buat Toko Online Interaktifmu Sekarang!</h1>
+        <p id="hookSubtitle" class="text-lg text-gray-200 mb-8">Bagikan produkmu dalam bentuk Album Feed yang menarik. Lebih hidup, lebih banyak pembeli.</p>
+        
+        <a id="hookCtaBtn" href="#" class="inline-block bg-white text-black font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-200 transition mb-10">
+            Coba Gratis 7 Hari
+        </a>
+        
+        <div class="mt-8">
+            <img id="hookBanner" src="" alt="Banner" class="rounded-2xl shadow-2xl hidden" style="max-width: 400px; aspect-ratio: 1/1; object-fit: cover; width: 100%;">
+        </div>
     </div>
+</div>
 
-    <!-- Form Register -->
-    <div id="registerForm" style="display:none;">
-        <input type="email" id="regEmail" class="inp" placeholder="Email">
-        <input type="password" id="regPass" class="inp" placeholder="Password (min 6 karakter)">
-        <input type="text" id="regWa" class="inp" placeholder="Nomor WhatsApp (cth: 0812...)" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-        <button onclick="doRegister()" class="btn-a">Daftar Sekarang</button>
-        <p class="text-center text-sm text-gray-400 mt-4">Sudah punya akun? <span class="text-orange-500 cursor-pointer" onclick="toggleForm('login')">Masuk di sini</span></p>
+<!-- KANAN: LOGIN / REGISTER -->
+<div class="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 bg-[#060606]">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8 md:hidden">
+            <span class="text-3xl">📸</span>
+            <h1 class="text-xl font-bold mt-2 text-orange-500">Album Feed Editor</h1>
+        </div>
+
+        <!-- Form Register -->
+        <div id="registerForm" style="display:none;">
+            <h2 class="text-2xl font-bold mb-2">Buat Akun Baru</h2>
+            <p class="text-gray-400 text-sm mb-6">Daftar dan mulai buat album feed pertamamu.</p>
+            <input type="email" id="regEmail" class="inp" placeholder="Email">
+            <input type="password" id="regPass" class="inp" placeholder="Password (min 6 karakter)">
+            <input type="text" id="regWa" class="inp" placeholder="Nomor WhatsApp (cth: 0812...)" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button onclick="doRegister()" class="btn-primary mb-3">Daftar Sekarang</button>
+            <button onclick="doGoogleLogin()" class="btn-google">
+                <i class="fab fa-google"></i> Lanjutkan dengan Google
+            </button>
+            <p class="text-center text-sm text-gray-400 mt-6">Sudah punya akun? <span class="text-orange-500 cursor-pointer font-semibold" onclick="toggleForm('login')">Masuk di sini</span></p>
+        </div>
+
+        <!-- Form Login -->
+        <div id="loginForm">
+            <h2 class="text-2xl font-bold mb-2">Selamat Datang Kembali</h2>
+            <p class="text-gray-400 text-sm mb-6">Masuk untuk mengelola album feedmu.</p>
+            <input type="email" id="loginEmail" class="inp" placeholder="Email">
+            <input type="password" id="loginPass" class="inp" placeholder="Password">
+            <button onclick="doLogin()" class="btn-primary mb-3">Masuk</button>
+            <button onclick="doGoogleLogin()" class="btn-google">
+                <i class="fab fa-google"></i> Lanjutkan dengan Google
+            </button>
+            <p class="text-center text-sm text-gray-400 mt-6">Belum punya akun? <span class="text-orange-500 cursor-pointer font-semibold" onclick="toggleForm('register')">Daftar gratis</span></p>
+        </div>
+
+        <p class="text-center text-xs text-gray-600 mt-10">Admin? <a href="admin-login.html" class="underline">Klik di sini</a></p>
     </div>
-
-    <!-- Form Login -->
-    <div id="loginForm">
-        <input type="email" id="loginEmail" class="inp" placeholder="Email">
-        <input type="password" id="loginPass" class="inp" placeholder="Password">
-        <button onclick="doLogin()" class="btn-a mb-3">Masuk</button>
-        <button onclick="doGoogleLogin()" class="btn-a" style="background:#fff; color:#000;">
-            <i class="fab fa-google mr-2"></i> Masuk dengan Google
-        </button>
-        <p class="text-center text-sm text-gray-400 mt-4">Belum punya akun? <span class="text-orange-500 cursor-pointer" onclick="toggleForm('register')">Daftar di sini</span></p>
-    </div>
-
-    <p class="text-center text-xs text-gray-600 mt-8">Admin? <a href="admin-login.html" class="underline">Klik di sini</a></p>
 </div>
 
 <script>
-    // PASTIKAN MENGGUNAKAN CONFIG FIREBASE ANDA
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
       authDomain: "feed-editor-93db1.firebaseapp.com",
@@ -57,60 +89,68 @@
       messagingSenderId: "249842615247",
       appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // --- LOAD DYNAMIC LANDING PAGE SETTINGS ---
+    db.collection('settings').doc('landingPage').onSnapshot((doc) => {
+        if(doc.exists) {
+            const data = doc.data();
+            if(data.hookTitle) document.getElementById('hookTitle').innerText = data.hookTitle;
+            if(data.hookSubtitle) document.getElementById('hookSubtitle').innerText = data.hookSubtitle;
+            if(data.ctaText) document.getElementById('hookCtaBtn').innerText = data.ctaText;
+            if(data.ctaLink) document.getElementById('hookCtaBtn').href = data.ctaLink;
+            
+            if(data.bannerUrl) {
+                document.getElementById('hookBanner').src = data.bannerUrl;
+                document.getElementById('hookBanner').classList.remove('hidden');
+            } else {
+                document.getElementById('hookBanner').classList.add('hidden');
+            }
+
+            if(data.bgImageUrl) {
+                document.getElementById('landingLeft').style.backgroundImage = `url(${data.bgImageUrl})`;
+                document.getElementById('landingLeft').style.backgroundColor = ''; // Hapus warna solid
+            } else if(data.bgColor) {
+                document.getElementById('landingLeft').style.backgroundImage = 'none';
+                document.getElementById('landingLeft').style.backgroundColor = data.bgColor;
+            }
+        }
+    });
 
     function toggleForm(type) {
         if(type === 'register') {
             document.getElementById('registerForm').style.display = 'block';
             document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('subTitle').innerText = 'Buat akun baru';
         } else {
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('subTitle').innerText = 'Masuk untuk melanjutkan';
         }
     }
 
-    // LOGIKA REGISTER
     function doRegister() {
         const email = document.getElementById('regEmail').value;
         const pass = document.getElementById('regPass').value;
         const wa = document.getElementById('regWa').value;
-
         if(!email || !pass || !wa) { alert('Mohon isi semua kolom'); return; }
 
         auth.createUserWithEmailAndPassword(email, pass)
             .then((userCredential) => {
-                // Simpan data tambahan ke Firestore
                 return db.collection('users').doc(userCredential.user.uid).set({
-                    email: email,
-                    whatsapp: wa,
-                    role: 'user',
-                    status: 'active',
-                    monetagEnabled: false, // Default false, dikontrol admin
+                    email: email, whatsapp: wa, role: 'user', status: 'active', monetagEnabled: false, albumLimit: 2,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
-            .then(() => {
-                alert('Pendaftaran berhasil! Silakan masuk.');
-                toggleForm('login');
-            })
-            .catch((error) => {
-                alert('Error: ' + error.message);
-            });
+            .then(() => { window.location.href = "dashboard.html"; })
+            .catch((error) => { alert('Error: ' + error.message); });
     }
 
-    // LOGIKA LOGIN EMAIL/PASS
     function doLogin() {
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
-
         auth.signInWithEmailAndPassword(email, pass)
             .then((userCredential) => {
-                // Cek apakah akun disuspend admin
                 return db.collection('users').doc(userCredential.user.uid).get();
             })
             .then((doc) => {
@@ -118,15 +158,12 @@
                     alert('Akun Anda telah dinonaktifkan oleh Admin.');
                     auth.signOut();
                 } else {
-                    window.location.href = "dashboard.html"; // Arahkan ke dashboard
+                    window.location.href = "dashboard.html";
                 }
             })
-            .catch((error) => {
-                alert('Login gagal: ' + error.message);
-            });
+            .catch((error) => { alert('Login gagal: ' + error.message); });
     }
 
-    // LOGIKA LOGIN GOOGLE
     function doGoogleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider)
@@ -134,13 +171,8 @@
                 const userRef = db.collection('users').doc(result.user.uid);
                 userRef.get().then((doc) => {
                     if (!doc.exists) {
-                        // Jika user Google baru, simpan datanya
                         userRef.set({
-                            email: result.user.email,
-                            whatsapp: '', // Google tidak menyediakan WA, biarkan kosong
-                            role: 'user',
-                            status: 'active',
-                            monetagEnabled: false,
+                            email: result.user.email, whatsapp: '', role: 'user', status: 'active', monetagEnabled: false, albumLimit: 2,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         }).then(() => window.location.href = "dashboard.html");
                     } else if (doc.data().status === 'suspended') {
@@ -151,12 +183,9 @@
                     }
                 });
             })
-            .catch((error) => {
-                alert('Login Google gagal: ' + error.message);
-            });
+            .catch((error) => { alert('Login Google gagal: ' + error.message); });
     }
 
-    // Jika sudah login, langsung redirect
     auth.onAuthStateChanged((user) => {
         if (user) {
             db.collection('users').doc(user.uid).get().then((doc) => {
