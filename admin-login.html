@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <style>
     body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
     .inp { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; color: #fff; width: 100%; margin-bottom: 12px; outline: none; }
@@ -24,17 +25,14 @@
         <p class="text-gray-400 text-sm">Akses Terbatas. Dobel Keamanan Aktif.</p>
     </div>
 
-    <!-- Tahap 1: Email & Password -->
     <div id="passForm">
         <input type="email" id="adminEmail" class="inp" placeholder="Email Admin">
         <input type="password" id="adminPass" class="inp" placeholder="Password">
         <button onclick="verifyPassword()" class="btn-a">Lanjutkan</button>
     </div>
 
-    <!-- Tahap 2: Input OTP -->
     <div id="otpForm" style="display:none;">
-        <p class="text-sm text-gray-400 mb-2">Kode OTP 6 digit telah dikirim ke email Anda. <br><span class="text-yellow-500">(Simulasi: Lihat kode di bawah)</span></p>
-        <div id="otpDisplay" class="bg-yellow-900 border border-yellow-700 text-yellow-300 text-center text-2xl font-bold p-2 rounded-lg mb-4"></div>
+        <p class="text-sm text-gray-400 mb-4">Kode OTP 6 digit telah dikirim ke email Admin. Cek inbox (atau folder Spam) Anda.</p>
         <input type="text" id="otpInput" class="inp text-center text-2xl tracking-widest" placeholder="------" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         <button onclick="verifyOtp()" class="btn-a">Masuk Dashboard</button>
         <button onclick="resetOtp()" class="text-gray-500 text-sm mt-4 w-full">Kembali</button>
@@ -55,9 +53,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const functions = firebase.app().functions('us-central1');
 
     let pendingAdminUid = null;
-    let generatedOtp = null;
 
     function verifyPassword() {
         const email = document.getElementById('adminEmail').value;
@@ -72,26 +70,23 @@
             .then((doc) => {
                 if (doc.exists && doc.data().role === 'admin') {
                     pendingAdminUid = doc.id;
-                    generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
                     
-                    return db.collection('admin_otps').doc(pendingAdminUid).set({
-                        code: generatedOtp,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    // Panggil Cloud Function untuk Kirim Email OTP
+                    const sendOtp = functions.httpsCallable('sendAdminOtp');
+                    return sendOtp({});
                 } else {
                     auth.signOut();
                     alert('Akses Ditolak! Anda bukan Admin.');
                 }
             })
-            .then(() => {
-                if(generatedOtp) {
+            .then((result) => {
+                if(result && result.data.success) {
                     document.getElementById('passForm').style.display = 'none';
                     document.getElementById('otpForm').style.display = 'block';
-                    document.getElementById('otpDisplay').innerText = generatedOtp;
                 }
             })
             .catch((error) => {
-                alert('Login gagal: ' + error.message);
+                alert('Error: ' + error.message);
             });
     }
 
@@ -103,10 +98,10 @@
             if(doc.exists && doc.data().code === inputOtp) {
                 window.location.href = "admin-dashboard.html";
             } else {
-                alert('Kode OTP salah atau sudah kadaluarsa.');
+                alert('Kode OTP salah.');
             }
         }).catch((error) => {
-            alert('Terjadi error saat verifikasi OTP: ' + error.message);
+            alert('Terjadi error: ' + error.message);
         });
     }
 
@@ -114,7 +109,6 @@
         document.getElementById('otpForm').style.display = 'none';
         document.getElementById('passForm').style.display = 'block';
         document.getElementById('otpInput').value = '';
-        generatedOtp = null;
         auth.signOut();
     }
 </script>
