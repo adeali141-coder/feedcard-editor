@@ -173,12 +173,15 @@
     function toggleSuspend(uid, s) { db.collection('users').doc(uid).update({ status: s ? 'active' : 'suspended' }); }
     async function toggleMonetag(uid, t) { db.collection('users').doc(uid).update({ monetagEnabled: t }); const s = await db.collection('albums').where('userId', '==', uid).get(); s.forEach(d => d.ref.update({ monetagEnabled: t })); }
     function toggleAlbumLimit(uid, c) { db.collection('users').doc(uid).update({ albumLimit: c === 2 ? 5 : 2 }); }
-    function sendCustomNotif(uid) {
-        let msg = prompt("Masukkan pesan notifikasi untuk User ini:");
+     function sendCustomNotif(uid) {
+        let msg = prompt("Masukkan pesan notifikasi untuk User ini:\n(Kosongkan jika ingin mematikan notifikasi)");
         if(msg !== null) {
             db.collection('users').doc(uid).update({ customNotif: msg });
-            alert("Notifikasi terkirim! User akan melihatnya saat masuk Dashboard.");
-        }
+            if(msg === '') {
+                alert("Notifikasi untuk User ini telah dimatikan.");
+            } else {
+                alert("Notifikasi terkirim! User akan melihatnya saat masuk Dashboard.");
+            }
     }
 
     // --- LAPORAN & MODERASI ---
