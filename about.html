@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tentang Aplikasi - Album Feed Editor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    body { font-family: 'DM Sans', sans-serif; background: #060606; color: #f0f0f0; }
+    .container-app { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .content-box { background: #111; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; line-height: 1.7; }
+    .content-box h1, .content-box h2, .content-box h3 { color: #e8572a; margin-top: 24px; margin-bottom: 12px; }
+    .content-box a { color: #3b82f6; text-decoration: underline; }
+    .content-box img { max-width: 100%; border-radius: 12px; margin: 16px 0; }
+    .content-box ul, .content-box ol { margin-left: 20px; margin-bottom: 16px; }
+    .btn-back { background: #1a1a1a; color: #aaa; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 16px; text-decoration: none; display: inline-block; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+<div class="container-app">
+    <a href="dashboard.html" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali ke Dashboard</a>
+    <div id="aboutContent" class="content-box">
+        <p style="text-align:center; color:#666;">Memuat konten...</p>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
+      authDomain: "feed-editor-93db1.firebaseapp.com",
+      projectId: "feed-editor-93db1",
+      storageBucket: "feed-editor-93db1.firebasestorage.app",
+      messagingSenderId: "249842615247",
+      appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    db.collection('settings').doc('aboutApp').onSnapshot((doc) => {
+        if(doc.exists) {
+            document.getElementById('aboutContent').innerHTML = doc.data().html || '<p>Belum ada informasi.</p>';
+        } else {
+            document.getElementById('aboutContent').innerHTML = '<p>Belum ada informasi.</p>';
+        }
+    });
+</script>
+</body>
+</html>
