@@ -138,7 +138,7 @@ function slugify(t){return t.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/
 function getDomain(){return album.customDomain||window.location.hostname;}
 function getBaseUrl(){var d=getDomain();return(d==='localhost'?'http://':'https://')+d+window.location.pathname;}
 var uid=function(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);};
-var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'https://picsum.photos/seed/'+Math.random().toString(36).slice(2,8)+'/800/450',aspectRatio:'16/9'}],title:{text:'Judul Feed',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'Tulis deskripsi menarik di sini...',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'Beli Sekarang',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},likes:Math.floor(Math.random()*50),liked:false,comments:[]};};
+var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'Judul Feed',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'Tulis deskripsi menarik di sini...',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'Beli Sekarang',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},likes:Math.floor(Math.random()*50),liked:false,comments:[]};};
 var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',customDomain:'feed.novavariety.store',gaId:'',firebaseConfig:'',slug:'',monetagEnabled:false,monetagZoneId:'',cards:[defCard(),defCard()]};
 var currentCardIdx=0,shareTargetCard=-1;
 
