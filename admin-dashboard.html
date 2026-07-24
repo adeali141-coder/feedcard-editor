@@ -54,7 +54,12 @@
         <div class="tab-btn" onclick="switchTab('reports')">Laporan Masuk</div>
     </div>
     <div id="tab-users">
-        <input type="text" id="searchUser" class="inp mb-2" placeholder="Cari email, WA, status..." oninput="renderUsers()">
+        <div class="flex gap-2 mb-2">
+            <input type="text" id="searchUser" class="inp" placeholder="Cari email, WA, status..." oninput="renderUsers()">
+            <button onclick="exportUsersToCSV()" class="btn-a flex items-center gap-1" style="white-space: nowrap; flex: none;">
+                <i class="fas fa-file-csv"></i> Export
+            </button>
+        </div>
         <p id="userCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
@@ -175,6 +180,42 @@
         });
         document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
     }
+
+    function exportUsersToCSV() {
+        if(allUsers.length === 0) {
+            alert("Tidak ada data user untuk diekspor.");
+            return;
+        }
+
+        // Header kolom Spreadsheet
+        let csv = "Email,No WhatsApp,Tanggal Daftar,Status,Limit Album,Monetag\n";
+
+        // Isi data dari variabel allUsers
+        allUsers.forEach(u => {
+            let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            let status = u.status || 'active';
+            let limit = u.albumLimit || 2;
+            let monetag = u.monetagEnabled ? 'ON' : 'OFF';
+            
+            // Bersihkan koma dari email/WA agar tidak merusak format CSV
+            let email = u.email ? u.email.replace(/,/g, ';') : '-';
+            let wa = u.whatsapp ? u.whatsapp.replace(/,/g, ';') : '-';
+
+            csv += `${email},${wa},${dateStr},${status},${limit},${monetag}\n`;
+        });
+
+        // Buat file dan download otomatis
+        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        let url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Data_User_NovaVariety.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
     function toggleSuspend(uid, s) { db.collection('users').doc(uid).update({ status: s ? 'active' : 'suspended' }); }
     async function toggleMonetag(uid, t) { db.collection('users').doc(uid).update({ monetagEnabled: t }); const s = await db.collection('albums').where('userId', '==', uid).get(); s.forEach(d => d.ref.update({ monetagEnabled: t })); }
     function toggleAlbumLimit(uid, c) { db.collection('users').doc(uid).update({ albumLimit: c === 2 ? 5 : 2 }); }
