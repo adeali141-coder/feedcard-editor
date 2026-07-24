@@ -9,7 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<!-- Quill WYSIWYG Editor CSS -->
+<!-- Quill WYSIWYG Editor -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <style>
@@ -68,7 +68,7 @@
     </div>
 </div>
 
-<!-- Modal Landing, Footer, Monetag (Disembunyikan untuk hemat space, tetap ada di sini) -->
+<!-- Modal Landing, Footer, Monetag -->
 <div id="landingModal" class="modal-ov" onclick="if(event.target===this)closeLandingSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Landing Page</h3><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Judul Hook</label><input type="text" id="landingTitle" class="inp"></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Sub-Judul</label><textarea id="landingSubtitle" class="inp" rows="2"></textarea></div><div class="flex gap-2 mb-4"><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Teks CTA</label><input type="text" id="landingCtaText" class="inp"></div><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL CTA</label><input type="text" id="landingCtaLink" class="inp"></div></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">URL Banner (Pisahkan koma)</label><textarea id="landingBanner" class="inp" rows="2"></textarea></div><div class="flex gap-2 mb-4"><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Warna BG</label><input type="text" id="landingBgColor" class="inp" placeholder="#e8572a"></div><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL Gambar BG</label><input type="text" id="landingBgImage" class="inp"></div></div><button onclick="saveLandingSettings()" class="btn-a w-full">Simpan</button></div></div>
 
 <div id="footerModal" class="modal-ov" onclick="if(event.target===this)closeFooterSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Footer</h3><input type="text" id="footerText" class="inp mb-3" placeholder="Teks Footer"><input type="text" id="footerImage" class="inp mb-3" placeholder="URL Gambar Footer"><input type="text" id="footerLink" class="inp mb-4" placeholder="URL Link Footer"><button onclick="saveGlobalFooter()" class="btn-a w-full">Simpan</button></div></div>
@@ -103,8 +103,7 @@
                     loadGlobalSettings();
                     loadFooterSettings();
                     loadLandingSettings();
-                    loadAboutApp();
-                    initQuill();
+                    try { initQuill(); } catch(e) { console.error("Quill init error", e); }
                 }
             });
         } else {
@@ -120,12 +119,11 @@
 
     // --- QUILL WYSIWYG ---
     function initQuill() {
+        if(typeof Quill === 'undefined') return;
         quill = new Quill('#quillEditor', {
             theme: 'snow',
             modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['link', 'image'], ['clean']] }
         });
-    }
-    function loadAboutApp() {
         db.collection('settings').doc('aboutApp').onSnapshot((doc) => {
             if(doc.exists && quill) {
                 quill.root.innerHTML = doc.data().html || '';
@@ -135,7 +133,7 @@
     function openAboutEditor() { document.getElementById('aboutModal').style.display = 'flex'; }
     function closeAboutEditor() { document.getElementById('aboutModal').style.display = 'none'; }
     function saveAboutApp() {
-        db.collection('settings').doc('aboutApp').set({ html: quill.root.innerHTML });
+        if(quill) db.collection('settings').doc('aboutApp').set({ html: quill.root.innerHTML });
         closeAboutEditor();
     }
 
@@ -174,15 +172,9 @@
     function toggleSuspend(uid, s) { db.collection('users').doc(uid).update({ status: s ? 'active' : 'suspended' }); }
     async function toggleMonetag(uid, t) { db.collection('users').doc(uid).update({ monetagEnabled: t }); const s = await db.collection('albums').where('userId', '==', uid).get(); s.forEach(d => d.ref.update({ monetagEnabled: t })); }
     function toggleAlbumLimit(uid, c) { db.collection('users').doc(uid).update({ albumLimit: c === 2 ? 5 : 2 }); }
-     function sendCustomNotif(uid) {
-        let msg = prompt("Masukkan pesan notifikasi untuk User ini:\n(Kosongkan jika ingin mematikan notifikasi)");
-        if(msg !== null) {
-            db.collection('users').doc(uid).update({ customNotif: msg });
-            if(msg === '') {
-                alert("Notifikasi untuk User ini telah dimatikan.");
-            } else {
-                alert("Notifikasi terkirim! User akan melihatnya saat masuk Dashboard.");
-            }
+    function sendCustomNotif(uid) {
+        let msg = prompt("Masukkan pesan notifikasi:\n(Kosongkan untuk mematikan)");
+        if(msg !== null) { db.collection('users').doc(uid).update({ customNotif: msg }); alert(msg === '' ? "Notifikasi dimatikan." : "Notifikasi terkirim!"); }
     }
 
     // --- LAPORAN & MODERASI ---
