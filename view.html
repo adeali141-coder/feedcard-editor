@@ -37,7 +37,7 @@
 <div id="appLoad" class="h-screen flex items-center justify-center">
     <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
 </div>
-<div id="feedContainer" class="feed-scroll hidden"></div> 
+<div id="feedContainer" class="feed-scroll hidden"></div>
 <div id="promoFooter" style="position:fixed; bottom:0; left:0; right:0; background:rgba(10,10,10,0.95); backdrop-filter:blur(10px); border-top:1px solid #2a2a2a; padding:10px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px;"></div>
 
 <!-- Modal Komentar -->
@@ -91,7 +91,7 @@
     let currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderState = {}, currentReportFeedIdx = -1;
     let currentAlbumComments = []; 
-    let globalFooterData = null; // <-- TARUH DI SINI
+    let globalFooterData = null;
 
     const urlParams = new URLSearchParams(window.location.search);
     currentAlbumId = urlParams.get('albumId');
@@ -119,15 +119,6 @@
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
             
-            // --- MUAT DAN RENDER FOOTER GLOBAL ---
-            db.collection('settings').doc('footer').get().then((doc) => {
-                if(doc.exists) {
-                    globalFooterData = doc.data();
-                    renderPromoFooter();
-                }
-            });
-            // -------------------------------------
-            
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
@@ -143,6 +134,14 @@
                     if(targetCard) targetCard.scrollIntoView({behavior: 'smooth', block: 'center'});
                 }, 500);
             }
+            
+            db.collection('settings').doc('footer').get().then((doc) => {
+                if(doc.exists) {
+                    globalFooterData = doc.data();
+                    renderPromoFooter();
+                }
+            });
+            
         }).catch((error) => {
             console.error("Error loading album:", error);
             document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Gagal memuat album.<br>' + error.message + '</p>';
@@ -185,6 +184,8 @@
                 bannerIdx++;
             }
             
+            if(c.hideActions === undefined) c.hideActions = false;
+            
             let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
             let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
             let sid = 'slider_'+i;
@@ -206,12 +207,13 @@
                 <div class="feed-card-wrap" id="target-card-${i}"><div style="width:100%;max-width:420px;border-radius:24px;padding:20px;background:${c.bgColor};animation:fadeUp .5s ease ${i*0.1}s both;position:relative">
                     ${sh ? `<div style="position:relative;overflow:hidden;border-radius:16px" id="${sid}"><div class="slider-track" id="track_${sid}">${sh}</div>${vi.length>1?`<button onclick="slideNav('${sid}',-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-left"></i></button><button onclick="slideNav('${sid}',1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer"><i class="fas fa-chevron-right"></i></button><div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px" id="dots_${sid}">${dh}</div>`:''}</div>`:''}
                     
-                    <h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${escH(c.title.text)}</h2>
+                    ${c.title && c.title.text ? `<h2 style="margin-top:16px;line-height:1.2;font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'}">${escH(c.title.text)}</h2>` : ''}
                     ${c.price && c.price.text ? `<p style="margin-top:6px;font-size:${c.price.size}px;color:${c.price.color};font-weight:700">${escH(c.price.text)}</p>` : ''}
-                    <p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${parseDesc(c.desc.text)}</p>
+                    ${c.desc && c.desc.text ? `<p style="margin-top:8px;line-height:1.6;font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line">${parseDesc(c.desc.text)}</p>` : ''}
                     ${ctaHtml}
-                    
-                    if(!c.hideActions) {
+            `;
+            
+            if(!c.hideActions) {
                 html += `
                     <div style="background:#f5f5dc; border-radius:12px; padding:12px; margin-top:20px; display:flex; align-items:center; gap:16px; justify-content: space-between;">
                         <button class="like-btn${c.liked?' liked':''}" id="likeBtn_${i}" onclick="toggleLike(${i})" style="display:flex;align-items:center;gap:6px;font-size:14px;background:none;border:none;color:${c.liked?'#ef4444':'#333'};cursor:pointer;font-weight:600;"><i class="fas fa-heart"></i> <span id="likeCount_${i}">${c.likes||0}</span></button>
@@ -221,6 +223,10 @@
                     </div>
                 `;
             }
+            
+            html += `</div></div>`;
+            activeCardCount++;
+        }
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
         startBannerAutoSlide();
     }
@@ -282,34 +288,12 @@
         var wasLiked = c.liked || false;
         var b = document.getElementById('likeBtn_' + i);
         var ct = document.getElementById('likeCount_' + i);
-
         c.liked = !wasLiked;
-        if (b) {
-            b.classList.toggle('liked', c.liked);
-            b.style.color = c.liked ? '#ef4444' : '#333';
-            b.classList.add('heart-pop');
-            setTimeout(function(){ b.classList.remove('heart-pop'); }, 300);
-        }
-
+        if (b) { b.classList.toggle('liked', c.liked); b.style.color = c.liked ? '#ef4444' : '#333'; b.classList.add('heart-pop'); setTimeout(function(){ b.classList.remove('heart-pop'); }, 300); }
         const incrementInteraction = functions.httpsCallable('incrementInteraction');
-        incrementInteraction({
-            albumId: currentAlbumId,
-            cardIdx: i,
-            type: 'like',
-            isDecrement: wasLiked
-        }).then((result) => {
-            if(result.data.success && ct) {
-                ct.textContent = result.data.newValue;
-                c.likes = result.data.newValue;
-            }
-        }).catch((error) => {
-            c.liked = wasLiked;
-            if (b) {
-                b.classList.toggle('liked', c.liked);
-                b.style.color = c.liked ? '#ef4444' : '#333';
-            }
-            showToast('Gagal menyimpan like');
-        });
+        incrementInteraction({ albumId: currentAlbumId, cardIdx: i, type: 'like', isDecrement: wasLiked })
+        .then((result) => { if(result.data.success && ct) { ct.textContent = result.data.newValue; c.likes = result.data.newValue; } })
+        .catch((error) => { c.liked = wasLiked; if (b) { b.classList.toggle('liked', c.liked); b.style.color = c.liked ? '#ef4444' : '#333'; } showToast('Gagal menyimpan like'); });
     }
 
     function updateCommentCounts() {
@@ -319,14 +303,7 @@
             if(btn) btn.innerText = count;
         }
     }
-    function openCommentModal(i) {
-        commentCardIdx = i; replyTo = null;
-        document.getElementById('commentModalTitle').textContent = 'Komentar';
-        document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || '';
-        document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>';
-        document.getElementById('commentModal').classList.add('show');
-        renderCmts();
-    }
+    function openCommentModal(i) { commentCardIdx = i; replyTo = null; document.getElementById('commentModalTitle').textContent = 'Komentar'; document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || ''; document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>'; document.getElementById('commentModal').classList.add('show'); renderCmts(); }
     function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
     function renderCmts() {
         var el = document.getElementById('commentList');
@@ -338,10 +315,7 @@
             var cm = parents[ci];
             h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p><button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
             let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
-            for (var ri = 0; ri < replies.length; ri++) {
-                var r = replies[ri];
-                h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222"><span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span><p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p></div>`;
-            }
+            for (var ri = 0; ri < replies.length; ri++) { var r = replies[ri]; h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222"><span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span><p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p></div>`; }
             h += `</div>`;
         }
         el.innerHTML = h;
@@ -354,37 +328,21 @@
         localStorage.setItem('acf_userName', a);
         var newCommentId = db.collection('comments').doc().id;
         db.collection('comments').doc(newCommentId).set({ commentId: newCommentId, albumId: currentAlbumId, cardIdx: commentCardIdx, author: a, text: t, parentId: replyTo || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
-        .then(() => {
-            document.getElementById('commentText').value = '';
-            document.getElementById('commentText').placeholder = 'Tulis komentar...';
-            replyTo = null;
-            showToast('Komentar berhasil terkirim!');
-        }).catch((e) => { showToast('Gagal simpan komentar: ' + e.message); });
+        .then(() => { document.getElementById('commentText').value = ''; document.getElementById('commentText').placeholder = 'Tulis komentar...'; replyTo = null; showToast('Komentar berhasil terkirim!'); })
+        .catch((e) => { showToast('Gagal simpan komentar: ' + e.message); });
     }
 
     function openShareModal(cardIdx = -1) {
         let baseUrl = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
         if(cardIdx >= 0) {
             baseUrl += '&card=' + (cardIdx + 1);
-            
             if(currentAlbum.cards[cardIdx]) {
                 let sc = document.getElementById('shareCount_' + cardIdx);
-                if(sc) {
-                    let currentShares = parseInt(sc.innerText) || 0;
-                    sc.innerText = currentShares + 1;
-                }
-
+                if(sc) { let currentShares = parseInt(sc.innerText) || 0; sc.innerText = currentShares + 1; }
                 const incrementInteraction = functions.httpsCallable('incrementInteraction');
-                incrementInteraction({
-                    albumId: currentAlbumId,
-                    cardIdx: cardIdx,
-                    type: 'share',
-                    isDecrement: false
-                }).then((result) => {
-                    if(result.data.success && sc) {
-                        sc.innerText = result.data.newValue;
-                    }
-                }).catch(e => console.error("Gagal track share:", e));
+                incrementInteraction({ albumId: currentAlbumId, cardIdx: cardIdx, type: 'share', isDecrement: false })
+                .then((result) => { if(result.data.success && sc) { sc.innerText = result.data.newValue; } })
+                .catch(e => console.error("Gagal track share:", e));
             }
         }
         document.getElementById('shareLinkInput').value = baseUrl;
@@ -407,34 +365,22 @@
         .catch(e=>showToast('Gagal: '+e.message));
     }
 
-   
-       // FUNGSI RENDER FOOTER PROMOSI
     function renderPromoFooter() {
-        // Cek apakah Admin mematikan footer untuk User ini (defaultnya true/aktif)
         let isFooterEnabled = currentAlbum.footerEnabled !== false;
-        
         if(isFooterEnabled && globalFooterData && (globalFooterData.text || globalFooterData.imageUrl)) {
             let f = globalFooterData;
             let innerHtml = '';
-            
-            if(f.imageUrl) {
-                innerHtml += `<img src="${escA(f.imageUrl)}" style="max-height:30px; max-width:80px; object-fit:contain; border-radius:4px;">`;
-            }
-            if(f.text) {
-                innerHtml += `<span style="font-size:12px; color:#ccc; font-weight:600;">${escH(f.text)}</span>`;
-            }
-            
+            if(f.imageUrl) { innerHtml += `<img src="${escA(f.imageUrl)}" style="max-height:30px; max-width:80px; object-fit:contain; border-radius:4px;">`; }
+            if(f.text) { innerHtml += `<span style="font-size:12px; color:#ccc; font-weight:600;">${escH(f.text)}</span>`; }
             let link = f.linkUrl || '#';
             let footerEl = document.getElementById('promoFooter');
             footerEl.innerHTML = `<a href="${escA(link)}" target="_blank" style="display:flex; align-items:center; gap:8px; text-decoration:none;">${innerHtml}</a>`;
             footerEl.style.display = 'flex';
-            
-            // Tambah padding bawah agar card terakhir tidak tertutup footer
             document.getElementById('feedContainer').style.paddingBottom = '70px';
         }
-    } 
-   
-   function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+    }
+
+    function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 </script>
 </body>
 </html>
