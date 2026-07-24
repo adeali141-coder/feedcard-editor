@@ -18,22 +18,36 @@
     .album-card { background: #111; border: 1px solid #2a2a2a; border-radius: 16px; overflow: hidden; transition: transform .2s, border-color .2s; }
     .album-card:hover { transform: translateY(-4px); border-color: #e8572a; }
     .empty-state { border: 2px dashed #2a2a2a; border-radius: 16px; padding: 40px; text-align: center; color: #666; }
+    .notif-box { background: #fef3c7; color: #1f2937; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; border-left: 4px solid #f59e0b; }
+    .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+    .modal-ct { background: #111; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 24px; }
 </style>
 </head>
 <body class="min-h-screen">
 
 <header class="border-b border-[#1a1a1a] bg-[#0a0a0a] sticky top-0 z-10">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div>
+        <div>
             <h1 class="text-lg font-bold">Dashboard Saya</h1>
         </div>
-        <button onclick="logout()" class="btn-g flex items-center gap-2">
-            <i class="fas fa-right-from-bracket text-xs"></i> Logout
-        </button>
+        <div class="flex gap-2 items-center">
+            <button onclick="openAboutModal()" class="btn-g flex items-center gap-2">
+                <i class="fas fa-info-circle"></i> <span class="hidden sm:inline">Tentang App</span>
+            </button>
+            <button onclick="logout()" class="btn-g flex items-center gap-2">
+                <i class="fas fa-right-from-bracket text-xs"></i> Logout
+            </button>
+        </div>
     </div>
 </header>
 
 <main class="container mx-auto px-4 py-8">
+    <!-- Notifikasi Kustom -->
+    <div id="customNotif" class="notif-box hidden">
+        <span id="notifText"></span>
+        <button onclick="dismissNotif()" class="text-gray-500 hover:text-gray-800 ml-4"><i class="fas fa-times"></i></button>
+    </div>
+
     <div class="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Akun Aktif</p>
@@ -56,7 +70,6 @@
     </div>
 </main>
 
-<!-- LETAKKAN FOOTER DI SINI -->
 <footer style="font-family: 'Poppins', sans-serif; text-align: center; padding: 30px 16px; margin-top: 40px; border-top: 1px solid #1a1a1a;">
     <p style="font-size: 12px; color: #555; margin-bottom: 8px; letter-spacing: 0.5px;">feed.novavariety.store</p>
     <p style="font-size: 12px; color: #888;">
@@ -67,6 +80,14 @@
     </p>
 </footer>
 
+<!-- Modal Tentang Aplikasi -->
+<div id="aboutModal" class="modal-ov" onclick="if(event.target===this)closeAboutModal()">
+    <div class="modal-ct">
+        <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Tentang Aplikasi</h3><button onclick="closeAboutModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
+        <div id="aboutContent" class="text-sm text-gray-300 leading-relaxed"></div>
+    </div>
+</div>
+
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -76,27 +97,26 @@
       messagingSenderId: "249842615247",
       appId: "1:249842615247:web:6ef4a9713bdccc5f5508ba"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
     let currentUser = null;
+    let currentUserData = null;
 
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
             loadUserData(user.uid);
             loadAlbums(user.uid);
+            loadAboutApp();
         } else {
             window.location.href = "login.html";
         }
     });
 
-        let currentUserData = null; // Tampung data user
-
     function loadUserData(uid) {
-        db.collection('users').doc(uid).get().then((doc) => {
+        db.collection('users').doc(uid).onSnapshot((doc) => {
             if (doc.exists) {
                 currentUserData = doc.data();
                 document.getElementById('userEmail').innerText = currentUserData.email;
@@ -106,95 +126,77 @@
                     alert('Akun Anda dinonaktifkan oleh Admin.');
                     logout();
                 }
+
+                // Tampilkan Notifikasi Kustom jika ada
+                if(currentUserData.customNotif) {
+                    document.getElementById('notifText').innerText = currentUserData.customNotif;
+                    document.getElementById('customNotif').classList.remove('hidden');
+                } else {
+                    document.getElementById('customNotif').classList.add('hidden');
+                }
             }
         });
+    }
+
+    function dismissNotif() {
+        document.getElementById('customNotif').classList.add('hidden');
+        // Notif akan muncul lagi saat user login next time, karena tidak dihapus dari database
     }
 
     function loadAlbums(uid) {
         db.collection('albums').where('userId', '==', uid).onSnapshot((snapshot) => {
             const listContainer = document.getElementById('albumList');
             if (snapshot.empty) {
-                listContainer.innerHTML = `
-                    <div class="col-span-full empty-state">
-                        <i class="fas fa-images text-4xl mb-4"></i>
-                        <h4 class="text-lg font-bold text-gray-300 mb-2">Belum ada Album</h4>
-                        <p class="mb-4">Mulai buat Album Feed pertama Anda sekarang!</p>
-                        <button onclick="createNewAlbum()" class="btn-a">+ Buat Album Baru</button>
-                    </div>
-                `;
+                listContainer.innerHTML = `<div class="col-span-full empty-state"><i class="fas fa-images text-4xl mb-4"></i><h4 class="text-lg font-bold text-gray-300 mb-2">Belum ada Album</h4><p class="mb-4">Mulai buat Album Feed pertama Anda sekarang!</p><button onclick="createNewAlbum()" class="btn-a">+ Buat Album Baru</button></div>`;
                 return;
             }
-
             let html = '';
             snapshot.forEach((doc) => {
                 const album = doc.data();
                 const albumId = doc.id;
                 const cardCount = album.cards ? album.cards.length : 0;
                 const ogImg = album.ogImage || (album.cards && album.cards[0] && album.cards[0].images[0] ? album.cards[0].images[0].url : 'https://via.placeholder.com/400x225/111/333?text=No+Image');
-                
-                html += `
-                    <div class="album-card flex flex-col">
-                        <div class="aspect-video bg-[#0a0a0a] overflow-hidden">
-                            <img src="${ogImg}" alt="${album.name}" class="w-full h-full object-cover opacity-90">
-                        </div>
-                        <div class="p-4 flex-1 flex flex-col">
-                            <h4 class="font-bold text-white truncate mb-1">${album.name}</h4>
-                            <p class="text-xs text-gray-500 mb-3"><i class="fas fa-layer-group mr-1"></i> ${cardCount} Feed Card</p>
-                            <div class="flex gap-2 mt-auto">
-                                <button onclick="editAlbum('${albumId}')" class="btn-a flex-1 text-sm" style="padding:8px 12px;">
-                                    <i class="fas fa-pen mr-1"></i> Buka Album
-                                </button>
-                                <button onclick="deleteAlbum('${albumId}', '${album.name.replace(/'/g, "\\'")}')" class="btn-g text-sm text-red-500" style="padding:8px 12px;" title="Hapus Album">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html += `<div class="album-card flex flex-col"><div class="aspect-video bg-[#0a0a0a] overflow-hidden"><img src="${ogImg}" alt="${album.name}" class="w-full h-full object-cover opacity-90"></div><div class="p-4 flex-1 flex flex-col"><h4 class="font-bold text-white truncate mb-1">${album.name}</h4><p class="text-xs text-gray-500 mb-3"><i class="fas fa-layer-group mr-1"></i> ${cardCount} Feed Card</p><div class="flex gap-2 mt-auto"><button onclick="editAlbum('${albumId}')" class="btn-a flex-1 text-sm" style="padding:8px 12px;"><i class="fas fa-pen mr-1"></i> Buka Album</button><button onclick="deleteAlbum('${albumId}', '${album.name.replace(/'/g, "\\'")}')" class="btn-g text-sm text-red-500" style="padding:8px 12px;" title="Hapus Album"><i class="fas fa-trash"></i></button></div></div></div>`;
             });
             listContainer.innerHTML = html;
         });
     }
 
-        function createNewAlbum() {
-        // Cek limit album (default 2, bisa diupgrade admin sampai 5)
+    function createNewAlbum() {
         let limit = currentUserData.albumLimit || 2;
         let currentAlbumCount = document.querySelectorAll('.album-card').length;
-        
         if(currentAlbumCount >= limit) {
             alert('Batas Maksimal! Anda sudah mencapai limit ' + limit + ' Album. Hubungi Admin untuk peningkatan batas.');
             return;
         }
-
         const name = prompt("Masukkan nama album baru:", "Album Feed Saya");
         if (!name) return;
         db.collection('albums').add({
-            name: name,
-            userId: currentUser.uid,
-            status: 'active',
-            bgColor: '#1a1a2e',
-            ogImage: '',
-            gaId: '',
-            gaName: '',
+            name: name, userId: currentUser.uid, status: 'active', bgColor: '#1a1a2e', ogImage: '', gaId: '', gaName: '',
             slug: name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').slice(0,60) || 'album-' + Date.now(),
-            monetagEnabled: false, 
-            cards: [], 
-            banners: [], 
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then((docRef) => {
-            window.location.href = `index.html?albumId=${docRef.id}`;
-        }).catch((error) => {
-            alert("Gagal membuat album: " + error.message);
-        });
+            monetagEnabled: false, cards: [], banners: [], createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then((docRef) => { window.location.href = `index.html?albumId=${docRef.id}`; })
+          .catch((error) => { alert("Gagal membuat album: " + error.message); });
     }
 
     function editAlbum(albumId) { window.location.href = `index.html?albumId=${albumId}`; }
     function deleteAlbum(albumId, albumName) {
-        if (confirm(`Yakin ingin menghapus album "${albumName}"? Semua Feed Card di dalamnya akan hilang.`)) {
+        if (confirm(`Yakin ingin menghapus album "${albumName}"?`)) {
             db.collection('albums').doc(albumId).delete().catch((error) => alert("Gagal menghapus: " + error.message));
         }
     }
     function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
+
+    // --- TENTANG APLIKASI ---
+    function loadAboutApp() {
+        db.collection('settings').doc('aboutApp').onSnapshot((doc) => {
+            if(doc.exists) {
+                document.getElementById('aboutContent').innerHTML = doc.data().html || '<p>Belum ada informasi.</p>';
+            }
+        });
+    }
+    function openAboutModal() { document.getElementById('aboutModal').style.display = 'flex'; }
+    function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
 </script>
 </body>
 </html>
