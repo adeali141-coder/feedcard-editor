@@ -31,9 +31,9 @@
             <h1 class="text-lg font-bold">Dashboard Saya</h1>
         </div>
         <div class="flex gap-2 items-center">
-            <button onclick="openAboutModal()" class="btn-g flex items-center gap-2">
-                <i class="fas fa-info-circle"></i> <span class="hidden sm:inline">Tentang App</span>
-            </button>
+            <a href="about.html" class="btn-g flex items-center gap-2" style="text-decoration:none">
+    <i class="fas fa-info-circle"></i> <span class="hidden sm:inline">Tentang App</span>
+</a>
             <button onclick="logout()" class="btn-g flex items-center gap-2">
                 <i class="fas fa-right-from-bracket text-xs"></i> Logout
             </button>
@@ -80,14 +80,6 @@
     </p>
 </footer>
 
-<!-- Modal Tentang Aplikasi -->
-<div id="aboutModal" class="modal-ov" onclick="if(event.target===this)closeAboutModal()">
-    <div class="modal-ct">
-        <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Tentang Aplikasi</h3><button onclick="closeAboutModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
-        <div id="aboutContent" class="text-sm text-gray-300 leading-relaxed"></div>
-    </div>
-</div>
-
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -109,7 +101,6 @@
             currentUser = user;
             loadUserData(user.uid);
             loadAlbums(user.uid);
-            loadAboutApp();
         } else {
             window.location.href = "login.html";
         }
@@ -187,16 +178,6 @@
     }
     function logout() { auth.signOut().then(() => window.location.href = "login.html"); }
 
-    // --- TENTANG APLIKASI ---
-    function loadAboutApp() {
-        db.collection('settings').doc('aboutApp').onSnapshot((doc) => {
-            if(doc.exists) {
-                document.getElementById('aboutContent').innerHTML = doc.data().html || '<p>Belum ada informasi.</p>';
-            }
-        });
-    }
-    function openAboutModal() { document.getElementById('aboutModal').style.display = 'flex'; }
-    function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
 </script>
 </body>
 </html>
