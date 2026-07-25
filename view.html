@@ -186,11 +186,11 @@
         let t = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let links = [];
         t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (match, p1, p2) => {
-            let linkHtml = `<a href="${p2}" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">${p1}</a>`;
+            let linkHtml = `<a href="${p2}" target="_blank" style="color:#afcdff; text-decoration:underline; font-weight:600;">${p1}</a>`;
             links.push(linkHtml);
             return `___LINK_PLACEHOLDER_${links.length-1}___`;
         });
-        t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#3b82f6; text-decoration:underline; font-weight:600;">$1</a>');
+        t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#afcdff; text-decoration:underline; font-weight:600;">$1</a>');
         t = t.replace(/___LINK_PLACEHOLDER_(\d+)___/g, (match, idx) => links[parseInt(idx)]);
         return t.replace(/\n/g,'<br>');
     }
