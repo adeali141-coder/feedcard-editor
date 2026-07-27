@@ -24,6 +24,10 @@
         --cta-padding: 10px 24px; /* Jarak teks ke garis tombol CTA */
         --footer-font-size: 12px; /* Ukuran Font Footer Melayang */
         --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); /* Stroke Footer */
+        /* ... variabel lainnya ... */
+        --mini-promo-left: 10px; /* Posisi kiri pop-up */
+        --mini-promo-bottom: 60px; /* Posisi bawah pop-up */
+        --mini-promo-size: 60px; /* Ukuran pop-up (kotak 1:1) */
     }
     /* ========================================== */
 
@@ -40,6 +44,11 @@
     .slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:flex-start;}
     
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 100%); pointer-events: none;}
+
+    /* Mini Pop-up Promo */
+    .mini-promo-container { position: absolute; left: var(--mini-promo-left); bottom: var(--mini-promo-bottom); width: var(--mini-promo-size); height: var(--mini-promo-size); z-index: 4; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .mini-promo-container img { width: 100%; height: 100%; object-fit: cover; }
+    .mini-promo-close { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     
     /* Konten Teks (Memanjang ke atas) */
     .feed-content{position:absolute; bottom: var(--content-bottom); left:0; right:0; z-index:2; padding: 0 20px; padding-right: 60px; max-width: 500px; margin: 0 auto; width: 100%; text-shadow: var(--text-stroke); display: flex; flex-direction: column;}
@@ -258,12 +267,28 @@
                     </div>
                 `;
             }
-            html += `</div>`;
+
+                        // Render Mini Promo
+            let miniPromoHtml = '';
+            if (c.miniPromos && c.miniPromos.length > 0) {
+                window.allMiniPromos = window.allMiniPromos || {};
+                window.allMiniPromos[i] = c.miniPromos; // Simpan data ke global
+                miniPromoHtml = `<div class="mini-promo-container" id="miniPromo_${i}">
+                    <button class="mini-promo-close" onclick="closeMiniPromo(${i})"><i class="fas fa-times"></i></button>
+                    <a href="${escA(c.miniPromos[0].link || '#')}" target="_blank" id="miniPromoLink_${i}"><img src="${escA(c.miniPromos[0].img)}" id="miniPromoImg_${i}" /></a>
+                </div>`;
+            }
+            
+            html += miniPromoHtml;
+            html += `</div>`; // Penutup card
             activeCardCount++;
         }
 
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
         startBannerAutoSlide();
+        document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
+        startBannerAutoSlide();
+        observePromos(); // <-- TAMBAHKAN INI
     }
 
     function renderBannerHTML(b, idx) {
@@ -402,6 +427,62 @@
         }
     }
 
+        // --- MINI PROMO ROTATOR ---
+    let miniPromoStates = {}; // { cardIndex: { idx: 0, visible: true } }
+    let miniPromoInterval = null;
+
+    function initMiniPromos() {
+        let containers = document.querySelectorAll('.mini-promo-container');
+        containers.forEach(c => {
+            let id = c.id.split('_')[1];
+            miniPromoStates[id] = { idx: 0, visible: true };
+        });
+        
+        // Jalankan rotator setiap 3 detik
+        if(miniPromoInterval) clearInterval(miniPromoInterval);
+        miniPromoInterval = setInterval(() => {
+            for (let key in miniPromoStates) {
+                if (miniPromoStates[key].visible) {
+                    let el = document.getElementById('miniPromo_' + key);
+                    if (el && window.allMiniPromos[key]) {
+                        let promos = window.allMiniPromos[key];
+                        if (promos.length > 1) {
+                            miniPromoStates[key].idx = (miniPromoStates[key].idx + 1) % promos.length;
+                            let newPromo = promos[miniPromoStates[key].idx];
+                            document.getElementById('miniPromoImg_' + key).src = newPromo.img;
+                            document.getElementById('miniPromoLink_' + key).href = newPromo.link || '#';
+                        }
+                    }
+                }
+            }
+        }, 3000); // 3 detik berganti
+    }
+
+    function closeMiniPromo(idx) {
+        let el = document.getElementById('miniPromo_' + idx);
+        if (el) el.style.display = 'none';
+        if (miniPromoStates[idx]) miniPromoStates[idx].visible = false;
+    }
+
+    // Reset Pop-up saat Card masuk ke layar
+    const promoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                let id = entry.target.id.split('_')[1];
+                if (miniPromoStates[id] && !miniPromoStates[id].visible) {
+                    miniPromoStates[id].visible = true;
+                    let el = document.getElementById('miniPromo_' + id);
+                    if (el) el.style.display = 'block';
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+
+    function observePromos() {
+        document.querySelectorAll('.feed-card-wrap').forEach(card => promoObserver.observe(card));
+        initMiniPromos();
+    }
+    
     function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 </script>
 </body>
