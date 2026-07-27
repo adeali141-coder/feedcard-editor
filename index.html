@@ -138,7 +138,7 @@ function slugify(t){return t.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/
 function getDomain(){return album.customDomain||window.location.hostname;}
 function getBaseUrl(){var d=getDomain();return(d==='localhost'?'http://':'https://')+d+window.location.pathname;}
 var uid=function(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);};
-var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'Judul Feed',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'Tulis deskripsi menarik di sini...',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'Beli Sekarang',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},likes:Math.floor(Math.random()*50),liked:false,comments:[]};};
+var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},miniPromos:[],likes:0,liked:false,comments:[]};};
 var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',customDomain:'feed.novavariety.store',gaId:'',firebaseConfig:'',slug:'',monetagEnabled:false,monetagZoneId:'',cards:[defCard(),defCard()]};
 var currentCardIdx=0,shareTargetCard=-1;
 
@@ -188,6 +188,22 @@ function renderForm(){
   h+=sec('','fa-eye-slash','#a78bfa','Tombol Interaksi',function(){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" '+(c.hideActions?'checked':'')+' onchange="upd(\'hideActions\',this.checked)" style="width:20px;height:20px;cursor:pointer"/> <span style="font-size:13px;color:#ccc">Sembunyikan Like, Komentar, Share, Lapor (Mode Mini-Web)</span></label>';});
     // Menu Video
   h+=sec('','fa-video','#a78bfa','Video Background',function(){return '<input class="inp" style="font-size:12px" value="'+escA(c.videoUrl||'')+'" placeholder="URL Video (MP4 atau Youtube)" onchange="upd(\'videoUrl\',this.value)" /><p style="font-size:10px;color:#666;margin-top:4px">MP4 akan autoplay (Ala TikTok). Youtube butuh klik manual.</p>';});
+  
+    // Menu Mini Promo
+  if(!c.miniPromos) c.miniPromos = [];
+  h+=sec('','fa-bullhorn','#f472b6','Mini Promo (1:1)',function(){
+      var s = '<div id="miniPromoList">';
+      for(var j=0; j<c.miniPromos.length; j++){
+          s += '<div style="border:1px solid #2a2a2a; padding:10px; border-radius:10px; position:relative; margin-bottom:8px;">';
+          s += '<button onclick="removeMiniPromo('+currentCardIdx+','+j+')" style="position:absolute;top:4px;right:4px;color:#f87171;background:none;border:none;cursor:pointer;font-size:12px">X</button>';
+          s += '<input class="inp mb-2" style="font-size:12px" value="'+escA(c.miniPromos[j].img||'')+'" placeholder="URL Gambar 1:1" onchange="updMiniPromo('+currentCardIdx+','+j+',\'img\',this.value)" />';
+          s += '<input class="inp" style="font-size:12px" value="'+escA(c.miniPromos[j].link||'')+'" placeholder="URL Tujuan Link" onchange="updMiniPromo('+currentCardIdx+','+j+',\'link\',this.value)" />';
+          s += '</div>';
+      }
+      s += '<button onclick="addMiniPromo('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Pop-up Promo</button>';
+      return s;
+  });
+  
   h+=sec('','fa-chart-line','#fbbf24','Analitik',function(){return '<input class="inp" style="font-size:12px" value="'+escA(c.analytics.id)+'" placeholder="ID Tracking (G-XXXXXXX)" onchange="updAn(\'id\',this.value)" /><input class="inp" style="font-size:12px;margin-top:8px" value="'+escA(c.analytics.name)+'" placeholder="Nama Analitik" onchange="updAn(\'name\',this.value)" />';});
   h+='</div>';el.innerHTML=h;
 }
@@ -199,6 +215,9 @@ function updP(k,v){if(!album.cards[currentCardIdx].price)album.cards[currentCard
 function updD(k,v){album.cards[currentCardIdx].desc[k]=v;saveLocal();}
 function updC(k,v){album.cards[currentCardIdx].cta[k]=v;saveLocal();renderEditor();}
 function updAn(k,v){album.cards[currentCardIdx].analytics[k]=v;saveLocal();}
+function addMiniPromo(ci){ album.cards[ci].miniPromos.push({img:'', link:''}); saveLocal(); renderEditor(); }
+function removeMiniPromo(ci, idx){ album.cards[ci].miniPromos.splice(idx, 1); saveLocal(); renderEditor(); }
+function updMiniPromo(ci, idx, k, v){ album.cards[ci].miniPromos[idx][k] = v; saveLocal(); }
 
 // ====== SHARE SYSTEM ======
 function openShareModal(cardIdx) {
