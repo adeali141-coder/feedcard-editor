@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
   <div class="flex items-center gap-2 px-4 py-3 border-b shrink-0 overflow-x-auto" style="border-color:#1a1a1a;background:#306930" id="cardSelector"></div>
   <div class="flex-1 overflow-y-auto px-4 py-4 pb-24" id="editorMain"></div>
   <div class="flex items-center gap-3 px-4 py-3 border-t shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
-    <button onclick="addCard()" class="btn-a flex-1 flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Tambah Card</button>
+    <button onclick="" class="btn-a flex-1 flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Tambah Card</button>
     <button onclick="saveToCloud()" class="btn-a flex items-center gap-2" style="background:linear-gradient(135deg,#059669,#34d399);padding:10px 16px" title="Simpan ke Cloud"><i class="fas fa-cloud-arrow-up"></i></button>
     <button onclick="openSettingsModal()" class="btn-g" style="padding:8px 12px" title="Pengaturan"><i class="fas fa-cog"></i></button>
   </div>
@@ -150,9 +150,9 @@ function saveLocal(){try{localStorage.setItem('acf_album',JSON.stringify(album))
 function setFav(v){var el=document.getElementById('dynFavicon'),h=document.getElementById('headerLogo');if(!v)return;if(v.indexOf('http')===0){el.href=v;}else{el.href='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'90\'%3E'+encodeURIComponent(v)+'%3C/text%3E%3C/svg%3E';}if(h){if(v.indexOf('http')===0){h.innerHTML='<img src="'+escA(v)+'" style="height:24px;width:24px;object-fit:contain;border-radius:4px;vertical-align:middle" onerror="this.outerHTML=\'📸\'" />';}else{h.textContent=v;}}}
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
-function addCard(){album.cards.push(defCard());currentCardIdx=album.cards.length-1;saveLocal();renderEditor();showToast('Card ditambahkan');}
+function addCard(){album.cards.unshift(defCard());currentCardIdx=0;saveLocal();renderEditor();showToast('Card ditambahkan di posisi 1');}
 function removeCard(i){if(album.cards.length<=1){showToast('Minimal 1 card');return;}album.cards.splice(i,1);if(currentCardIdx>=album.cards.length)currentCardIdx=album.cards.length-1;saveLocal();renderEditor();}
-function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.splice(i+1,0,c);currentCardIdx=i+1;saveLocal();renderEditor();showToast('Card diduplikasi');}
+function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.unshift(c);currentCardIdx=0;saveLocal();renderEditor();showToast('Card diduplikasi di posisi 1');}
 function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();renderEditor();}
 function selCard(i){currentCardIdx=i;renderEditor();}
 function addImg(ci){album.cards[ci].images.push({url:'',aspectRatio:'16/9'});saveLocal();renderEditor();}
