@@ -144,6 +144,15 @@
         }
     }
 
+    function resetPassword() {
+    const email = prompt("Masukkan email Anda untuk reset password:");
+    if(email) {
+        auth.sendPasswordResetEmail(email)
+            .then(() => { alert('Email reset password telah dikirim! Cek inbox Anda.'); })
+            .catch((error) => { alert('Gagal: ' + error.message); });
+    }
+}
+    
     function doRegister() {
         const email = document.getElementById('regEmail').value;
         const pass = document.getElementById('regPass').value;
