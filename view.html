@@ -9,10 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    let currentUserId = null;
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) currentUserId = user.uid;
-    });
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -29,11 +25,9 @@
         --cta-padding: 5px 18px; /* Jarak teks ke garis tombol CTA */
         --footer-font-size: 12px; /* Ukuran Font Footer Melayang */
         --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); /* Stroke Footer */
-        /* ... variabel lainnya ... */
         --mini-promo-left: 4px; /* Posisi kiri pop-up */
         --mini-promo-bottom: 475px; /* Posisi bawah pop-up */
         --mini-promo-size: 80px; /* Ukuran pop-up (kotak 1:1) */
-         /* ... variabel lainnya ... */
         --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); /* Stroke angka counter */
     }
     /* ========================================== */
@@ -52,15 +46,12 @@
     
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 100%); pointer-events: none;}
 
-    /* Mini Pop-up Promo */
     .mini-promo-container { position: absolute; left: var(--mini-promo-left); bottom: var(--mini-promo-bottom); width: var(--mini-promo-size); height: var(--mini-promo-size); z-index: 4; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .mini-promo-container img { width: 100%; height: 100%; object-fit: cover; }
     .mini-promo-close { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     
-    /* Konten Teks (Memanjang ke atas) */
     .feed-content{position:absolute; bottom: var(--content-bottom); left:0; right:0; z-index:2; padding: 0 20px; padding-right: 60px; max-width: 500px; margin: 0 auto; width: 100%; text-shadow: var(--text-stroke); display: flex; flex-direction: column;}
     
-    /* Tombol Interaksi */
     .feed-actions{position:absolute; right: 10px; bottom: var(--actions-bottom); z-index:3; display: flex; flex-direction: column; gap: 15px; align-items: center; text-shadow: var(--text-stroke);}
     .feed-actions button{color:#fff; background:none; border:none; text-align:center; display:flex; flex-direction:column; align-items:center; font-size:12px; cursor:pointer; font-weight:600;}
     .feed-actions i{font-size: 26px; margin-bottom: 4px; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.9));}
@@ -87,7 +78,6 @@
     .banner-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
     .banner-slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:center;}
     
-    /* Footer Melayang */
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
 </style>
 </head>
@@ -100,13 +90,12 @@
 <div id="feedContainer" class="feed-scroll hidden"></div>
 <div id="promoFooter"></div>
 
-<!-- Modal Komentar, Share, Lapor (Sama seperti sebelumnya) -->
 <div id="commentModal" class="modal-ov" onclick="if(event.target===this)closeCommentModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold" id="commentModalTitle">Komentar</h3><button onclick="closeCommentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div id="commentList" class="space-y-3 mb-4" style="max-height:50vh;overflow-y:auto"></div><div class="border-t pt-3" style="border-color:#222"><div class="flex gap-2 mb-2"><input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" /></div><div class="flex gap-2"><input id="commentText" class="inp flex-1" style="padding:6px 10px" placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter')submitComment()" /><button onclick="submitComment()" class="btn-a" style="padding:6px 14px;width:auto"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Link</label><div class="flex gap-2"><input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly /><button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px;width:auto"><i class="fas fa-copy"></i></button></div></div><div class="space-y-2"><button onclick="shareToFacebook()" class="btn-a flex items-center gap-2" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button><button onclick="shareToWhatsApp()" class="btn-a flex items-center gap-2" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button></div></div></div>
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Laporkan Feed Ini</h3><button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau.</p><textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea><button onclick="submitReport()" class="btn-a">Kirim Laporan</button></div></div>
 
 <script>
-     firebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
       authDomain: "feed-editor-93db1.firebaseapp.com",
       projectId: "feed-editor-93db1",
@@ -117,6 +106,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const functions = firebase.app().functions('us-central1');
+
+    let currentUserId = null;
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) currentUserId = user.uid;
+    });
+
+    const MINI_PROMO_INTERVAL = 3000; // Ubah durasi ganti Mini Promo di sini (milidetik)
 
     let currentAlbum = null, currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderState = {}, currentReportFeedIdx = -1;
@@ -220,7 +216,6 @@
             let sid = 'slider_'+i;
             sliderState[sid] = 0;
             
-            // CAMPURAN VIDEO + GAMBAR
             let slidesArr = [];
             let videoHtml = getVideoHtml(c.videoUrl);
             if(videoHtml) slidesArr.push(videoHtml);
@@ -253,7 +248,6 @@
                 bgHtml = `<div style="position:absolute; inset:0; background:${c.bgColor}; z-index:0;"></div><div class="feed-overlay" style="background: none;"></div>`;
             }
 
-            // URUTAN: CTA -> Judul -> Harga -> Deskripsi
             html += `
                 <div class="feed-card-wrap" id="target-card-${i}" style="background:${c.bgColor};">
                     ${bgHtml}
@@ -276,11 +270,10 @@
                 `;
             }
 
-                        // Render Mini Promo
             let miniPromoHtml = '';
             if (c.miniPromos && c.miniPromos.length > 0) {
                 window.allMiniPromos = window.allMiniPromos || {};
-                window.allMiniPromos[i] = c.miniPromos; // Simpan data ke global
+                window.allMiniPromos[i] = c.miniPromos;
                 miniPromoHtml = `<div class="mini-promo-container" id="miniPromo_${i}">
                     <button class="mini-promo-close" onclick="closeMiniPromo(${i})"><i class="fas fa-times"></i></button>
                     <a href="${escA(c.miniPromos[0].link || '#')}" target="_blank" id="miniPromoLink_${i}"><img src="${escA(c.miniPromos[0].img)}" id="miniPromoImg_${i}" /></a>
@@ -288,15 +281,13 @@
             }
             
             html += miniPromoHtml;
-            html += `</div>`; // Penutup card
+            html += `</div>`;
             activeCardCount++;
         }
 
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
         startBannerAutoSlide();
-        document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
-        startBannerAutoSlide();
-        observePromos(); // <-- TAMBAHKAN INI
+        observePromos();
     }
 
     function renderBannerHTML(b, idx) {
@@ -361,23 +352,27 @@
     }
     function openCommentModal(i) { commentCardIdx = i; replyTo = null; document.getElementById('commentModalTitle').textContent = 'Komentar'; document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || ''; document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>'; document.getElementById('commentModal').classList.add('show'); renderCmts(); }
     function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
+    
     function renderCmts() {
         var el = document.getElementById('commentList');
         let parents = currentAlbumComments.filter(c => c.cardIdx == commentCardIdx && !c.parentId);
         if (!parents.length) { el.innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Belum ada komentar</p>'; document.getElementById('commentModalTitle').textContent = 'Komentar (0)'; return; }
         document.getElementById('commentModalTitle').textContent = 'Komentar (' + parents.length + ')';
         var h = '';
+        let isOwner = currentUserId === currentAlbum.userId;
+        
         for (var ci = 0; ci < parents.length; ci++) {
             var cm = parents[ci];
-            h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p><button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>`;
-            let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
-            for (var ri = 0; ri < replies.length; ri++) { var r = replies[ri]; h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222"><span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span><p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p></div>`; }
-            h += `</div>`;
-                        // Tombol hapus jika yang lihat adalah pemilik album
-            let isOwner = currentUserId === currentAlbum.userId;
             let delBtn = isOwner ? `<button onclick="deleteComment('${cm.commentId}')" style="font-size:11px;color:#f87171;background:none;border:none;cursor:pointer;margin-top:4px;margin-left:10px;"><i class="fas fa-trash"></i></button>` : '';
-            
             h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p><div><button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>${delBtn}</div>`;
+            
+            let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
+            for (var ri = 0; ri < replies.length; ri++) {
+                var r = replies[ri];
+                let delBtnReply = isOwner ? `<button onclick="deleteComment('${r.commentId}')" style="font-size:10px;color:#f87171;background:none;border:none;cursor:pointer;margin-top:4px;margin-left:10px;"><i class="fas fa-trash"></i></button>` : '';
+                h += `<div style="margin-left:32px;margin-top:8px;padding:8px;border-radius:8px;background:#222"><span style="font-size:12px;font-weight:600;color:#22d3ee">${escH(r.author || 'Anonim')}</span><p style="font-size:12px;margin-top:4px;color:#bbb">${escH(r.text)}</p><div><button onclick="setReply('${r.commentId}','${escA(r.author || 'Anonim')}')" style="font-size:10px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>${delBtnReply}</div></div>`;
+            }
+            h += `</div>`;
         }
         el.innerHTML = h;
     }
@@ -387,6 +382,7 @@
             db.collection('comments').doc(commentId).delete()
             .then(() => showToast('Komentar dihapus.'))
             .catch(e => showToast('Gagal hapus: ' + e.message));
+        }
     }
         
     function setReply(commentId, a) { replyTo = commentId; document.getElementById('commentText').placeholder = 'Membalas ' + a + '...'; document.getElementById('commentText').focus(); }
@@ -448,8 +444,7 @@
         }
     }
 
-        // --- MINI PROMO ROTATOR ---
-    let miniPromoStates = {}; // { cardIndex: { idx: 0, visible: true } }
+    let miniPromoStates = {};
     let miniPromoInterval = null;
 
     function initMiniPromos() {
@@ -459,7 +454,6 @@
             miniPromoStates[id] = { idx: 0, visible: true };
         });
         
-        // Jalankan rotator setiap 3 detik
         if(miniPromoInterval) clearInterval(miniPromoInterval);
         miniPromoInterval = setInterval(() => {
             for (let key in miniPromoStates) {
@@ -476,7 +470,7 @@
                     }
                 }
             }
-        }, 3000); // 3 detik berganti
+        }, MINI_PROMO_INTERVAL);
     }
 
     function closeMiniPromo(idx) {
@@ -485,7 +479,6 @@
         if (miniPromoStates[idx]) miniPromoStates[idx].visible = false;
     }
 
-    // Reset Pop-up saat Card masuk ke layar
     const promoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
