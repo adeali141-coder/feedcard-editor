@@ -154,7 +154,7 @@ function removeCard(i){if(album.cards.length<=1){showToast('Minimal 1 card');ret
 function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.unshift(c);currentCardIdx=0;saveLocal();renderEditor();showToast('Card diduplikasi di posisi 1');}
 function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();renderEditor();}
 function selCard(i){currentCardIdx=i;renderEditor();}
-function addImg(ci){album.cards[ci].images.push({url:'',aspectRatio:'16/9'});saveLocal();renderEditor();}
+function addImg(ci){ if(album.cards[ci].images.length >= 15) { showToast('Maksimal 15 media'); return; } album.cards[ci].images.push({url:'', link:''}); saveLocal(); renderEditor(); }
 function remImg(ci,ii){if(album.cards[ci].images.length<=1){showToast('Minimal 1 gambar');return;}album.cards[ci].images.splice(ii,1);saveLocal();renderEditor();}
 
 function renderEditor(){renderSel();renderForm();}
@@ -174,14 +174,39 @@ function renderForm(){
   h+='<button onclick="dupCard('+currentCardIdx+')" class="btn-g" style="padding:4px 8px;font-size:11px"><i class="fas fa-copy"></i></button>';
   h+='<button onclick="if(confirm(\'Hapus?\'))removeCard('+currentCardIdx+')" class="btn-g" style="padding:4px 8px;font-size:11px;color:#f87171"><i class="fas fa-trash"></i></button></div>';
   h+=sec('open','fa-palette','#e8572a','Warna Latar',function(){return '<div class="color-wrap"><input type="color" value="'+c.bgColor+'" onchange="upd(\'bgColor\',this.value)" /><input class="inp" style="flex:1" value="'+c.bgColor+'" onchange="upd(\'bgColor\',this.value)" /></div>';});
-  h+=sec('open','fa-images','#fbbf24','Gambar Slide',function(){var s='';for(var i=0;i<c.images.length;i++){s+='<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';if(c.images.length>1)s+='<button onclick="remImg('+currentCardIdx+','+i+')" style="position:absolute;top:8px;right:8px;color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-xmark"></i></button>';s+='<input class="inp" style="font-size:12px" value="'+escA(c.images[i].url)+'" placeholder="URL gambar..." onchange="updImg('+i+',\'url\',this.value)" />';if(c.images[i].url)s+='<img src="'+escA(c.images[i].url)+'" style="width:100%;height:80px;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\'" />';s+='</div>';}s+='<button onclick="addImg('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Gambar</button>';return s;});
+  h+=sec('open','fa-images','#fbbf24','Media Slide (Gambar/Video)',function(){
+      var s='';
+      for(var i=0;i<c.images.length;i++){
+          s+='<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';
+          if(c.images.length>1)s+='<button onclick="remImg('+currentCardIdx+','+i+')" style="position:absolute;top:8px;right:8px;color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-xmark"></i></button>';
+          s+='<input class="inp" style="font-size:12px" value="'+escA(c.images[i].url)+'" placeholder="URL Gambar / Video (MP4/YT)" onchange="updImg('+i+',\'url\',this.value)" />';
+          
+          // Preview jika sudah ada URL
+          if(c.images[i].url){
+              if(c.images[i].url.match(/\.(mp4|webm)$/) || c.images[i].url.indexOf('youtube') >= 0 || c.images[i].url.indexOf('youtu.be') >= 0) {
+                  s+='<div style="font-size:10px;color:#a78bfa;text-align:center; background:#1a1a1a; padding:4px; border-radius:4px;">Format Video Terdeteksi</div>';
+              } else {
+                  s+='<img src="'+escA(c.images[i].url)+'" style="width:100%;height:80px;object-fit:cover;border-radius:10px" onerror="this.style.display=\'none\'" />';
+              }
+          }
+          
+          s+='<input class="inp" style="font-size:12px" value="'+escA(c.images[i].link||'')+'" placeholder="URL Tujuan Link (Opsional)" onchange="updImg('+i+',\'link\',this.value)" />';
+          s+='</div>';
+      }
+      if(c.images.length < 15) {
+          s+='<button onclick="addImg('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Media</button>';
+      } else {
+          s+='<p style="font-size:10px;color:#666;text-align:center">Maksimal 15 media per Card</p>';
+      }
+      return s;
+  });
   h+=sec('open','fa-heading','#22d3ee','Judul Feed',function(){return '<input class="inp" value="'+escA(c.title.text)+'" placeholder="Judul feed..." onchange="updT(\'text\',this.value)" /><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><select class="sel" style="flex:1" onchange="updT(\'font\',this.value)">'+fntOpt(c.title.font)+'</select><input type="number" class="inp" style="width:70px" value="'+c.title.size+'" min="10" max="60" onchange="updT(\'size\',+this.value)" /><div class="color-wrap"><input type="color" value="'+c.title.color+'" onchange="updT(\'color\',this.value)" /></div><button onclick="updT(\'bold\',!album.cards[currentCardIdx].title.bold)" class="btn-g" style="padding:6px 10px;'+(c.title.bold?'color:#e8572a':'')+'"><i class="fas fa-bold"></i></button></div>';});
   var cp=c.price||{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true};
   h+=sec('open','fa-tag','#4ade80','Harga / Label',function(){return '<input class="inp" value="'+escA(cp.text)+'" placeholder="Rp 150.000 / $29.99 / SOLD OUT" onchange="updP(\'text\',this.value)" /><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><select class="sel" style="flex:1" onchange="updP(\'font\',this.value)">'+fntOpt(cp.font)+'</select><input type="number" class="inp" style="width:70px" value="'+cp.size+'" min="10" max="60" onchange="updP(\'size\',+this.value)" /><div class="color-wrap"><input type="color" value="'+cp.color+'" onchange="updP(\'color\',this.value)" /></div><button onclick="updP(\'bold\',!album.cards[currentCardIdx].price.bold)" class="btn-g" style="padding:6px 10px;'+(cp.bold?'color:#4ade80':'')+'"><i class="fas fa-bold"></i></button></div>';});
   h+=sec('','fa-align-left','#4ade80','Deskripsi',function(){return '<textarea class="inp" style="height:100px;resize:none;white-space:pre-wrap" placeholder="Deskripsi... (Enter untuk baris baru)" onchange="updD(\'text\',this.value)">'+escH(c.desc.text)+'</textarea><p style="font-size:10px;color:#666;margin-top:4px">Tekan Enter untuk baris baru. Sisipkan link: [Teks Link](https://url.com) atau paste langsung link Anda.</p><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><select class="sel" style="flex:1" onchange="updD(\'font\',this.value)">'+fntOpt(c.desc.font)+'</select><input type="number" class="inp" style="width:70px" value="'+c.desc.size+'" min="10" max="40" onchange="updD(\'size\',+this.value)" /><div class="color-wrap"><input type="color" value="'+c.desc.color+'" onchange="updD(\'color\',this.value)" /></div></div>';});
   h+=sec('','fa-arrow-pointer','#f472b6','Tombol CTA',function(){return '<input class="inp" value="'+escA(c.cta.text)+'" placeholder="Teks tombol (bisa emoji)..." onchange="updC(\'text\',this.value)" /><input class="inp" style="font-size:12px;margin-top:8px" value="'+escA(c.cta.url)+'" placeholder="URL tujuan..." onchange="updC(\'url\',this.value)" /><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><div class="color-wrap"><span style="font-size:10px;color:#888">Latar</span><input type="color" value="'+c.cta.bgColor+'" onchange="updC(\'bgColor\',this.value)" /></div><div class="color-wrap"><span style="font-size:10px;color:#888">Teks</span><input type="color" value="'+c.cta.textColor+'" onchange="updC(\'textColor\',this.value)" /></div><div style="flex:1"><span style="font-size:10px;color:#888">Radius</span><input type="range" min="0" max="50" value="'+c.cta.radius+'" style="width:100%" onchange="updC(\'radius\',+this.value)" /></div></div><div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;margin-top:8px"><p style="font-size:10px;color:#888;margin-bottom:8px">Preview:</p><button style="background:'+c.cta.bgColor+';color:'+c.cta.textColor+';border-radius:'+c.cta.radius+'px;padding:10px 24px;font-size:14px;font-weight:600;border:none;cursor:pointer">'+escH(c.cta.text)+'</button></div>';});
   h+=sec('','fa-eye-slash','#a78bfa','Tombol Interaksi',function(){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" '+(c.hideActions?'checked':'')+' onchange="upd(\'hideActions\',this.checked)" style="width:20px;height:20px;cursor:pointer"/> <span style="font-size:13px;color:#ccc">Sembunyikan Like, Komentar, Share, Lapor (Mode Mini-Web)</span></label>';});
-  h+=sec('','fa-video','#a78bfa','Video Background',function(){return '<input class="inp" style="font-size:12px" value="'+escA(c.videoUrl||'')+'" placeholder="URL Video (MP4 atau Youtube)" onchange="upd(\'videoUrl\',this.value)" /><p style="font-size:10px;color:#666;margin-top:4px">MP4 akan autoplay (Ala TikTok). Youtube butuh klik manual.</p>';});
+  
   
   if(!c.miniPromos) c.miniPromos = [];
   h+=sec('','fa-bullhorn','#f472b6','Mini Promo (1:1)',function(){
