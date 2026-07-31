@@ -40,8 +40,8 @@
     .feed-card-wrap{scroll-snap-align: start; min-height: var(--card-height); width: 100vw; position: relative; display: flex; flex-direction: column; overflow: hidden; border-bottom: 20px solid #000;}
     
     .feed-bg-slider{position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;}
-    /* DIPERBAIKI: Hapus position absolute agar slider track berfungsi normal */
-    .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{width:100%; height:100%; object-fit:cover; object-position: top center; display:block;}
+    /* pointer-events:none agar iframe/video tidak menghalangi geser slider */
+    .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{width:100%; height:100%; object-fit:cover; object-position: top center; display:block; pointer-events: none;}
     .slider-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
     .slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:flex-start;}
     
@@ -61,7 +61,6 @@
     
     .slider-nav-btn{position:absolute; top:14vh; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:4; border:none;}
     
-    /* DIPERBAIKI: Hapus duplikasi CSS, titik dot jelas warna oranye */
     .slider-dots-top{position:absolute; top:2vh; left:50%; transform:translateX(-50%); z-index:4; display:flex; gap:6px;}
     .slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);transition:all .3s;cursor:pointer;}.slider-dot.active{background:#e8572a;transform:scale(1.5)}
 
@@ -115,7 +114,29 @@
         if (user) currentUserId = user.uid;
     });
 
-    const MINI_PROMO_INTERVAL = 3000; // Ubah durasi ganti Mini Promo di sini (milidetik)
+    const MINI_PROMO_INTERVAL = 3000; 
+
+    // --- SMART VIDEO PLAY/PAUSE OBSERVER (Dipindah ke atas agar berfungsi saat load pertama) ---
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            let card = entry.target;
+            if (entry.isIntersecting) {
+                let iframes = card.querySelectorAll('iframe[data-src]');
+                iframes.forEach(v => { if(!v.src) v.src = v.dataset.src; });
+                let videos = card.querySelectorAll('video[data-src]');
+                videos.forEach(v => { if(!v.src) v.src = v.dataset.src; v.play().catch(()=>{}); });
+            } else {
+                let iframes = card.querySelectorAll('iframe');
+                iframes.forEach(v => { v.src = ''; });
+                let videos = card.querySelectorAll('video');
+                videos.forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
+            }
+        });
+    }, { threshold: 0.6 });
+
+    function observeVideos() {
+        document.querySelectorAll('.feed-card-wrap').forEach(card => videoObserver.observe(card));
+    }
 
     let currentAlbum = null, currentAlbumId = null;
     let commentCardIdx = -1, replyTo = null, sliderState = {}, currentReportFeedIdx = -1;
@@ -204,7 +225,6 @@
             let sid = 'slider_'+i;
             sliderState[sid] = 0;
             
-            // CAMPURAN VIDEO + GAMBAR + LINK
             let vi = c.images.filter(img => img.url);
             if(c.videoUrl) vi.unshift({url: c.videoUrl, link: ''});
             
@@ -222,7 +242,8 @@
                         }
                         if (u.hostname.indexOf('youtu.be') >= 0) vid = u.pathname.slice(1);
                     } catch(e) {}
-                    if(vid) mediaHtml = `<iframe data-src="https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}&controls=0&modestbranding=1&playsinline=1" src="" style="width:100%;height:100%;border:none;object-fit:cover;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                    // Ditambahkan mute=1 agar diizinkan autoplay oleh browser
+                    if(vid) mediaHtml = `<iframe data-src="https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&loop=1&playlist=${vid}&controls=0&modestbranding=1&playsinline=1" src="" style="width:100%;height:100%;border:none;object-fit:cover;" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                 } 
                 else if (url.indexOf('screenpal.com/player/') >= 0) {
                     mediaHtml = `<iframe data-src="${escA(url)}" src="" style="width:100%;height:100%;border:none;object-fit:cover;" allowfullscreen="true" scrolling="no"></iframe>`;
@@ -259,7 +280,7 @@
                           ${slidesArr.length > 1 ? `
                             <button onclick="slideNav('${sid}',-1)" class="slider-nav-btn" style="left:8px;"><i class="fas fa-chevron-left"></i></button>
                             <button onclick="slideNav('${sid}',1)" class="slider-nav-btn" style="right:8px;"><i class="fas fa-chevron-right"></i></button>
-                            <div class="slider-dots-top">${dh}</div>
+                            <div class="slider-dots-top" id="dots_${sid}">${dh}</div>
                           ` : ''}`;
             } else {
                 bgHtml = `<div style="position:absolute; inset:0; background:${c.bgColor}; z-index:0;"></div><div class="feed-overlay" style="background: none;"></div>`;
@@ -343,7 +364,26 @@
         }, 1000);
     }
 
-    function goSlide(sid,idx){var tr=document.getElementById('track_'+sid),dc=document.querySelectorAll('#'+sid+' .slider-dot');if(!tr)return;var total=tr.children.length;if(idx<0)idx=total-1;if(idx>=total)idx=0;sliderState[sid]=idx;tr.style.transform='translateX(-'+(idx*100)+'%)';if(dc){for(var i=0;i<dc.length;i++){if(i===idx)dc[i].classList.add('active');else dc[i].classList.remove('active');}}}
+    // DIPERBAIKI: QuerySelector titik dot agar targetnya akurat
+    function goSlide(sid,idx){
+        var tr=document.getElementById('track_'+sid);
+        if(!tr) return;
+        var total=tr.children.length;
+        if(idx<0) idx=total-1;
+        if(idx>=total) idx=0;
+        sliderState[sid]=idx;
+        tr.style.transform='translateX(-'+(idx*100)+'%)';
+        
+        var dotsEl = document.getElementById('dots_'+sid);
+        if(dotsEl) {
+            var dc = dotsEl.children;
+            for(var i=0;i<dc.length;i++){
+                if(i===idx) dc[i].classList.add('active');
+                else dc[i].classList.remove('active');
+            }
+        }
+    }
+    
     function slideNav(sid,dir){goSlide(sid,(sliderState[sid]||0)+dir);}
     document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
     document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
@@ -513,28 +553,6 @@
     function observePromos() {
         document.querySelectorAll('.feed-card-wrap').forEach(card => promoObserver.observe(card));
         initMiniPromos();
-    }
-        
-    // --- SMART VIDEO PLAY/PAUSE OBSERVER ---
-    const videoObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            let card = entry.target;
-            if (entry.isIntersecting) {
-                let iframes = card.querySelectorAll('iframe[data-src]');
-                iframes.forEach(v => { if(!v.src) v.src = v.dataset.src; });
-                let videos = card.querySelectorAll('video[data-src]');
-                videos.forEach(v => { if(!v.src) v.src = v.dataset.src; v.play().catch(()=>{}); });
-            } else {
-                let iframes = card.querySelectorAll('iframe');
-                iframes.forEach(v => { v.src = ''; });
-                let videos = card.querySelectorAll('video');
-                videos.forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
-            }
-        });
-    }, { threshold: 0.6 });
-
-    function observeVideos() {
-        document.querySelectorAll('.feed-card-wrap').forEach(card => videoObserver.observe(card));
     }
     
     function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
