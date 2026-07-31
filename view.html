@@ -40,9 +40,10 @@
     .feed-card-wrap{scroll-snap-align: start; min-height: var(--card-height); width: 100vw; position: relative; display: flex; flex-direction: column; overflow: hidden; border-bottom: 20px solid #000;}
     
     .feed-bg-slider{position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;}
-    .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{width:100%; height:100%; object-fit:cover; object-position: top center; display:block; pointer-events: none;}
+    /* DIPERBAIKI: Tambahkan position absolute & top 0 agar video nempel ke atas kontainer tanpa space kosong */
+    .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{width:100%; height:100%; object-fit:cover; object-position: top center; display:block; position:absolute; top:0; left:0; border:none; margin:0; padding:0;}
     .slider-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
-    .slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:flex-start;}
+    .slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:flex-start; position:relative;}
     
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 100%); pointer-events: none;}
 
@@ -115,12 +116,11 @@
 
     const MINI_PROMO_INTERVAL = 3000; 
 
-    // --- SMART VIDEO PLAY/PAUSE OBSERVER (Diperbaiki) ---
+    // --- SMART VIDEO PLAY/PAUSE OBSERVER ---
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             let card = entry.target;
             if (entry.isIntersecting) {
-                // Card masuk layar: Load & Play
                 let iframes = card.querySelectorAll('iframe[data-src]');
                 iframes.forEach(v => { 
                     if(!v.getAttribute('src')) v.setAttribute('src', v.dataset.src); 
@@ -133,7 +133,6 @@
                     }
                 });
             } else {
-                // Card keluar layar: Stop & Bersihkan
                 let iframes = card.querySelectorAll('iframe');
                 iframes.forEach(v => { 
                     if(v.getAttribute('src')) v.removeAttribute('src'); 
@@ -146,7 +145,7 @@
                 });
             }
         });
-    }, { threshold: 0.3 }); // Diturunkan ke 30% agar cepat terdeteksi di layar
+    }, { threshold: 0.3 });
 
     function observeVideos() {
         document.querySelectorAll('.feed-card-wrap').forEach(card => videoObserver.observe(card));
