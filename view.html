@@ -249,14 +249,18 @@
             let sid = 'slider_'+i;
             sliderState[sid] = 0;
             
-            // CAMPURAN VIDEO + GAMBAR + LINK
+                        // CAMPURAN VIDEO + GAMBAR + LINK
             let vi = c.images.filter(img => img.url);
             if(c.videoUrl) vi.unshift({url: c.videoUrl, link: ''});
             
             let sh = vi.map((img, idx) => {
                 let mediaHtml = '';
                 let url = img.url;
-                let styleFix = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:cover; object-position:top center;";
+                
+                // Style untuk Video (Cover / memotong agar fullscreen)
+                let styleCover = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:cover; object-position:top center;";
+                // Style untuk Gambar (Contain / utuh tidak terpotong)
+                let styleContain = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:contain; object-position:top center;";
                 
                 if (url.indexOf('youtube.com') >= 0 || url.indexOf('youtu.be') >= 0) {
                     let vid = '';
@@ -268,17 +272,17 @@
                         }
                         if (u.hostname.indexOf('youtu.be') >= 0) vid = u.pathname.slice(1);
                     } catch(e) {}
-                    // Diubah jadi autoplay=0 & controls=1 agar bisa diklik manual
-                    if(vid) mediaHtml = `<iframe data-src="https://www.youtube.com/embed/${vid}?autoplay=0&loop=1&playlist=${vid}&controls=1&modestbranding=1&playsinline=1" src="" style="${styleFix}" allow="encrypted-media" allowfullscreen></iframe>`;
+                    if(vid) mediaHtml = `<iframe data-src="https://www.youtube.com/embed/${vid}?autoplay=0&loop=1&playlist=${vid}&controls=1&modestbranding=1&playsinline=1" src="" style="${styleCover}" allow="encrypted-media" allowfullscreen></iframe>`;
                 } 
                 else if (url.indexOf('screenpal.com/player/') >= 0) {
-                    mediaHtml = `<iframe data-src="${escA(url)}" src="" style="${styleFix}" allowfullscreen="true" scrolling="no"></iframe>`;
+                    mediaHtml = `<iframe data-src="${escA(url)}" src="" style="${styleCover}" allowfullscreen="true" scrolling="no"></iframe>`;
                 } 
                 else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
-                    mediaHtml = `<video data-src="${escA(url)}" src="" loop muted playsinline style="${styleFix}"></video>`;
+                    mediaHtml = `<video data-src="${escA(url)}" src="" loop muted playsinline style="${styleCover}"></video>`;
                 } 
                 else {
-                    mediaHtml = `<img src="${escA(url)}" loading="lazy" style="${styleFix}" />`;
+                    // Gambar menggunakan styleContain agar tidak terpotong
+                    mediaHtml = `<img src="${escA(url)}" loading="lazy" style="${styleContain}" />`;
                 }
                 
                 if (img.link) {
@@ -288,7 +292,7 @@
             }).join('');
 
             let dh = vi.map((s, idx) => `<div class="slider-dot${idx===0?' active':''}" onclick="goSlide('${sid}',${idx})"></div>`).join('');
-            let slidesArr = vi;  
+            let slidesArr = vi;
             
             let ctaHtml = '';
             if(c.cta && c.cta.text) {
