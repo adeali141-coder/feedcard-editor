@@ -39,7 +39,6 @@
     .feed-scroll{scroll-snap-type: y mandatory; overflow-y:scroll; height:95vh; background:#000;}
     .feed-card-wrap{scroll-snap-align: start; min-height: var(--card-height); width: 100vw; position: relative; display: flex; flex-direction: column; overflow: hidden; border-bottom: 20px solid #000; padding: 0; margin: 0;}
     
-    /* DIPERBAIKI: Paksa kontainer video nempel 100% ke atas tanpa space */
     .feed-bg-slider{position:absolute; top:0 !important; left:0 !important; width:100%; height:100%; z-index:0; margin:0 !important; padding:0 !important;}
     .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{
         width:100% !important; 
@@ -76,6 +75,11 @@
     .slider-dots-top{position:absolute; top:2vh; left:50%; transform:translateX(-50%); z-index:4; display:flex; gap:6px;}
     .slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);transition:all .3s;cursor:pointer;}.slider-dot.active{background:#e8572a;transform:scale(1.5)}
 
+    /* FITUR SEE MORE */
+    .desc-clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .desc-expanded { max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .see-more-btn { display: none; color: #fff; font-weight: 600; cursor: pointer; margin-top: 4px; text-shadow: var(--text-stroke); }
+
     @keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
     .heart-pop{animation:heartPop .3s ease}
     
@@ -87,16 +91,11 @@
     .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
     
-        /* DIPERBAIKI: Tinggi banner menyesuaikan gambar (tidak dipaksa 100vh) */
+    /* DIPERBAIKI: Tinggi banner menyesuaikan gambar (tidak dipaksa 100vh) */
     .banner-wrap{width: 100vw; position: relative; scroll-snap-align: start; overflow: hidden; display:flex; justify-content:center; align-items:center; padding: 16px 0; background: #000;}
     .banner-wrap img{max-width:90%; max-height: 30vh; object-fit:contain; border-radius: 8px;}
     .banner-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
     .banner-slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:center;}
-    
-    /* FITUR SEE MORE */
-    .desc-clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
-    .desc-expanded { max-height: 50vh; overflow-y: auto; }
-    .see-more-btn { display: none; color: #fff; font-weight: 600; cursor: pointer; margin-top: 4px; text-shadow: var(--text-stroke); }
     
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
 </style>
@@ -255,17 +254,14 @@
             let sid = 'slider_'+i;
             sliderState[sid] = 0;
             
-                        // CAMPURAN VIDEO + GAMBAR + LINK
+            // CAMPURAN VIDEO + GAMBAR + LINK
             let vi = c.images.filter(img => img.url);
             if(c.videoUrl) vi.unshift({url: c.videoUrl, link: ''});
             
             let sh = vi.map((img, idx) => {
                 let mediaHtml = '';
                 let url = img.url;
-                
-                // Style untuk Video (Cover / memotong agar fullscreen)
                 let styleCover = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:cover; object-position:top center;";
-                // Style untuk Gambar (Contain / utuh tidak terpotong)
                 let styleContain = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:contain; object-position:top center;";
                 
                 if (url.indexOf('youtube.com') >= 0 || url.indexOf('youtu.be') >= 0) {
@@ -287,7 +283,6 @@
                     mediaHtml = `<video data-src="${escA(url)}" src="" loop muted playsinline style="${styleCover}"></video>`;
                 } 
                 else {
-                    // Gambar menggunakan styleContain agar tidak terpotong
                     mediaHtml = `<img src="${escA(url)}" loading="lazy" style="${styleContain}" />`;
                 }
                 
@@ -298,7 +293,7 @@
             }).join('');
 
             let dh = vi.map((s, idx) => `<div class="slider-dot${idx===0?' active':''}" onclick="goSlide('${sid}',${idx})"></div>`).join('');
-            let slidesArr = vi;
+            let slidesArr = vi; 
             
             let ctaHtml = '';
             if(c.cta && c.cta.text) {
@@ -329,7 +324,10 @@
                         ${ctaHtml}
                         ${c.title && c.title.text ? `<h2 style="line-height:var(--title-line-height);font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'};margin-bottom:4px;">${escH(c.title.text)}</h2>` : ''}
                         ${c.price && c.price.text ? `<p style="font-size:${c.price.size}px;color:${c.price.color};font-weight:700;margin-bottom:8px;">${escH(c.price.text)}</p>` : ''}
-                        ${c.desc && c.desc.text ? `<p style="line-height:var(--desc-line-height);font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line;margin-bottom:8px;">${parseDesc(c.desc.text)}</p>` : ''}
+                        ${c.desc && c.desc.text ? `
+                            <p id="desc_${i}" class="desc-clamped" style="line-height:var(--desc-line-height);font-family:${df};font-size:${c.desc.size}px;color:${c.desc.color};white-space:pre-line;margin-bottom:4px;">${parseDesc(c.desc.text)}</p>
+                            <span class="see-more-btn" id="seeMore_${i}" onclick="toggleDesc(${i})">... See more</span>
+                        ` : ''}
                     </div>
             `;
             
@@ -363,6 +361,7 @@
         startBannerAutoSlide();
         observePromos();
         observeVideos();
+        checkLongDescriptions();
     }
 
     function renderBannerHTML(b, idx) {
@@ -589,10 +588,20 @@
         document.querySelectorAll('.feed-card-wrap').forEach(card => promoObserver.observe(card));
         initMiniPromos();
     }
-    
-    function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 
-        // FITUR SEE MORE / SEE LESS
+    // FITUR SEE MORE / SEE LESS
+    function checkLongDescriptions() {
+        setTimeout(() => {
+            document.querySelectorAll('.desc-clamped').forEach(el => {
+                let id = el.id.split('_')[1];
+                let btn = document.getElementById('seeMore_' + id);
+                if (el.scrollHeight > el.clientHeight + 5) {
+                    if(btn) btn.style.display = 'inline-block';
+                }
+            });
+        }, 200);
+    }
+
     function toggleDesc(idx) {
         let desc = document.getElementById('desc_' + idx);
         let btn = document.getElementById('seeMore_' + idx);
@@ -607,6 +616,7 @@
         }
     }
     
+    function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 </script>
 </body>
 </html>
