@@ -87,10 +87,16 @@
     .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
     
-    .banner-wrap{min-height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; overflow: hidden; display:flex; justify-content:center; align-items:center;}
-    .banner-wrap img{max-width:100%; max-height:100vh; object-fit:contain;}
+        /* DIPERBAIKI: Tinggi banner menyesuaikan gambar (tidak dipaksa 100vh) */
+    .banner-wrap{width: 100vw; position: relative; scroll-snap-align: start; overflow: hidden; display:flex; justify-content:center; align-items:center; padding: 16px 0; background: #000;}
+    .banner-wrap img{max-width:90%; max-height: 30vh; object-fit:contain; border-radius: 8px;}
     .banner-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
     .banner-slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:center;}
+    
+    /* FITUR SEE MORE */
+    .desc-clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .desc-expanded { max-height: 50vh; overflow-y: auto; }
+    .see-more-btn { display: none; color: #fff; font-weight: 600; cursor: pointer; margin-top: 4px; text-shadow: var(--text-stroke); }
     
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
 </style>
@@ -585,6 +591,22 @@
     }
     
     function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+
+        // FITUR SEE MORE / SEE LESS
+    function toggleDesc(idx) {
+        let desc = document.getElementById('desc_' + idx);
+        let btn = document.getElementById('seeMore_' + idx);
+        if (desc.classList.contains('desc-clamped')) {
+            desc.classList.remove('desc-clamped');
+            desc.classList.add('desc-expanded');
+            btn.innerText = 'See less';
+        } else {
+            desc.classList.remove('desc-expanded');
+            desc.classList.add('desc-clamped');
+            btn.innerText = '... See more';
+        }
+    }
+    
 </script>
 </body>
 </html>
