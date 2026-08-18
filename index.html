@@ -121,11 +121,6 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
       <div><label class="text-xs text-gray-400 mb-1 block">OG Image Album (URL Gambar Default)</label><input id="settingsOGImage" class="inp" placeholder="https://..." /></div>
       <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID (G-XXXX)</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
       
-      <div style="border-top:1px solid #2a2a2a;padding-top:16px;margin-top:8px">
-        <p style="font-size:13px;font-weight:600;margin-bottom:12px"><i class="fas fa-images" style="color:#fbbf24;margin-right:6px"></i>Grup Sliding Banner (1000x300)</p>
-        <div id="bannerEditorContainer"></div>
-      </div>
-      
       <button onclick="saveSettings()" class="btn-a w-full">Simpan Pengaturan</button>
     </div>
   </div>
@@ -137,7 +132,7 @@ function slugify(t){return t.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/
 function getDomain(){return album.customDomain||window.location.hostname;}
 function getBaseUrl(){var d=getDomain();return(d==='localhost'?'http://':'https://')+d+window.location.pathname;}
 var uid=function(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);};
-var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},miniPromos:[],likes:0,liked:false,comments:[]};};
+var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},miniPromos:[],miniPromoRatio:'1:1',miniPromoTime:3,likes:0,liked:false,comments:[]};};
 var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',customDomain:'feed.novavariety.store',gaId:'',firebaseConfig:'',slug:'',monetagEnabled:false,monetagZoneId:'',cards:[defCard(),defCard()]};
 var currentCardIdx=0,shareTargetCard=-1;
 
@@ -208,17 +203,29 @@ function renderForm(){
   h+=sec('','fa-eye-slash','#a78bfa','Tombol Interaksi',function(){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" '+(c.hideActions?'checked':'')+' onchange="upd(\'hideActions\',this.checked)" style="width:20px;height:20px;cursor:pointer"/> <span style="font-size:13px;color:#ccc">Sembunyikan Like, Komentar, Share, Lapor (Mode Mini-Web)</span></label>';});
   
   
+    // Menu Mini Promo (Upgrade)
   if(!c.miniPromos) c.miniPromos = [];
-  h+=sec('','fa-bullhorn','#f472b6','Mini Promo (1:1)',function(){
-      var s = '<div id="miniPromoList">';
+  if(!c.miniPromoRatio) c.miniPromoRatio = '1:1';
+  if(!c.miniPromoTime) c.miniPromoTime = 3;
+  h+=sec('','fa-bullhorn','#f472b6','Mini Promo Slider',function(){
+      var s = '<div style="display:flex; gap:8px; margin-bottom:12px;">';
+      s += '<div style="flex:1;"><label class="text-xs text-gray-400 mb-1 block">Rasio Promo</label><select class="sel" onchange="upd(\'miniPromoRatio\',this.value)"><option value="1:1"'+(c.miniPromoRatio=='1:1'?' selected':'')+'>1:1 Kotak</option><option value="9:16"'+(c.miniPromoRatio=='9:16'?' selected':'')+'>9:16 Potret</option><option value="16:9"'+(c.miniPromoRatio=='16:9'?' selected':'')+'>16:9 Lanskap</option></select></div>';
+      s += '<div style="flex:1;"><label class="text-xs text-gray-400 mb-1 block">Durasi (detik)</label><input type="number" min="1" max="10" class="inp" value="'+c.miniPromoTime+'" onchange="upd(\'miniPromoTime\',this.value)"></div>';
+      s += '</div>';
+      
+      s += '<div id="miniPromoList">';
       for(var j=0; j<c.miniPromos.length; j++){
           s += '<div style="border:1px solid #2a2a2a; padding:10px; border-radius:10px; position:relative; margin-bottom:8px;">';
           s += '<button onclick="removeMiniPromo('+currentCardIdx+','+j+')" style="position:absolute;top:4px;right:4px;color:#f87171;background:none;border:none;cursor:pointer;font-size:12px">X</button>';
-          s += '<input class="inp mb-2" style="font-size:12px" value="'+escA(c.miniPromos[j].img||'')+'" placeholder="URL Gambar 1:1" onchange="updMiniPromo('+currentCardIdx+','+j+',\'img\',this.value)" />';
+          s += '<input class="inp mb-2" style="font-size:12px" value="'+escA(c.miniPromos[j].img||'')+'" placeholder="URL Gambar" onchange="updMiniPromo('+currentCardIdx+','+j+',\'img\',this.value)" />';
           s += '<input class="inp" style="font-size:12px" value="'+escA(c.miniPromos[j].link||'')+'" placeholder="URL Tujuan Link" onchange="updMiniPromo('+currentCardIdx+','+j+',\'link\',this.value)" />';
           s += '</div>';
       }
-      s += '<button onclick="addMiniPromo('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Pop-up Promo</button>';
+      if(c.miniPromos.length < 10) {
+          s += '<button onclick="addMiniPromo('+currentCardIdx+')" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Slide Promo</button>';
+      } else {
+          s += '<p style="font-size:10px;color:#666;text-align:center">Maksimal 10 slide promo</p>';
+      }
       return s;
   });
   
