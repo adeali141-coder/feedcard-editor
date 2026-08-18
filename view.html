@@ -16,19 +16,16 @@
        PENGATURAN MANUAL LAYOUT (UBAH DI SINI)
        ========================================== */
     :root {
-        --card-height: 110vh; /* Tinggi Card Container */
-        --content-bottom: 110px; /* Jarak teks dari bawah Card */
-        --actions-bottom: 250px; /* Jarak tombol interaksi dari bawah Card */
-        --text-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9), 0 0 2px #000; /* Stroke & Shadow Teks */
-        --title-line-height: 1.2; /* Jarak baris Judul */
-        --desc-line-height: 1.2; /* Jarak baris Deskripsi */
-        --cta-padding: 5px 18px; /* Jarak teks ke garis tombol CTA */
-        --footer-font-size: 12px; /* Ukuran Font Footer Melayang */
-        --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); /* Stroke Footer */
-        --mini-promo-left: 4px; /* Posisi kiri pop-up */
-        --mini-promo-bottom: 475px; /* Posisi bawah pop-up */
-        --mini-promo-size: 80px; /* Ukuran pop-up (kotak 1:1) */
-        --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); /* Stroke angka counter */
+        --card-height: 110vh; 
+        --content-bottom: 110px; 
+        --actions-bottom: 250px; 
+        --text-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9), 0 0 2px #000; 
+        --title-line-height: 1.2; 
+        --desc-line-height: 1.2; 
+        --cta-padding: 5px 18px; 
+        --footer-font-size: 12px; 
+        --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); 
+        --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); 
     }
     /* ========================================== */
 
@@ -49,9 +46,18 @@
     
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 100%); pointer-events: none;}
 
-    .mini-promo-container { position: absolute; left: var(--mini-promo-left); bottom: var(--mini-promo-bottom); width: var(--mini-promo-size); height: var(--mini-promo-size); z-index: 4; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .mini-promo-container img { width: 100%; height: 100%; object-fit: cover; }
-    .mini-promo-close { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    /* MINI PROMO UPGRADE (Rasio Dinamis) */
+    .mini-promo-container { position: absolute; left: 4px; bottom: 475px; z-index: 4; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .mini-promo-track { display: flex; transition: transform 0.5s ease-in-out; height: 100%; }
+    .mini-promo-slide { min-width: 100%; height: 100%; }
+    .mini-promo-slide a { display: block; width: 100%; height: 100%; }
+    .mini-promo-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mini-promo-close { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; }
+    
+    /* Ukuran kontainer berdasarkan rasio */
+    .mp-ratio-1-1 { width: 80px; height: 80px; }
+    .mp-ratio-9-16 { width: 70px; height: 124px; }
+    .mp-ratio-16-9 { width: 120px; height: 67px; }
     
     .feed-content{position:absolute; bottom: var(--content-bottom); left:0; right:0; z-index:2; padding: 0 20px; padding-right: 60px; max-width: 500px; margin: 0 auto; width: 100%; text-shadow: var(--text-stroke); display: flex; flex-direction: column;}
     
@@ -81,13 +87,6 @@
     @media(min-width:640px){.modal-ct{border-radius:20px;margin-bottom:10%;max-height:70vh}}
     .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
-    
-    /* DIPERBAIKI: Tambah scroll-snap-align agar tidak auto-hide, hapus flexbox agar aspect-ratio tidak rusak */
-    .banner-wrap{width: 100%; padding: 20px 0; background:#000; box-sizing: border-box; scroll-snap-align: start; overflow: hidden;}
-    .banner-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); width: 90%; margin: 0 auto; aspect-ratio: 10 / 3; max-height: 250px; border-radius: 8px; overflow: hidden; background:#111;}
-    .banner-slide{min-width: 100%; flex-shrink: 0; height: 100%;}
-    .banner-slide a{display:block; width:100%; height:100%;}
-    .banner-slide img{width:100%; height:100%; object-fit:cover; display:block;}
     
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
 </style>
@@ -123,34 +122,19 @@
         if (user) currentUserId = user.uid;
     });
 
-    const MINI_PROMO_INTERVAL = 3000; 
-
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             let card = entry.target;
             if (entry.isIntersecting) {
                 let iframes = card.querySelectorAll('iframe[data-src]');
-                iframes.forEach(v => { 
-                    if(!v.getAttribute('src')) v.setAttribute('src', v.dataset.src); 
-                });
+                iframes.forEach(v => { if(!v.getAttribute('src')) v.setAttribute('src', v.dataset.src); });
                 let videos = card.querySelectorAll('video[data-src]');
-                videos.forEach(v => { 
-                    if(!v.getAttribute('src')) {
-                        v.setAttribute('src', v.dataset.src);
-                        v.play().catch(()=>{});
-                    }
-                });
+                videos.forEach(v => { if(!v.getAttribute('src')) { v.setAttribute('src', v.dataset.src); v.play().catch(()=>{}); } });
             } else {
                 let iframes = card.querySelectorAll('iframe');
-                iframes.forEach(v => { 
-                    if(v.getAttribute('src')) v.removeAttribute('src'); 
-                });
+                iframes.forEach(v => { if(v.getAttribute('src')) v.removeAttribute('src'); });
                 let videos = card.querySelectorAll('video');
-                videos.forEach(v => { 
-                    v.pause(); 
-                    v.removeAttribute('src'); 
-                    v.load(); 
-                });
+                videos.forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
             }
         });
     }, { threshold: 0.3 });
@@ -227,17 +211,11 @@
 
     function renderFeeds() {
         let cards = currentAlbum.cards || [];
-        let html = '', activeCardCount = 0, bannerIdx = 0;
+        let html = '', activeCardCount = 0;
         
         for(let i=0; i<cards.length; i++) {
             let c = cards[i];
             if(c.status === 'suspended') continue; 
-            
-            if(activeCardCount % 10 === 0 && currentAlbum.banners && currentAlbum.banners[bannerIdx]) {
-                let b = currentAlbum.banners[bannerIdx];
-                if(b.images && b.images.filter(img => img.url).length > 0) html += renderBannerHTML(b, bannerIdx);
-                bannerIdx++;
-            }
             
             if(c.hideActions === undefined) c.hideActions = false;
             
@@ -308,9 +286,30 @@
                 bgHtml = `<div style="position:absolute; inset:0; background:${c.bgColor}; z-index:0;"></div><div class="feed-overlay" style="background: none;"></div>`;
             }
 
+            // MINI PROMO HTML GENERATOR
+            let miniPromoHtml = '';
+            if (c.miniPromos && c.miniPromos.length > 0) {
+                window.allMiniPromos = window.allMiniPromos || {};
+                window.allMiniPromos[i] = c.miniPromos;
+                
+                let ratioClass = 'mp-ratio-1-1';
+                if(c.miniPromoRatio == '9:16') ratioClass = 'mp-ratio-9-16';
+                if(c.miniPromoRatio == '16:9') ratioClass = 'mp-ratio-16-9';
+                
+                let trackHtml = c.miniPromos.map(p => 
+                    `<div class="mini-promo-slide"><a href="${escA(p.link || '#')}" target="_blank"><img src="${escA(p.img)}" /></a></div>`
+                ).join('');
+                
+                miniPromoHtml = `<div class="mini-promo-container ${ratioClass}" id="miniPromo_${i}">
+                    <button class="mini-promo-close" onclick="closeMiniPromo(${i})"><i class="fas fa-times"></i></button>
+                    <div class="mini-promo-track" id="track_mp_${i}">${trackHtml}</div>
+                </div>`;
+            }
+
             html += `
                 <div class="feed-card-wrap" id="target-card-${i}" style="background:${c.bgColor};">
                     ${bgHtml}
+                    ${miniPromoHtml}
                     <div class="feed-content">
                         ${ctaHtml}
                         ${c.title && c.title.text ? `<h2 style="line-height:var(--title-line-height);font-family:${tf};font-size:${c.title.size}px;color:${c.title.color};font-weight:${c.title.bold?'700':'400'};margin-bottom:4px;">${escH(c.title.text)}</h2>` : ''}
@@ -332,62 +331,15 @@
                     </div>
                 `;
             }
-
-            let miniPromoHtml = '';
-            if (c.miniPromos && c.miniPromos.length > 0) {
-                window.allMiniPromos = window.allMiniPromos || {};
-                window.allMiniPromos[i] = c.miniPromos;
-                miniPromoHtml = `<div class="mini-promo-container" id="miniPromo_${i}">
-                    <button class="mini-promo-close" onclick="closeMiniPromo(${i})"><i class="fas fa-times"></i></button>
-                    <a href="${escA(c.miniPromos[0].link || '#')}" target="_blank" id="miniPromoLink_${i}"><img src="${escA(c.miniPromos[0].img)}" id="miniPromoImg_${i}" /></a>
-                </div>`;
-            }
             
-            html += miniPromoHtml;
             html += `</div>`;
             activeCardCount++;
         }
 
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
-        startBannerAutoSlide();
         observePromos();
         observeVideos();
         checkLongDescriptions();
-    }
-
-    function renderBannerHTML(b, idx) {
-      sliderState['ban_'+idx] = 0;
-      let sh = '';
-      let validImgs = b.images.filter(img => img.url);
-      for(let s=0; s<validImgs.length; s++){
-        sh += `<div class="banner-slide"><a href="${escA(validImgs[s].link || '#')}" target="_blank"><img src="${escA(validImgs[s].url)}" /></a></div>`;
-      }
-      return `<div class="banner-wrap" id="ban_${idx}"><div class="banner-track" id="track_ban_${idx}">${sh}</div></div>`;
-    }
-
-    let bannerTimers = {};
-    function startBannerAutoSlide() {
-        setInterval(() => {
-            for(let key in sliderState) {
-                if(key.startsWith('ban_')) {
-                    let tr = document.getElementById('track_'+key);
-                    if(tr && tr.children.length > 1) {
-                        let idx = parseInt(key.split('_')[1]);
-                        let b = currentAlbum.banners[idx];
-                        let time = b && b.slideTime ? b.slideTime * 1000 : 3000;
-                        if(time === 0) continue;
-                        bannerTimers[key] = (bannerTimers[key] || 0) + 1000;
-                        if(bannerTimers[key] >= time) {
-                            bannerTimers[key] = 0;
-                            let total = tr.children.length;
-                            let next = (sliderState[key] || 0) + 1;
-                            if(next >= total) next = 0;
-                            goSlide(key, next);
-                        }
-                    }
-                }
-            }
-        }, 1000);
     }
 
     function goSlide(sid,idx){
@@ -408,7 +360,6 @@
             }
         }
     }
-    
     function slideNav(sid,dir){goSlide(sid,(sliderState[sid]||0)+dir);}
     document.addEventListener('touchstart',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s)return;s._tx=e.changedTouches[0].clientX;},{passive:true});
     document.addEventListener('touchend',function(e){var s=e.target.closest('[id^="slider_"], [id^="ban_"]');if(!s||s._tx==null)return;var d=s._tx-e.changedTouches[0].clientX;if(Math.abs(d)>50)slideNav(s.id,d>0?1:-1);s._tx=null;},{passive:true});
@@ -459,7 +410,6 @@
         }
         el.innerHTML = h;
     }
-    
     function deleteComment(commentId) {
         if(confirm('Hapus komentar ini?')) {
             db.collection('comments').doc(commentId).delete()
@@ -467,7 +417,6 @@
             .catch(e => showToast('Gagal hapus: ' + e.message));
         }
     }
-        
     function setReply(commentId, a) { replyTo = commentId; document.getElementById('commentText').placeholder = 'Membalas ' + a + '...'; document.getElementById('commentText').focus(); }
     function submitComment() {
         var a = document.getElementById('commentAuthor').value.trim() || 'Anonim';
@@ -527,33 +476,34 @@
         }
     }
 
+    // MINI PROMO ROTATOR (DURASI DINAMIS)
     let miniPromoStates = {};
-    let miniPromoInterval = null;
+    let miniPromoIntervals = {};
 
     function initMiniPromos() {
         let containers = document.querySelectorAll('.mini-promo-container');
         containers.forEach(c => {
             let id = c.id.split('_')[1];
             miniPromoStates[id] = { idx: 0, visible: true };
-        });
-        
-        if(miniPromoInterval) clearInterval(miniPromoInterval);
-        miniPromoInterval = setInterval(() => {
-            for (let key in miniPromoStates) {
-                if (miniPromoStates[key].visible) {
-                    let el = document.getElementById('miniPromo_' + key);
-                    if (el && window.allMiniPromos[key]) {
-                        let promos = window.allMiniPromos[key];
-                        if (promos.length > 1) {
-                            miniPromoStates[key].idx = (miniPromoStates[key].idx + 1) % promos.length;
-                            let newPromo = promos[miniPromoStates[key].idx];
-                            document.getElementById('miniPromoImg_' + key).src = newPromo.img;
-                            document.getElementById('miniPromoLink_' + key).href = newPromo.link || '#';
+            
+            if(miniPromoIntervals[id]) clearInterval(miniPromoIntervals[id]);
+            
+            let cardData = currentAlbum.cards[id];
+            let time = (cardData && cardData.miniPromoTime) ? cardData.miniPromoTime * 1000 : 3000;
+            
+            if (window.allMiniPromos[id] && window.allMiniPromos[id].length > 1) {
+                miniPromoIntervals[id] = setInterval(() => {
+                    if (miniPromoStates[id].visible) {
+                        let tr = document.getElementById('track_mp_' + id);
+                        if(tr) {
+                            let total = tr.children.length;
+                            miniPromoStates[id].idx = (miniPromoStates[id].idx + 1) % total;
+                            tr.style.transform = `translateX(-${miniPromoStates[id].idx * 100}%)`;
                         }
                     }
-                }
+                }, time);
             }
-        }, MINI_PROMO_INTERVAL);
+        });
     }
 
     function closeMiniPromo(idx) {
@@ -594,7 +544,6 @@
             btn.innerText = '... See more';
         }
     }
-
     function checkLongDescriptions() {
         setTimeout(() => {
             document.querySelectorAll('.desc-clamped').forEach(el => {
