@@ -16,23 +16,27 @@
        PENGATURAN MANUAL LAYOUT (UBAH DI SINI)
        ========================================== */
     :root {
-    --card-height: 110vh; 
-    --content-bottom: 110px; 
-    --actions-bottom: 250px; 
-    --text-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9), 0 0 2px #000; 
-    --title-line-height: 1.2; 
-    --desc-line-height: 1.2; 
-    --cta-padding: 5px 18px; 
-    --footer-font-size: 12px; 
-    --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); 
-    --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); 
+        --card-height: 110vh; 
+        --content-bottom: 110px; 
+        --actions-bottom: 250px; 
+        --text-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9), 0 0 2px #000; 
+        --title-line-height: 1.2; 
+        --desc-line-height: 1.2; 
+        --cta-padding: 5px 18px; 
+        --footer-font-size: 12px; 
+        --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); 
+        --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); 
 
-    /* ===== MINI PROMO (BARU) ===== */
-    --mini-promo-w: 80px;        /* Lebar. MODE MANUAL: isi angka. MODE OTOMATIS (ikut rasio): isi auto */
-    --mini-promo-h: 80px;        /* Tinggi. Hanya dipakai bila --mini-promo-w berisi angka */
-    --mini-promo-left: 4px;      /* Jarak mini promo dari kiri layar */
-    --mini-promo-bottom: 575px;  /* Jarak mini promo dari bawah layar */
-}
+        /* ===== PENGATURAN MINI PROMO ===== */
+        /* MODE OTOMATIS (default): ukuran kotak mengikuti rasio tiap slide */
+        --mini-promo-w: auto;
+        --mini-promo-h: auto;
+        /* MODE MANUAL: isi KEDUA variabel di atas dengan angka, contoh:
+           --mini-promo-w: 100px;  --mini-promo-h: 178px;
+           Maka SEMUA slide berukuran sama (gambar dipotong rapi). */
+        --mini-promo-left: 4px;      /* jarak dari sisi kiri layar */
+        --mini-promo-bottom: 575px;  /* jarak dari sisi bawah layar */
+    }
     /* ========================================== */
 
     *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:none}
@@ -52,17 +56,20 @@
     
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.9) 100%); pointer-events: none;}
 
-    /* MINI PROMO (X di luar gambar + ukuran via PENGATURAN MANUAL LAYOUT) */
-.mini-promo-outer{position:absolute; left:var(--mini-promo-left,4px); bottom:var(--mini-promo-bottom,575px); z-index:4;}
-.mini-promo-container{position:relative; border-radius:8px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.5); background:rgba(255,255,255,0.07); transition:width .4s ease, height .4s ease;}
-.mini-promo-track{display:flex; transition:transform .5s ease-in-out; height:100%;}
-.mini-promo-slide{min-width:100%; height:100%;}
-.mini-promo-slide a{display:block; width:100%; height:100%;}
-.mini-promo-slide img{width:100%; height:100%; object-fit:cover; display:block;}
-/* Tombol X: 20px (sebelumnya 25px), pojok kanan-atas, mayoritas di luar gambar.
-   Mau 100% di luar gambar? Ganti jadi: top:-10px; right:-30px; */
-.mini-promo-close{position:absolute; top:-8px; right:-8px; width:20px; height:20px; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.55); border-radius:50%; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,0.45);}
-.mini-promo-container.mp-img-broken{background:#161616;}
+    /* ============================================================
+       MINI PROMO (Tombol X di luar gambar + ukuran via :root)
+       ============================================================ */
+    .mini-promo-outer{position:absolute; left:var(--mini-promo-left,4px); bottom:var(--mini-promo-bottom,575px); z-index:4;}
+    .mini-promo-container{position:relative; border-radius:8px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.5); background:rgba(255,255,255,0.07); transition:width .4s ease, height .4s ease;}
+    .mini-promo-track{display:flex; transition:transform .5s ease-in-out; height:100%;}
+    .mini-promo-slide{min-width:100%; height:100%;}
+    .mini-promo-slide a{display:block; width:100%; height:100%;}
+    .mini-promo-slide img{width:100%; height:100%; object-fit:cover; display:block;}
+    /* Tombol X: 20px (sebelumnya 25px), pojok kanan-atas, mayoritas DI LUAR gambar.
+       Mau 100% di luar gambar? Ubah right:-10px menjadi right:-32px */
+    .mini-promo-close{position:absolute; top:-10px; right:-10px; width:20px; height:20px; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.55); border-radius:50%; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,0.45);}
+    .mini-promo-container.mp-img-broken{background:#161616;}
+    /* ============================================================ */
     
     .feed-content{position:absolute; bottom: var(--content-bottom); left:0; right:0; z-index:2; padding: 0 20px; padding-right: 60px; max-width: 500px; margin: 0 auto; width: 100%; text-shadow: var(--text-stroke); display: flex; flex-direction: column;}
     
@@ -193,7 +200,7 @@
             });
         }).catch((error) => {
             console.error("Error loading album:", error);
-            document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Gagal memuat album.<br>' + error.message + '</p>';
+            document.getElementById('appLoad').innerHTML = '<p class="text-red-500">Gagal memuat album.<br>' + error.message + '</p>';
         });
     }
 
@@ -291,26 +298,29 @@
                 bgHtml = `<div style="position:absolute; inset:0; background:${c.bgColor}; z-index:0;"></div><div class="feed-overlay" style="background: none;"></div>`;
             }
 
-            // MINI PROMO HTML GENERATOR (Dinamis + Ukuran Manual/Auto + X di luar gambar)
-let miniPromoHtml = '';
-if (c.miniPromos && c.miniPromos.length > 0) {
-    window.allMiniPromos = window.allMiniPromos || {};
-    window.allMiniPromos[i] = c.miniPromos;
+            // ============================================================
+            // MINI PROMO HTML GENERATOR (X di luar gambar + ukuran Manual/Auto)
+            // ============================================================
+            let miniPromoHtml = '';
+            if (c.miniPromos && c.miniPromos.length > 0) {
+                window.allMiniPromos = window.allMiniPromos || {};
+                window.allMiniPromos[i] = c.miniPromos;
 
-    let firstRatio = c.miniPromos[0].ratio || '1:1';
-    let mps = getMiniPromoSize(firstRatio);
+                let firstRatio = c.miniPromos[0].ratio || '1:1';
+                let mps = getMiniPromoSize(firstRatio);
 
-    let trackHtml = c.miniPromos.map(p =>
-        `<div class="mini-promo-slide"><a href="${escA(p.link || '#')}" target="_blank" rel="noopener"><img src="${escA(p.img)}" referrerpolicy="no-referrer" decoding="async" onerror="miniPromoImgError(this)" alt="promo"></a></div>`
-    ).join('');
+                let trackHtml = c.miniPromos.map(p =>
+                    `<div class="mini-promo-slide"><a href="${escA(p.link || '#')}" target="_blank" rel="noopener"><img src="${escA(p.img)}" referrerpolicy="no-referrer" decoding="async" onerror="miniPromoImgError(this)" alt="promo"></a></div>`
+                ).join('');
 
-    miniPromoHtml = `<div class="mini-promo-outer" id="miniPromoOuter_${i}">
-        <button class="mini-promo-close" onclick="closeMiniPromo(${i})" aria-label="Tutup promo"><i class="fas fa-times"></i></button>
-        <div class="mini-promo-container" id="miniPromo_${i}" style="width:${mps.w}px; height:${mps.h}px;">
-            <div class="mini-promo-track" id="track_mp_${i}">${trackHtml}</div>
-        </div>
-    </div>`;
-}
+                miniPromoHtml = `<div class="mini-promo-outer" id="miniPromoOuter_${i}">
+                    <button class="mini-promo-close" onclick="closeMiniPromo(${i})" aria-label="Tutup promo"><i class="fas fa-times"></i></button>
+                    <div class="mini-promo-container" id="miniPromo_${i}" style="width:${mps.w}px; height:${mps.h}px;">
+                        <div class="mini-promo-track" id="track_mp_${i}">${trackHtml}</div>
+                    </div>
+                </div>`;
+            }
+            // ============================================================
 
             html += `
                 <div class="feed-card-wrap" id="target-card-${i}" style="background:${c.bgColor};">
@@ -482,41 +492,42 @@ if (c.miniPromos && c.miniPromos.length > 0) {
         }
     }
 
-    // MINI PROMO ROTATOR (DURASI DINAMIS)
+    // ============================================================
+    // MINI PROMO ROTATOR (Durasi dinamis + ukuran Manual/Auto)
+    // ============================================================
     let miniPromoStates = {};
     let miniPromoIntervals = {};
 
-    // == Ukuran mini promo: dibaca dari PENGATURAN MANUAL LAYOUT (:root) ==
-function getMiniPromoSize(ratio) {
-    const cs = getComputedStyle(document.documentElement);
-    let wNum = parseFloat(cs.getPropertyValue('--mini-promo-w'));
-    let hNum = parseFloat(cs.getPropertyValue('--mini-promo-h'));
+    // Baca ukuran mini promo dari PENGATURAN MANUAL LAYOUT (:root)
+    function getMiniPromoSize(ratio) {
+        const cs = getComputedStyle(document.documentElement);
+        let wNum = parseFloat(cs.getPropertyValue('--mini-promo-w'));
+        let hNum = parseFloat(cs.getPropertyValue('--mini-promo-h'));
 
-    // MODE MANUAL: kedua variabel diisi angka -> ukuran dikunci untuk semua slide
-    if (!isNaN(wNum) && wNum > 0 && !isNaN(hNum) && hNum > 0) {
-        return { w: wNum, h: hNum, fixed: true };
+        // MODE MANUAL: kedua variabel berisi angka -> ukuran dikunci (semua slide sama)
+        if (!isNaN(wNum) && wNum > 0 && !isNaN(hNum) && hNum > 0) {
+            return { w: wNum, h: hNum, fixed: true };
+        }
+
+        // MODE OTOMATIS: ukuran mengikuti rasio tiap slide (perilaku lama)
+        let base = (!isNaN(wNum) && wNum > 0) ? wNum : 80;
+        let w = base, h = base;
+        if (ratio == '9:16') h = Math.round(base * 16 / 9);
+        if (ratio == '16:9') w = Math.round(base * 16 / 9);
+        return { w: w, h: h, fixed: false };
     }
 
-    // MODE OTOMATIS: ukuran menyesuaikan rasio tiap slide (perilaku lama)
-    let base = (!isNaN(wNum) && wNum > 0) ? wNum : 80;
-    let w = base, h = base;
-    if (ratio == '9:16') h = Math.round(base * 16 / 9);
-    if (ratio == '16:9') w = Math.round(base * 16 / 9);
-    return { w: w, h: h, fixed: false };
-}
-
-// == Fallback bila gambar mini promo gagal dimuat: retry 1x, lalu tandai ==
-function miniPromoImgError(img) {
-    if (img.dataset.retried) {
-        let box = img.closest('.mini-promo-container');
-        if (box) box.classList.add('mp-img-broken');
-        console.warn('Mini promo gagal dimuat:', img.src);
-        return;
+    // Fallback bila gambar mini promo gagal dimuat: coba 1x lagi, lalu tandai kotak
+    function miniPromoImgError(img) {
+        if (img.dataset.retried) {
+            let box = img.closest('.mini-promo-container');
+            if (box) box.classList.add('mp-img-broken');
+            return;
+        }
+        img.dataset.retried = '1';
+        img.src = img.src + (img.src.indexOf('?') >= 0 ? '&' : '?') + '_r=' + Date.now();
     }
-    img.dataset.retried = '1';
-    img.src = img.src + (img.src.indexOf('?') >= 0 ? '&' : '?') + '_r=' + Date.now();
-}
-    
+
     function initMiniPromos() {
         let containers = document.querySelectorAll('.mini-promo-container');
         containers.forEach(c => {
@@ -538,14 +549,14 @@ function miniPromoImgError(img) {
                             miniPromoStates[id].idx = (miniPromoStates[id].idx + 1) % total;
                             tr.style.transform = `translateX(-${miniPromoStates[id].idx * 100}%)`;
                             
-                            // Auto Resize Kotak berdasarkan rasio slide aktif
+                            // Auto-resize hanya di MODE OTOMATIS
                             let activePromo = window.allMiniPromos[id][miniPromoStates[id].idx];
                             let ratio = activePromo.ratio || '1:1';
-let mps = getMiniPromoSize(ratio);
-if (!mps.fixed) { // ukuran hanya berubah otomatis di MODE OTOMATIS
-    container.style.width = mps.w + 'px';
-    container.style.height = mps.h + 'px';
-}
+                            let mps = getMiniPromoSize(ratio);
+                            if (!mps.fixed) {
+                                container.style.width = mps.w + 'px';
+                                container.style.height = mps.h + 'px';
+                            }
                         }
                     }
                 }, time);
@@ -554,28 +565,29 @@ if (!mps.fixed) { // ukuran hanya berubah otomatis di MODE OTOMATIS
     }
 
     function closeMiniPromo(idx) {
-    let el = document.getElementById('miniPromoOuter_' + idx);
-    if (el) el.style.display = 'none';
-    if (miniPromoStates[idx]) miniPromoStates[idx].visible = false;
-}
+        let el = document.getElementById('miniPromoOuter_' + idx);
+        if (el) el.style.display = 'none';
+        if (miniPromoStates[idx]) miniPromoStates[idx].visible = false;
+    }
 
     const promoObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            let id = entry.target.id.replace('target-card-', '');
-            if (miniPromoStates[id] && !miniPromoStates[id].visible) {
-                miniPromoStates[id].visible = true;
-                let el = document.getElementById('miniPromoOuter_' + id);
-                if (el) el.style.display = 'block';
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                let id = entry.target.id.replace('target-card-', '');
+                if (miniPromoStates[id] && !miniPromoStates[id].visible) {
+                    miniPromoStates[id].visible = true;
+                    let el = document.getElementById('miniPromoOuter_' + id);
+                    if (el) el.style.display = 'block';
+                }
             }
-        }
-    });
-}, { threshold: 0.5 });
+        });
+    }, { threshold: 0.5 });
 
     function observePromos() {
         document.querySelectorAll('.feed-card-wrap').forEach(card => promoObserver.observe(card));
         initMiniPromos();
     }
+    // ============================================================
 
     // FITUR SEE MORE / SEE LESS
     function toggleDesc(idx) {
