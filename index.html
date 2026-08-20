@@ -25,6 +25,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#333 transparent}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:8px}
@@ -66,6 +67,14 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
 <body>
 <div id="toast" class="toast"></div>
 <div id="savingOverlay" class="saving-ov" style="display:none"><div class="saving-box"><i class="fas fa-cloud-arrow-up" style="font-size:28px;color:#e8572a;margin-bottom:12px;display:block"></i><p style="font-size:15px;font-weight:600">Menyimpan ke Cloud...</p></div></div>
+
+<!-- ===== FITUR UPLOAD GAMBAR (BARU): file picker tersembunyi + progress bar ===== -->
+<input type="file" id="hiddenFilePicker" accept="image/*" style="display:none">
+<div id="uploadProgressBox" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:400;background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:12px 20px;min-width:250px;box-shadow:0 8px 30px rgba(0,0,0,.5)">
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span id="uploadProgressLabel">Mengunggah...</span><span id="uploadProgressPct">0%</span></div>
+  <div style="height:6px;background:#222;border-radius:3px;overflow:hidden"><div id="uploadProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#e8572a,#ff7e47);transition:width .2s"></div></div>
+</div>
+<!-- ============================================================================ -->
 
 <div id="editorView" class="h-full flex flex-col">
   <header class="flex items-center gap-3 px-4 py-3 border-b shrink-0" style="border-color:#1a1a1a;background:#0a0a0a">
@@ -118,9 +127,19 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
     <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Pengaturan Album</h3><button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div>
     <div class="space-y-4">
       <div><label class="text-xs text-gray-400 mb-1 block">Favicon Album (Emoji/URL)</label><input id="settingsFavicon" class="inp" placeholder="📸" /></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">OG Image Album (URL Gambar Default)</label><input id="settingsOGImage" class="inp" placeholder="https://..." /></div>
+      <div>
+        <label class="text-xs text-gray-400 mb-1 block">OG Image Album (Preview Share Album)</label>
+        <div style="display:flex;gap:6px">
+          <input id="settingsOGImage" class="inp" placeholder="https://..." style="flex:1" />
+          <button onclick="uploadOGAlbum()" class="btn-g" style="padding:8px 12px" title="Upload (otomatis dipotong 1200x630)"><i class="fas fa-cloud-arrow-up"></i></button>
+        </div>
+        <p style="font-size:10px;color:#666;margin-top:4px">Upload otomatis memotong tepat ke 1200x630 — ideal untuk WhatsApp/Facebook.</p>
+      </div>
       <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID (G-XXXX)</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
-      
+      <div>
+        <label class="text-xs text-gray-400 mb-2 block">Banner Iklan (di antara feed)</label>
+        <div id="bannerEditorContainer"></div>
+      </div>
       <button onclick="saveSettings()" class="btn-a w-full">Simpan Pengaturan</button>
     </div>
   </div>
@@ -132,12 +151,12 @@ function slugify(t){return t.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/
 function getDomain(){return album.customDomain||window.location.hostname;}
 function getBaseUrl(){var d=getDomain();return(d==='localhost'?'http://':'https://')+d+window.location.pathname;}
 var uid=function(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);};
-var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',analytics:{id:'',name:''},miniPromos:[],miniPromoRatio:'1:1',miniPromoTime:3,likes:0,liked:false,comments:[]};};
+var defCard=function(){return{id:uid(),bgColor:'#1a1a2e',images:[{url:'',aspectRatio:'16/9'}],title:{text:'',font:'Poppins',size:22,color:'#ffffff',bold:true},price:{text:'',font:'Poppins',size:20,color:'#4ade80',bold:true},desc:{text:'',font:'DM Sans',size:15,color:'#cccccc'},cta:{text:'',url:'https://example.com',bgColor:'#e8572a',textColor:'#ffffff',radius:24},videoUrl:'',ogImage:'',analytics:{id:'',name:''},miniPromos:[],miniPromoRatio:'1:1',miniPromoTime:3,likes:0,liked:false,comments:[]};};
 var album={id:uid(),name:'Album Feed Saya',favicon:'\uD83D\uDCF8',ogImage:'',customDomain:'feed.novavariety.store',gaId:'',firebaseConfig:'',slug:'',monetagEnabled:false,monetagZoneId:'',cards:[defCard(),defCard()]};
 var currentCardIdx=0,shareTargetCard=-1;
 
 function updOG(t,d,img){var m=[['og:title',t],['og:description',d],['og:image',img],['twitter:title',t],['twitter:description',d],['twitter:image',img]];for(var i=0;i<m.length;i++){var el=document.querySelector('[property="'+m[i][0]+'"]')||document.querySelector('[name="'+m[i][0]+'"]');if(el)el.content=m[i][1];}document.title=t;}
-function getOGImg(ci){var c=ci>=0?album.cards[ci]:album.cards[0];if(!c)return'';for(var i=0;i<c.images.length;i++){if(c.images[i].url)return c.images[i].url;}if(album.ogImage)return album.ogImage;return'';}
+function getOGImg(ci){var c=ci>=0?album.cards[ci]:album.cards[0];if(!c)return'';if(c.ogImage)return c.ogImage;for(var i=0;i<c.images.length;i++){if(c.images[i].url)return c.images[i].url;}if(album.ogImage)return album.ogImage;return'';}
 function getOGTitle(ci){return ci>=0?album.cards[ci].title.text+' - '+album.name:album.name;}
 function getOGDesc(ci){if(ci>=0)return album.cards[ci].desc.text.slice(0,200);return'';}
 function saveLocal(){try{localStorage.setItem('acf_album',JSON.stringify(album));}catch(e){}}
@@ -147,7 +166,7 @@ function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.c
 function addCard(){album.cards.unshift(defCard());currentCardIdx=0;saveLocal();renderEditor();showToast('Card ditambahkan di posisi 1');}
 function removeCard(i){if(album.cards.length<=1){showToast('Minimal 1 card');return;}album.cards.splice(i,1);if(currentCardIdx>=album.cards.length)currentCardIdx=album.cards.length-1;saveLocal();renderEditor();}
 function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.unshift(c);currentCardIdx=0;saveLocal();renderEditor();showToast('Card diduplikasi di posisi 1');}
-function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();renderEditor();}
+function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();}
 function selCard(i){currentCardIdx=i;renderEditor();}
 function addImg(ci){ if(album.cards[ci].images.length >= 15) { showToast('Maksimal 15 media'); return; } album.cards[ci].images.push({url:'', link:''}); saveLocal(); renderEditor(); }
 function remImg(ci,ii){if(album.cards[ci].images.length<=1){showToast('Minimal 1 gambar');return;}album.cards[ci].images.splice(ii,1);saveLocal();renderEditor();}
@@ -174,7 +193,7 @@ function renderForm(){
       for(var i=0;i<c.images.length;i++){
           s+='<div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;position:relative;display:flex;flex-direction:column;gap:8px">';
           if(c.images.length>1)s+='<button onclick="remImg('+currentCardIdx+','+i+')" style="position:absolute;top:8px;right:8px;color:#f87171;font-size:11px;background:none;border:none;cursor:pointer"><i class="fas fa-xmark"></i></button>';
-          s+='<input class="inp" style="font-size:12px" value="'+escA(c.images[i].url)+'" placeholder="URL Gambar / Video (MP4/YT)" onchange="updImg('+i+',\'url\',this.value)" />';
+          s+='<div style="display:flex;gap:6px"><input id="feedImg_'+i+'" class="inp" style="font-size:12px;flex:1" value="'+escA(c.images[i].url)+'" placeholder="URL Gambar / Video (MP4/YT)" onchange="updImg('+i+',\'url\',this.value)" /><button onclick="uploadFeedImg('+currentCardIdx+','+i+')" class="btn-g" style="padding:6px 10px" title="Upload gambar (auto-kompres, aman dari blokir ISP)"><i class="fas fa-cloud-arrow-up"></i></button></div>';
           
           // Preview jika sudah ada URL
           if(c.images[i].url){
@@ -202,8 +221,18 @@ function renderForm(){
   h+=sec('','fa-arrow-pointer','#f472b6','Tombol CTA',function(){return '<input class="inp" value="'+escA(c.cta.text)+'" placeholder="Teks tombol (bisa emoji)..." onchange="updC(\'text\',this.value)" /><input class="inp" style="font-size:12px;margin-top:8px" value="'+escA(c.cta.url)+'" placeholder="URL tujuan..." onchange="updC(\'url\',this.value)" /><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><div class="color-wrap"><span style="font-size:10px;color:#888">Latar</span><input type="color" value="'+c.cta.bgColor+'" onchange="updC(\'bgColor\',this.value)" /></div><div class="color-wrap"><span style="font-size:10px;color:#888">Teks</span><input type="color" value="'+c.cta.textColor+'" onchange="updC(\'textColor\',this.value)" /></div><div style="flex:1"><span style="font-size:10px;color:#888">Radius</span><input type="range" min="0" max="50" value="'+c.cta.radius+'" style="width:100%" onchange="updC(\'radius\',+this.value)" /></div></div><div style="padding:12px;border-radius:12px;border:1px solid #2a2a2a;margin-top:8px"><p style="font-size:10px;color:#888;margin-bottom:8px">Preview:</p><button style="background:'+c.cta.bgColor+';color:'+c.cta.textColor+';border-radius:'+c.cta.radius+'px;padding:10px 24px;font-size:14px;font-weight:600;border:none;cursor:pointer">'+escH(c.cta.text)+'</button></div>';});
   h+=sec('','fa-eye-slash','#a78bfa','Tombol Interaksi',function(){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" '+(c.hideActions?'checked':'')+' onchange="upd(\'hideActions\',this.checked)" style="width:20px;height:20px;cursor:pointer"/> <span style="font-size:13px;color:#ccc">Sembunyikan Like, Komentar, Share, Lapor (Mode Mini-Web)</span></label>';});
   
+  // ===== OG IMAGE CARD (BARU) =====
+  h+=sec('','fa-share-nodes','#22d3ee','OG Image Card (Preview Share)',function(){
+      var s='<div style="display:flex;gap:6px">';
+      s+='<input id="cardOgInput" class="inp" style="font-size:12px;flex:1" value="'+escA(c.ogImage||'')+'" placeholder="Kosongkan = otomatis pakai gambar pertama" onchange="upd(\'ogImage\',this.value)" />';
+      s+='<button onclick="uploadCardOG('+currentCardIdx+')" class="btn-g" style="padding:6px 10px" title="Upload (otomatis dipotong 1200x630)"><i class="fas fa-cloud-arrow-up"></i></button>';
+      s+='</div>';
+      s+='<p style="font-size:10px;color:#666;margin-top:4px">Gambar preview saat Card ini di-share ke WhatsApp/Facebook. Upload otomatis memotong ke 1200x630.</p>';
+      s+='<div id="cardOgPrev">'+(c.ogImage?'<img src="'+escA(c.ogImage)+'" style="width:100%;aspect-ratio:1.91/1;object-fit:cover;border-radius:10px;margin-top:6px" onerror="this.style.display=\'none\'" />':'')+'</div>';
+      return s;
+  });
   
-  // Menu Mini Promo (Per-Slide Ratio)
+  // Menu Mini Promo (Per-Slide Ratio + Upload)
   if(!c.miniPromos) c.miniPromos = [];
   if(!c.miniPromoTime) c.miniPromoTime = 3;
   h+=sec('','fa-bullhorn','#f472b6','Mini Promo Slider',function(){
@@ -214,7 +243,7 @@ function renderForm(){
       s += '<div id="miniPromoList">';
       for(var j=0; j<c.miniPromos.length; j++){
           var p = c.miniPromos[j];
-          if(!p.ratio) p.ratio = '1:1'; // Fallback untuk data lama
+          if(!p.ratio) p.ratio = '1:1';
           
           s += '<div style="border:1px solid #2a2a2a; padding:10px; border-radius:10px; position:relative; margin-bottom:8px;">';
           s += '<button onclick="removeMiniPromo('+currentCardIdx+','+j+')" style="position:absolute;top:4px;right:4px;color:#f87171;background:none;border:none;cursor:pointer;font-size:12px">X</button>';
@@ -226,8 +255,9 @@ function renderForm(){
           s += '<option value="16:9"'+(p.ratio=='16:9'?' selected':'')+'>Rasio 16:9 (Lanskap)</option>';
           s += '</select>';
           
-          s += '<input class="inp mb-2" style="font-size:12px" value="'+escA(p.img||'')+'" placeholder="URL Gambar" onchange="updMiniPromo('+currentCardIdx+','+j+',\'img\',this.value)" />';
-          s += '<input class="inp" style="font-size:12px" value="'+escA(p.link||'')+'" placeholder="URL Tujuan Link" onchange="updMiniPromo('+currentCardIdx+','+j+',\'link\',this.value)" />';
+          s += '<div style="display:flex;gap:6px"><input id="mpImg_'+j+'" class="inp" style="font-size:12px;flex:1" value="'+escA(p.img||'')+'" placeholder="URL Gambar" onchange="updMiniPromo('+currentCardIdx+','+j+',\'img\',this.value)" /><button onclick="uploadMiniPromoImg('+currentCardIdx+','+j+')" class="btn-g" style="padding:6px 10px" title="Upload gambar (auto-kompres, aman dari blokir ISP)"><i class="fas fa-cloud-arrow-up"></i></button></div>';
+          s += '<div id="mpPrev_'+j+'">'+(p.img?'<img src="'+escA(p.img)+'" style="width:100%;height:56px;object-fit:cover;border-radius:8px;margin-top:6px" onerror="this.style.display=\'none\'" />':'')+'</div>';
+          s += '<input class="inp" style="font-size:12px;margin-top:6px" value="'+escA(p.link||'')+'" placeholder="URL Tujuan Link" onchange="updMiniPromo('+currentCardIdx+','+j+',\'link\',this.value)" />';
           s += '</div>';
       }
       if(c.miniPromos.length < 10) {
@@ -306,8 +336,8 @@ function renderBannerEditor(){
     for(let j=0; j<b.images.length; j++){
       h += `<div style="border:1px solid #2a2a2a; padding:10px; border-radius:10px; position:relative;">
                <button onclick="removeBannerImg(${i},${j})" style="position:absolute;top:8px;right:8px;color:#f87171;background:none;border:none;cursor:pointer;font-size:12px"><i class="fas fa-xmark"></i></button>
-               <input class="inp mb-2" style="font-size:12px" value="${b.images[j].url||''}" placeholder="URL Gambar 1000x300" onchange="updBannerImg(${i},${j},'url',this.value)" />
-               <input class="inp" style="font-size:12px" value="${b.images[j].link||''}" placeholder="URL Tujuan Link" onchange="updBannerImg(${i},${j},'link',this.value)" />
+               <div style="display:flex;gap:6px"><input class="inp" style="font-size:12px;flex:1" value="${b.images[j].url||''}" placeholder="URL Gambar 1000x300" onchange="updBannerImg(${i},${j},'url',this.value)" /><button onclick="uploadBannerImg(${i},${j})" class="btn-g" style="padding:6px 10px" title="Upload gambar"><i class="fas fa-cloud-arrow-up"></i></button></div>
+               <input class="inp" style="font-size:12px;margin-top:6px" value="${b.images[j].link||''}" placeholder="URL Tujuan Link" onchange="updBannerImg(${i},${j},'link',this.value)" />
              </div>`;
     }
     if(b.images.length < 15){ h += `<button onclick="addBannerImg(${i})" class="btn-g" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px"><i class="fas fa-plus"></i> Tambah Gambar Banner</button>`; }
@@ -334,6 +364,7 @@ function updBannerTime(bIdx, val){ if(!album.banners[bIdx]) album.banners[bIdx] 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfigV2);
     const authV2 = firebase.auth();
     const dbV2 = firebase.firestore();
+    const storageV2 = firebase.storage();
 
     let currentUserId = null;
     let currentAlbumId = null;
@@ -436,6 +467,139 @@ function updBannerTime(bIdx, val){ if(!album.banners[bIdx]) album.banners[bIdx] 
             window.location.href = "dashboard.html";
         }
     }
+
+    // ============================================================
+    // FITUR UPLOAD GAMBAR (Firebase Storage) - BARU
+    // ============================================================
+    const UPLOAD_SPECS = {
+      feed:   { folder: 'feed',   maxW: 1080, maxH: 1080, crop: false, quality: 0.85 },
+      mini:   { folder: 'mini',   maxW: 400,  maxH: 400,  crop: false, quality: 0.85 },
+      og:     { folder: 'og',     maxW: 1200, maxH: 630,  crop: true,  quality: 0.85 },
+      banner: { folder: 'banner', maxW: 1200, maxH: 1200, crop: false, quality: 0.85 }
+    };
+
+    let pendingUpload = null;
+
+    function pickImage(kind, onSuccess) {
+      if (!currentUserId) { showToast('Sesi berakhir, silakan login ulang.'); return; }
+      pendingUpload = { spec: UPLOAD_SPECS[kind], onSuccess: onSuccess };
+      var fp = document.getElementById('hiddenFilePicker');
+      fp.value = '';
+      fp.click();
+    }
+
+    document.getElementById('hiddenFilePicker').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      if (!file || !pendingUpload) return;
+      handleUpload(file, pendingUpload.spec, pendingUpload.onSuccess);
+    });
+
+    function drawCompressed(img, spec) {
+      var sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0, dw, dh;
+      if (spec.crop) { // potong bagian tengah ke rasio tepat (untuk OG 1200x630)
+        var tr = spec.maxW / spec.maxH, sr = sw / sh;
+        if (sr > tr) { var cw = Math.round(sh * tr); sx = Math.round((sw - cw) / 2); sw = cw; }
+        else { var ch = Math.round(sw / tr); sy = Math.round((sh - ch) / 2); sh = ch; }
+        dw = spec.maxW; dh = spec.maxH;
+      } else { // perkecil proporsional (tidak dipotong)
+        var sc = Math.min(1, spec.maxW / sw, spec.maxH / sh);
+        dw = Math.max(1, Math.round(sw * sc)); dh = Math.max(1, Math.round(sh * sc));
+      }
+      var cv = document.createElement('canvas');
+      cv.width = dw; cv.height = dh;
+      cv.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+      return cv;
+    }
+
+    function finalizeBlob(canvas, mime, quality, cb) {
+      canvas.toBlob(function (blob) {
+        if (!blob) { cb(null, mime); return; }
+        // PNG hasilnya terlalu besar (maks rules 2MB)? konversi ke JPEG
+        if (blob.size > 1.9 * 1024 * 1024 && mime === 'image/png') {
+          canvas.toBlob(function (b2) { cb(b2 || blob, 'image/jpeg'); }, 'image/jpeg', 0.8);
+        } else { cb(blob, mime); }
+      }, mime, quality);
+    }
+
+    function handleUpload(file, spec, onSuccess) {
+      if (!/^image\//.test(file.type)) { showToast('File harus berupa gambar.'); return; }
+      if (file.type === 'image/gif') { showToast('GIF animasi tidak didukung upload, gunakan kolom URL.'); return; }
+      if (file.size > 20 * 1024 * 1024) { showToast('File terlalu besar (maks 20 MB).'); return; }
+      showUploadProgress(0, 'Memproses gambar...');
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var mime = (file.type === 'image/png') ? 'image/png' : 'image/jpeg';
+          var canvas;
+          try { canvas = drawCompressed(img, spec); } catch (err) { hideUploadProgress(); showToast('Gagal memproses gambar.'); return; }
+          finalizeBlob(canvas, mime, spec.quality, function (blob, finalMime) {
+            if (!blob) { hideUploadProgress(); showToast('Gagal memproses gambar.'); return; }
+            var ext = finalMime === 'image/png' ? 'png' : 'jpg';
+            var path = 'users/' + currentUserId + '/' + spec.folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+            var task = storageV2.ref(path).put(blob, { contentType: finalMime });
+            task.on('state_changed',
+              function (snap) { showUploadProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100), 'Mengunggah...'); },
+              function (err) { hideUploadProgress(); showToast('Upload gagal: ' + err.message); },
+              function () {
+                task.snapshot.ref.getDownloadURL().then(function (url) {
+                  hideUploadProgress();
+                  onSuccess(url);
+                  showToast('Gambar siap! Jangan lupa klik Simpan ke Cloud.');
+                });
+              }
+            );
+          });
+        };
+        img.onerror = function () { hideUploadProgress(); showToast('Format gambar tidak bisa dibaca browser.'); };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showUploadProgress(pct, label) {
+      document.getElementById('uploadProgressBox').style.display = 'block';
+      document.getElementById('uploadProgressBar').style.width = pct + '%';
+      document.getElementById('uploadProgressPct').textContent = pct + '%';
+      if (label) document.getElementById('uploadProgressLabel').textContent = label;
+    }
+    function hideUploadProgress() { document.getElementById('uploadProgressBox').style.display = 'none'; }
+
+    // ---- Handler tombol upload per bagian ----
+    function uploadFeedImg(ci, ii) {
+      pickImage('feed', function (url) { album.cards[ci].images[ii].url = url; saveLocal(); renderEditor(); });
+    }
+    function uploadMiniPromoImg(ci, idx) {
+      pickImage('mini', function (url) {
+        album.cards[ci].miniPromos[idx].img = url; saveLocal();
+        var inp = document.getElementById('mpImg_' + idx); if (inp) inp.value = url;
+        var pv = document.getElementById('mpPrev_' + idx);
+        if (pv) pv.innerHTML = '<img src="' + escA(url) + '" style="width:100%;height:56px;object-fit:cover;border-radius:8px;margin-top:6px" />';
+      });
+    }
+    function uploadCardOG(ci) {
+      pickImage('og', function (url) {
+        album.cards[ci].ogImage = url; saveLocal();
+        var inp = document.getElementById('cardOgInput'); if (inp) inp.value = url;
+        var pv = document.getElementById('cardOgPrev');
+        if (pv) pv.innerHTML = '<img src="' + escA(url) + '" style="width:100%;aspect-ratio:1.91/1;object-fit:cover;border-radius:10px;margin-top:6px" />';
+      });
+    }
+    function uploadOGAlbum() {
+      pickImage('og', function (url) {
+        album.ogImage = url; saveLocal();
+        document.getElementById('settingsOGImage').value = url;
+      });
+    }
+    function uploadBannerImg(bIdx, imgIdx) {
+      pickImage('banner', function (url) {
+        if (!album.banners[bIdx]) album.banners[bIdx] = { images: [] };
+        if (!album.banners[bIdx].images[imgIdx]) album.banners[bIdx].images[imgIdx] = { url: '', link: '' };
+        album.banners[bIdx].images[imgIdx].url = url; saveLocal(); renderBannerEditor();
+      });
+    }
+    // ============================================================
 </script>
 </body>
 </html>
