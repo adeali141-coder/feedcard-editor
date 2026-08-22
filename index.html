@@ -136,10 +136,6 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
         <p style="font-size:10px;color:#666;margin-top:4px">Upload otomatis memotong tepat ke 1200x630 — ideal untuk WhatsApp/Facebook.</p>
       </div>
       <div><label class="text-xs text-gray-400 mb-1 block">Google Analytics ID (G-XXXX)</label><input id="settingsGA" class="inp" placeholder="G-XXXXXXXXXX" /></div>
-      <div>
-        <label class="text-xs text-gray-400 mb-2 block">Banner Iklan (di antara feed)</label>
-        <div id="bannerEditorContainer"></div>
-      </div>
       <button onclick="saveSettings()" class="btn-a w-full">Simpan Pengaturan</button>
     </div>
   </div>
@@ -320,7 +316,7 @@ function shareToTelegram(){var l=document.getElementById('shareLinkInput').value
 function shareToTwitter(){var l=document.getElementById('shareLinkInput').value;if(!l)return;window.open('https://twitter.com/intent/tweet?url='+encodeURIComponent(l),'_blank');}
 function copyShareLink(){var i=document.getElementById('shareLinkInput');if(!i.value)return;i.select();if(navigator.clipboard){navigator.clipboard.writeText(i.value).then(function(){showToast('Link disalin!');});}else{document.execCommand('copy');showToast('Link disalin!');}}
 
-function openSettingsModal(){document.getElementById('settingsFavicon').value=album.favicon||'';document.getElementById('settingsOGImage').value=album.ogImage||'';document.getElementById('settingsGA').value=album.gaId||'';renderBannerEditor();document.getElementById('settingsModal').classList.add('show');}
+function openSettingsModal(){document.getElementById('settingsFavicon').value=album.favicon||'';document.getElementById('settingsOGImage').value=album.ogImage||'';document.getElementById('settingsGA').value=album.gaId||'';document.getElementById('settingsModal').classList.add('show');}
 function closeSettingsModal(){document.getElementById('settingsModal').classList.remove('show');}
 function saveSettings(){album.favicon=document.getElementById('settingsFavicon').value||'\uD83D\uDCF8';album.ogImage=document.getElementById('settingsOGImage').value||'';album.gaId=document.getElementById('settingsGA').value||'';setFav(album.favicon);saveLocal();closeSettingsModal();showToast('Pengaturan disimpan');}
 
