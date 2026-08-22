@@ -51,7 +51,7 @@
 <div class="container mx-auto px-4 py-6">
     <div class="flex border-b border-[#1a1a1a] mb-6">
         <div class="tab-btn active" onclick="switchTab('users')">Manajemen User</div>
-        <div class="tab-btn" onclick="switchTab('reports')">Laporan Masuk</div>
+        <div class="tab-btn" id="tabReports" onclick="switchTab('reports')">Laporan Masuk</div>
     </div>
     <div id="tab-users">
         <div class="flex gap-2 mb-2">
@@ -64,7 +64,12 @@
         <div id="userList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
     <div id="tab-reports" style="display:none;">
-        <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari laporan..." oninput="renderReports()">
+        <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari judul, album, pemilik, alasan, atau status (pending/resolved)..." oninput="renderReports()">
+<div class="flex gap-2 mb-2">
+    <button id="rfAll" onclick="setReportFilter('all')" class="btn-g">Semua</button>
+    <button id="rfPending" onclick="setReportFilter('pending')" class="btn-g text-orange-400">Pending</button>
+    <button id="rfResolved" onclick="setReportFilter('resolved')" class="btn-g text-green-400">Selesai</button>
+</div>
         <p id="reportCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="reportList"></div>
     </div>
@@ -237,13 +242,26 @@
 
     // --- LAPORAN & MODERASI ---
     function loadReports() { db.collection('reports').onSnapshot((snapshot) => { allReports = []; snapshot.forEach(doc => allReports.push({id: doc.id, ...doc.data()})); renderReports(); }); }
+        let reportStatusFilter = 'all';
+    function setReportFilter(f) { reportStatusFilter = f; renderReports(); }
     function renderReports() {
         let q = document.getElementById('searchReport').value.toLowerCase();
-        let filtered = allReports.filter(r => { let o = allUsers.find(u => u.id === r.ownerId); let oe = o ? o.email.toLowerCase() : ''; return (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || (r.albumName && r.albumName.toLowerCase().includes(q)) || (r.reason && r.reason.toLowerCase().includes(q)) || oe.includes(q); });
+        let pendingTotal = allReports.filter(r => (r.status || 'pending') === 'pending').length;
+        let filtered = allReports.filter(r => {
+            let o = allUsers.find(u => u.id === r.ownerId);
+            let oe = o ? o.email.toLowerCase() : '';
+            let st = (r.status || 'pending').toLowerCase();
+            if (reportStatusFilter === 'pending' && st !== 'pending') return false;
+            if (reportStatusFilter === 'resolved' && st !== 'resolved') return false;
+            return (r.feedTitle && r.feedTitle.toLowerCase().includes(q)) || (r.albumName && r.albumName.toLowerCase().includes(q)) || (r.reason && r.reason.toLowerCase().includes(q)) || st.includes(q) || oe.includes(q);
+        });
         document.getElementById('reportCounter').innerText = `Menampilkan ${filtered.length} dari ${allReports.length} laporan`;
+        ['All','Pending','Resolved'].forEach(id => { let b = document.getElementById('rf' + id); if (b) b.style.borderColor = (reportStatusFilter === id.toLowerCase()) ? '#e8572a' : '#2a2a2a'; });
+        let tabR = document.getElementById('tabReports');
+        if (tabR) tabR.innerHTML = 'Laporan Masuk' + (pendingTotal > 0 ? ' <span style="background:#e8572a;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">' + pendingTotal + '</span>' : '');
         let html = '';
         if(filtered.length === 0) { html = '<div class="card text-center text-gray-500">Tidak ada laporan.</div>'; } else {
-            filtered.forEach((r) => { let isPending = r.status === 'pending'; let o = allUsers.find(u => u.id === r.ownerId); let os = o && o.status === 'suspended'; let wl = o && o.whatsapp ? `https://wa.me/${o.whatsapp.replace(/[^0-9]/g, '')}` : '#'; html += `<div class="card ${isPending ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-green-500'}"><div class="flex justify-between mb-2"><h4 class="font-bold text-white">${r.feedTitle || 'Feed'}</h4><span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span></div><div class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></div><div class="text-sm text-gray-400 mb-2">Pemilik: <span class="text-white">${o ? o.email : 'N/A'}</span> ${os ? '<span class="text-red-500 text-xs ml-1">(Disuspend)</span>' : ''} ${o ? `<a href="mailto:${o.email}" class="ml-2 text-blue-400"><i class="fas fa-envelope"></i></a>` : ''} ${o && o.whatsapp ? `<a href="${wl}" target="_blank" class="ml-1 text-green-400"><i class="fab fa-whatsapp"></i></a>` : ''}</div><p class="text-sm text-gray-400 mb-4 bg-[#0a0a0a] p-2 rounded">Alasan: "${r.reason}"</p><div class="flex flex-wrap gap-2"><a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6;text-decoration:none;"><i class="fas fa-eye"></i> Tinjau</a><button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400"><i class="fas fa-eye-slash"></i> Suspend Feed</button><button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400"><i class="fas fa-folder-minus"></i> Suspend Album</button>${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}</div></div>`; });
+            filtered.forEach((r) => { let isPending = (r.status || 'pending') === 'pending'; let o = allUsers.find(u => u.id === r.ownerId); let os = o && o.status === 'suspended'; let wl = o && o.whatsapp ? `https://wa.me/${o.whatsapp.replace(/[^0-9]/g, '')}` : '#'; html += `<div class="card ${isPending ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-green-500'}"><div class="flex justify-between mb-2"><h4 class="font-bold text-white">${r.feedTitle || 'Feed'}</h4><span class="text-xs text-gray-500">${r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('id-ID') : ''}</span></div><div class="text-sm text-gray-300 mb-1">Album: <span class="text-orange-500">${r.albumName}</span></div><div class="text-sm text-gray-400 mb-2">Pemilik: <span class="text-white">${o ? o.email : 'N/A'}</span> ${os ? '<span class="text-red-500 text-xs ml-1">(Disuspend)</span>' : ''} ${o ? `<a href="mailto:${o.email}" class="ml-2 text-blue-400"><i class="fas fa-envelope"></i></a>` : ''} ${o && o.whatsapp ? `<a href="${wl}" target="_blank" class="ml-1 text-green-400"><i class="fab fa-whatsapp"></i></a>` : ''}</div><p class="text-sm text-gray-400 mb-4 bg-[#0a0a0a] p-2 rounded">Alasan: "${r.reason}"</p><div class="flex flex-wrap gap-2"><a href="view.html?albumId=${r.albumId}" target="_blank" class="btn-a" style="background:#3b82f6;text-decoration:none;"><i class="fas fa-eye"></i> Tinjau</a><button onclick="suspendFeed('${r.albumId}', '${r.feedId}')" class="btn-g text-orange-400"><i class="fas fa-eye-slash"></i> Suspend Feed</button><button onclick="suspendAlbum('${r.albumId}')" class="btn-g text-red-400"><i class="fas fa-folder-minus"></i> Suspend Album</button>${isPending ? `<button onclick="resolveReport('${r.id}')" class="btn-g text-green-400"><i class="fas fa-check"></i> Selesai</button>` : `<span class="text-green-500 text-sm p-2">✓ Selesai</span>`}</div></div>`; });
         }
         document.getElementById('reportList').innerHTML = html;
     }
