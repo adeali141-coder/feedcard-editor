@@ -289,8 +289,8 @@ function openShareModal(cardIdx) {
   var link = '', lc = document.getElementById('shareLinkContainer'), nt = document.getElementById('shareLinkNote');
   
   if (currentAlbumId) {
-    link = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
-    if (cardIdx >= 0) { link += '&card=' + (cardIdx + 1); }
+    link = 'https://feed.novavariety.store/f/' + currentAlbumId;
+    if (cardIdx >= 0) { link += '/' + (cardIdx + 1); }
     if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link publik siap dibagikan!'; }
     if (nt) { nt.style.display = 'none'; }
   } else {
