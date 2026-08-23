@@ -446,9 +446,9 @@
     }
 
     function openShareModal(cardIdx = -1) {
-        let baseUrl = 'https://us-central1-feed-editor-93db1.cloudfunctions.net/getShareMeta?albumId=' + currentAlbumId;
+        let baseUrl = 'https://feed.novavariety.store/f/' + currentAlbumId;
         if(cardIdx >= 0) {
-            baseUrl += '&card=' + (cardIdx + 1);
+            baseUrl += '/' + (cardIdx + 1);
             if(currentAlbum.cards[cardIdx]) {
                 let sc = document.getElementById('shareCount_' + cardIdx);
                 if(sc) { let currentShares = parseInt(sc.innerText) || 0; sc.innerText = currentShares + 1; }
