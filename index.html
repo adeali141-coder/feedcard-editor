@@ -162,7 +162,7 @@ function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.c
 function addCard(){album.cards.unshift(defCard());currentCardIdx=0;saveLocal();renderEditor();showToast('Card ditambahkan di posisi 1');}
 function removeCard(i){if(album.cards.length<=1){showToast('Minimal 1 card');return;}album.cards.splice(i,1);if(currentCardIdx>=album.cards.length)currentCardIdx=album.cards.length-1;saveLocal();renderEditor();}
 function dupCard(i){var c=JSON.parse(JSON.stringify(album.cards[i]));c.id=uid();c.likes=0;c.liked=false;c.comments=[];album.cards.unshift(c);currentCardIdx=0;saveLocal();renderEditor();showToast('Card diduplikasi di posisi 1');}
-function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();}
+function moveCard(i,d){var n=i+d;if(n<0||n>=album.cards.length)return;var t=album.cards[i];album.cards[i]=album.cards[n];album.cards[n]=t;currentCardIdx=n;saveLocal();renderEditor();}
 function selCard(i){currentCardIdx=i;renderEditor();}
 function addImg(ci){ if(album.cards[ci].images.length >= 15) { showToast('Maksimal 15 media'); return; } album.cards[ci].images.push({url:'', link:''}); saveLocal(); renderEditor(); }
 function remImg(ci,ii){if(album.cards[ci].images.length<=1){showToast('Minimal 1 gambar');return;}album.cards[ci].images.splice(ii,1);saveLocal();renderEditor();}
