@@ -146,7 +146,7 @@
                 const album = doc.data();
                 const albumId = doc.id;
                 const cardCount = album.cards ? album.cards.length : 0;
-                const ogImg = album.ogImage || (album.cards && album.cards[0] && album.cards[0].images[0] ? album.cards[0].images[0].url : 'https://via.placeholder.com/400x225/111/333?text=No+Image');
+                const ogImg = album.ogImage || (album.cards && album.cards[0] && album.cards[0].images && album.cards[0].images[0] && album.cards[0].images[0].url ? album.cards[0].images[0].url : 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225"><rect width="100%" height="100%" fill="#111"/><text x="50%" y="52%" fill="#444" font-family="sans-serif" font-size="18" text-anchor="middle">No Image</text></svg>'));
                 html += `<div class="album-card flex flex-col"><div class="aspect-video bg-[#0a0a0a] overflow-hidden"><img src="${ogImg}" alt="${album.name}" class="w-full h-full object-cover opacity-90"></div><div class="p-4 flex-1 flex flex-col"><h4 class="font-bold text-white truncate mb-1">${album.name}</h4><p class="text-xs text-gray-500 mb-3"><i class="fas fa-layer-group mr-1"></i> ${cardCount} Feed Card</p><div class="flex gap-2 mt-auto"><button onclick="editAlbum('${albumId}')" class="btn-a flex-1 text-sm" style="padding:8px 12px;"><i class="fas fa-pen mr-1"></i> Buka Album</button><button onclick="deleteAlbum('${albumId}', '${album.name.replace(/'/g, "\\'")}')" class="btn-g text-sm text-red-500" style="padding:8px 12px;" title="Hapus Album"><i class="fas fa-trash"></i></button></div></div></div>`;
             });
             listContainer.innerHTML = html;
