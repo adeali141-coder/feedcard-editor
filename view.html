@@ -387,10 +387,22 @@
         var ct = document.getElementById('likeCount_' + i);
         c.liked = !wasLiked;
         if (b) { b.classList.toggle('liked', c.liked); b.classList.add('heart-pop'); setTimeout(function(){ b.classList.remove('heart-pop'); }, 300); }
+        // LANGSUNG update angka (tidak menunggu server)
+        if (ct) {
+            var cur = parseInt(ct.textContent) || 0;
+            ct.textContent = c.liked ? cur + 1 : Math.max(0, cur - 1);
+        }
         const incrementInteraction = functions.httpsCallable('incrementInteraction');
         incrementInteraction({ albumId: currentAlbumId, cardIdx: i, type: 'like', isDecrement: wasLiked })
-        .then((result) => { if(result.data.success && ct) { ct.textContent = result.data.newValue; c.likes = result.data.newValue; } })
-        .catch((error) => { c.liked = wasLiked; if (b) { b.classList.toggle('liked', c.liked); } showToast('Gagal menyimpan like'); });
+        .catch((error) => {
+            c.liked = wasLiked;
+            if (b) { b.classList.toggle('liked', c.liked); }
+            if (ct) {
+                var cur = parseInt(ct.textContent) || 0;
+                ct.textContent = c.liked ? cur + 1 : Math.max(0, cur - 1);
+            }
+            showToast('Gagal menyimpan like');
+        });
     }
 
     function updateCommentCounts() {
