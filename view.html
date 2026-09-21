@@ -128,6 +128,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const functions = firebase.app().functions('us-central1');
+        // ===== STATISTICS RECORDING =====
+    let viewedCards = new Set();
+    function recordStat(albumId, cardIdx, type) {
+        try {
+            const today = new Date().toISOString().slice(0, 10);
+            const docId = albumId + '_' + cardIdx + '_' + today;
+            const upd = { albumId: albumId, cardIdx: cardIdx, date: today };
+            upd[type] = firebase.firestore.FieldValue.increment(1);
+            db.collection('stats_daily').doc(docId).set(upd, { merge: true }).catch(function(){});
+        } catch(e) {}
+    }
 
     let currentUserId = null;
     firebase.auth().onAuthStateChanged((user) => {
@@ -138,6 +149,11 @@
         entries.forEach(entry => {
             let card = entry.target;
             if (entry.isIntersecting) {
+                let vNum = card.id.replace('target-card-', '');
+                if (!viewedCards.has(vNum)) {
+                    viewedCards.add(vNum);
+                    recordStat(currentAlbumId, parseInt(vNum), 'views');
+                }
                 let iframes = card.querySelectorAll('iframe[data-src]');
                 iframes.forEach(v => { if(!v.getAttribute('src')) v.setAttribute('src', v.dataset.src); });
                 let videos = card.querySelectorAll('video[data-src]');
@@ -178,7 +194,7 @@
             document.getElementById('appLoad').classList.add('hidden');
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
-            
+            recordStat(currentAlbumId, -1, 'views');
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
@@ -278,7 +294,7 @@
             
             let ctaHtml = '';
             if(c.cta && c.cta.text) {
-                ctaHtml = `<a href="${escA(c.cta.url)}" target="_blank" rel="noopener" style="text-decoration:none; display:inline-block; margin-bottom:12px;">
+                ctaHtml = `<a href="${escA(c.cta.url)}" target="_blank" rel="noopener" onclick="recordStat(currentAlbumId, ${i}, 'ctaClicks')" style="text-decoration:none; display:inline-block; margin-bottom:12px;">
                     <button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:25px;padding:var(--cta-padding);font-size:14px;font-weight:600;border:none;cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${escH(c.cta.text)}</button>
                 </a>`;
             }
@@ -386,6 +402,7 @@
         var b = document.getElementById('likeBtn_' + i);
         var ct = document.getElementById('likeCount_' + i);
         c.liked = !wasLiked;
+        recordStat(currentAlbumId, i, 'likes');
         if (b) { b.classList.toggle('liked', c.liked); b.classList.add('heart-pop'); setTimeout(function(){ b.classList.remove('heart-pop'); }, 300); }
         // LANGSUNG update angka (tidak menunggu server)
         if (ct) {
@@ -451,6 +468,7 @@
         var t = document.getElementById('commentText').value.trim();
         if (!t) return;
         localStorage.setItem('acf_userName', a);
+        recordStat(currentAlbumId, commentCardIdx, 'comments');
         var newCommentId = db.collection('comments').doc().id;
         db.collection('comments').doc(newCommentId).set({ commentId: newCommentId, albumId: currentAlbumId, cardIdx: commentCardIdx, author: a, text: t, parentId: replyTo || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
         .then(() => { document.getElementById('commentText').value = ''; document.getElementById('commentText').placeholder = 'Tulis komentar...'; replyTo = null; showToast('Komentar berhasil terkirim!'); })
@@ -460,7 +478,8 @@
     function openShareModal(cardIdx = -1) {
         let baseUrl = 'https://feed.novavariety.store/f/' + currentAlbumId;
         if(cardIdx >= 0) {
-            baseUrl += '/' + (cardIdx + 1);
+            recordStat(currentAlbumId, cardIdx, 'shares');
+            baseUrl += '/' + (currentAlbum.cards[cardIdx] ? currentAlbum.cards[cardIdx].id : (cardIdx + 1));
             if(currentAlbum.cards[cardIdx]) {
                 let sc = document.getElementById('shareCount_' + cardIdx);
                 if(sc) { let currentShares = parseInt(sc.innerText) || 0; sc.innerText = currentShares + 1; }
@@ -483,6 +502,7 @@
     function submitReport(){
         let reason=document.getElementById('reportReason').value.trim();
         if(!reason){showToast('Mohon isi alasan');return;}
+        recordStat(currentAlbumId, currentReportFeedIdx, 'reports');
         let reportedCard=currentAlbum.cards[currentReportFeedIdx];
         let ownerId = currentAlbum.userId || null;
         db.collection('reports').add({albumId:currentAlbumId,albumName:currentAlbum.name,ownerId: ownerId,feedId:reportedCard.id,feedTitle:reportedCard.title.text,reason:reason,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()})
