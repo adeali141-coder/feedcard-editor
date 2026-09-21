@@ -290,7 +290,7 @@ function openShareModal(cardIdx) {
   
   if (currentAlbumId) {
     link = 'https://feed.novavariety.store/f/' + currentAlbumId;
-    if (cardIdx >= 0) { link += '/' + (cardIdx + 1); }
+    if (cardIdx >= 0) { link += '/' + (album.cards[cardIdx] ? album.cards[cardIdx].id : (cardIdx + 1)); }
     if (lc) { lc.style.display = 'block'; lc.innerHTML = '<i class="fas fa-check-circle" style="color:#4ade80;margin-right:6px"></i>Link publik siap dibagikan!'; }
     if (nt) { nt.style.display = 'none'; }
   } else {
