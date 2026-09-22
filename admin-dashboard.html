@@ -366,6 +366,15 @@
                     }
                 });
             });
+            // Tambahkan card yang belum memiliki data statistik (views = 0)
+            Object.keys(albumInfo).forEach((aid) => {
+                if (!byAlbum[aid]) return;
+                Object.keys(albumInfo[aid].cards).forEach((ci) => {
+                    if (!byAlbum[aid].cards[ci]) {
+                        byAlbum[aid].cards[ci] = { views: 0, likes: 0, shares: 0, ctaClicks: 0 };
+                    }
+                });
+            });
             renderStatsSummary(totals);
             renderStatsAlbums(byAlbum, albumInfo);
         }).catch((e) => { document.getElementById('statsSummary').innerHTML = '<p class="text-red-500 text-sm">Gagal: ' + e.message + '</p>'; });
