@@ -376,7 +376,7 @@
         items.forEach(([l,v,c]) => { h += '<div class="card" style="margin-bottom:0;text-align:center"><p class="text-xs text-gray-500">'+l+'</p><p class="text-xl font-bold" style="color:'+c+'">'+v.toLocaleString('id-ID')+'</p></div>'; });
         document.getElementById('statsSummary').innerHTML = h;
     }
-    function renderStatsAlbums(byAlbum) {
+    function renderStatsAlbums(byAlbum, albumInfo) {
         const el = document.getElementById('statsAlbumDetail');
         const ids = Object.keys(byAlbum);
         if (ids.length === 0) { el.innerHTML = '<div class="card text-center text-gray-500">Belum ada data. Buka feed publik beberapa kali untuk mulai merekam.</div>'; return; }
