@@ -376,24 +376,26 @@
         items.forEach(([l,v,c]) => { h += '<div class="card" style="margin-bottom:0;text-align:center"><p class="text-xs text-gray-500">'+l+'</p><p class="text-xl font-bold" style="color:'+c+'">'+v.toLocaleString('id-ID')+'</p></div>'; });
         document.getElementById('statsSummary').innerHTML = h;
     }
-    function renderStatsAlbums(byAlbum, albumInfo) {
+        function renderStatsAlbums(byAlbum, albumInfo) {
         const el = document.getElementById('statsAlbumDetail');
         const ids = Object.keys(byAlbum);
         if (ids.length === 0) { el.innerHTML = '<div class="card text-center text-gray-500">Belum ada data. Buka feed publik beberapa kali untuk mulai merekam.</div>'; return; }
         let h = '';
         ids.forEach((aid) => {
             const a = byAlbum[aid];
+            const albumName = (albumInfo[aid] && albumInfo[aid].name) || aid.slice(0, 8) + '...';
             let cardsHtml = '';
             const cardIdxs = Object.keys(a.cards);
             if (cardIdxs.length > 0) {
                 const maxV = Math.max(1, ...cardIdxs.map(x => a.cards[x].views));
                 cardIdxs.forEach((ci) => {
                     const c = a.cards[ci];
+                    const cardTitle = (albumInfo[aid] && albumInfo[aid].cards[ci]) || 'Card ' + (parseInt(ci) + 1);
                     const barW = Math.round((c.views / maxV) * 100);
-                    cardsHtml += '<div class="mb-2"><div class="flex justify-between text-[11px] mb-1"><span class="text-gray-400">Card '+(parseInt(ci)+1)+'</span><span class="text-gray-500">'+c.views+'v | '+c.likes+'l | '+c.ctaClicks+' CTA</span></div><div style="height:6px;background:#1a1a1a;border-radius:3px"><div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#22d3ee,#3b82f6);border-radius:3px"></div></div></div>';
+                    cardsHtml += '<div class="mb-2"><div class="flex justify-between text-[11px] mb-1"><span class="text-gray-400 truncate mr-2">' + cardTitle + '</span><span class="text-gray-500" style="flex:none">' + c.views + 'v | ' + c.likes + 'l | ' + c.ctaClicks + ' CTA</span></div><div style="height:6px;background:#1a1a1a;border-radius:3px"><div style="height:100%;width:' + barW + '%;background:linear-gradient(90deg,#22d3ee,#3b82f6);border-radius:3px"></div></div></div>';
                 });
             }
-            h += '<div class="card" onclick="this.querySelector(\'.stat-cards\').style.display=this.querySelector(\'.stat-cards\').style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer"><div class="flex justify-between items-center"><h4 class="font-bold text-white text-sm">'+aid.slice(0,8)+'...</h4><span class="text-xs text-gray-500">'+a.views+' views | '+a.likes+' likes | '+a.ctaClicks+' CTA</span></div><div class="stat-cards" style="display:none;margin-top:10px;border-top:1px solid #222;padding-top:8px">'+cardsHtml+'</div></div>';
+            h += '<div class="card" onclick="this.querySelector(\'.stat-cards\').style.display=this.querySelector(\'.stat-cards\').style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer"><div class="flex justify-between items-center"><h4 class="font-bold text-white text-sm">' + albumName + '</h4><span class="text-xs text-gray-500">' + a.views + ' views | ' + a.likes + ' likes | ' + a.ctaClicks + ' CTA</span></div><div class="stat-cards" style="display:none;margin-top:10px;border-top:1px solid #222;padding-top:8px">' + cardsHtml + '</div></div>';
         });
         el.innerHTML = h;
     }
