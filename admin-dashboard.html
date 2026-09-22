@@ -335,12 +335,22 @@
     }
 
     // ===== STATISTIK =====
-    function loadStats() {
+        function loadStats() {
         const days = parseInt(document.getElementById('statsPeriod').value) || 30;
         const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
         document.getElementById('statsSummary').innerHTML = '<p class="text-gray-500 text-sm">Memuat...</p>';
         document.getElementById('statsAlbumDetail').innerHTML = '';
-        db.collection('stats_daily').where('date', '>=', startDate).get().then((snap) => {
+        const albumInfo = {};
+        db.collection('albums').get().then((albumSnap) => {
+            albumSnap.forEach((doc) => {
+                const a = doc.data();
+                albumInfo[doc.id] = { name: a.name || '(tanpa nama)', cards: {} };
+                (Array.isArray(a.cards) ? a.cards : Object.values(a.cards || {})).forEach((c, i) => {
+                    albumInfo[doc.id].cards[i] = (c && c.title && c.title.text) || 'Card ' + (i + 1);
+                });
+            });
+            return db.collection('stats_daily').where('date', '>=', startDate).get();
+        }).then((snap) => {
             const totals = { views: 0, likes: 0, shares: 0, comments: 0, reports: 0, ctaClicks: 0 };
             const byAlbum = {};
             snap.forEach((doc) => {
@@ -357,7 +367,7 @@
                 });
             });
             renderStatsSummary(totals);
-            renderStatsAlbums(byAlbum);
+            renderStatsAlbums(byAlbum, albumInfo);
         }).catch((e) => { document.getElementById('statsSummary').innerHTML = '<p class="text-red-500 text-sm">Gagal: ' + e.message + '</p>'; });
     }
     function renderStatsSummary(t) {
