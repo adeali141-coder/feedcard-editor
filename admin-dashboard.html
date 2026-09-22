@@ -26,7 +26,6 @@
     .contact-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; }
     .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
     .modal-ct { background: #111; border-radius: 12px; padding: 24px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-
  /* Fix Kontras Teks di Quill Editor */
     .ql-editor { color: #111 !important; }
     .ql-snow .ql-stroke { stroke: #444 !important; }
@@ -54,6 +53,7 @@
     <div class="flex border-b border-[#1a1a1a] mb-6">
         <div class="tab-btn active" onclick="switchTab('users')">Manajemen User</div>
         <div class="tab-btn" id="tabReports" onclick="switchTab('reports')">Laporan Masuk</div>
+        <div class="tab-btn" onclick="switchTab('stats')">Statistik</div>
     </div>
     <div id="tab-users">
         <div class="flex gap-2 mb-2">
@@ -67,13 +67,22 @@
     </div>
     <div id="tab-reports" style="display:none;">
         <input type="text" id="searchReport" class="inp mb-2" placeholder="Cari judul, album, pemilik, alasan, atau status (pending/resolved)..." oninput="renderReports()">
-<div class="flex gap-2 mb-2">
-    <button id="rfAll" onclick="setReportFilter('all')" class="btn-g">Semua</button>
-    <button id="rfPending" onclick="setReportFilter('pending')" class="btn-g text-orange-400">Pending</button>
-    <button id="rfResolved" onclick="setReportFilter('resolved')" class="btn-g text-green-400">Selesai</button>
-</div>
+        <div class="flex gap-2 mb-2">
+            <button id="rfAll" onclick="setReportFilter('all')" class="btn-g">Semua</button>
+            <button id="rfPending" onclick="setReportFilter('pending')" class="btn-g text-orange-400">Pending</button>
+            <button id="rfResolved" onclick="setReportFilter('resolved')" class="btn-g text-green-400">Selesai</button>
+        </div>
         <p id="reportCounter" class="text-xs text-gray-500 mb-4"></p>
         <div id="reportList"></div>
+    </div>
+    <div id="tab-stats" style="display:none;">
+        <select id="statsPeriod" class="inp mb-4" style="max-width:200px" onchange="loadStats()">
+            <option value="7">7 Hari</option>
+            <option value="30" selected>30 Hari</option>
+            <option value="90">90 Hari</option>
+        </select>
+        <div id="statsSummary" class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6"></div>
+        <div id="statsAlbumDetail"></div>
     </div>
 </div>
 
@@ -86,12 +95,13 @@
     </div>
 </div>
 
-<!-- Modal Landing, Footer, Monetag -->
+<!-- Modal Landing, Footer, Monetag, Storage -->
 <div id="landingModal" class="modal-ov" onclick="if(event.target===this)closeLandingSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Landing Page</h3><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Judul Hook</label><input type="text" id="landingTitle" class="inp"></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Sub-Judul</label><textarea id="landingSubtitle" class="inp" rows="2"></textarea></div><div class="flex gap-2 mb-4"><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Teks CTA</label><input type="text" id="landingCtaText" class="inp"></div><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL CTA</label><input type="text" id="landingCtaLink" class="inp"></div></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">URL Banner (Pisahkan koma)</label><textarea id="landingBanner" class="inp" rows="2"></textarea></div><div class="flex gap-2 mb-4"><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">Warna BG</label><input type="text" id="landingBgColor" class="inp" placeholder="#e8572a"></div><div class="flex-1"><label class="text-xs text-gray-400 mb-1 block">URL Gambar BG</label><input type="text" id="landingBgImage" class="inp"></div></div><button onclick="saveLandingSettings()" class="btn-a w-full">Simpan</button></div></div>
 
 <div id="footerModal" class="modal-ov" onclick="if(event.target===this)closeFooterSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Footer</h3><input type="text" id="footerText" class="inp mb-3" placeholder="Teks Footer"><input type="text" id="footerImage" class="inp mb-3" placeholder="URL Gambar Footer"><input type="text" id="footerLink" class="inp mb-4" placeholder="URL Link Footer"><button onclick="saveGlobalFooter()" class="btn-a w-full">Simpan</button></div></div>
 
 <div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Monetag</h3><input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="URL Monetag"><button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button></div></div>
+
 <div id="storageModal" class="modal-ov" onclick="if(event.target===this)closeStorageModal()">
     <div class="modal-ct">
         <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold">Maintenance Storage</h3><button onclick="closeStorageModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark"></i></button></div>
@@ -142,7 +152,9 @@
     function switchTab(tab) {
         document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
         document.getElementById('tab-reports').style.display = tab === 'reports' ? 'block' : 'none';
-        document.querySelectorAll('.tab-btn').forEach((el, i) => el.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'reports' && i === 1)));
+        document.getElementById('tab-stats').style.display = tab === 'stats' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach((el, i) => el.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'reports' && i === 1) || (tab === 'stats' && i === 2)));
+        if (tab === 'stats') loadStats();
     }
 
     // --- QUILL WYSIWYG ---
@@ -199,29 +211,17 @@
     }
 
     function exportUsersToCSV() {
-        if(allUsers.length === 0) {
-            alert("Tidak ada data user untuk diekspor.");
-            return;
-        }
-
-        // Header kolom Spreadsheet
+        if(allUsers.length === 0) { alert("Tidak ada data user untuk diekspor."); return; }
         let csv = "Email,No WhatsApp,Tanggal Daftar,Status,Limit Album,Monetag\n";
-
-        // Isi data dari variabel allUsers
         allUsers.forEach(u => {
             let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
             let status = u.status || 'active';
             let limit = u.albumLimit || 2;
             let monetag = u.monetagEnabled ? 'ON' : 'OFF';
-            
-            // Bersihkan koma dari email/WA agar tidak merusak format CSV
             let email = u.email ? u.email.replace(/,/g, ';') : '-';
             let wa = u.whatsapp ? u.whatsapp.replace(/,/g, ';') : '-';
-
             csv += `${email},${wa},${dateStr},${status},${limit},${monetag}\n`;
         });
-
-        // Buat file dan download otomatis
         let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         let link = document.createElement("a");
         let url = URL.createObjectURL(blob);
@@ -232,7 +232,7 @@
         link.click();
         document.body.removeChild(link);
     }
-    
+
     function toggleSuspend(uid, s) { db.collection('users').doc(uid).update({ status: s ? 'active' : 'suspended' }); }
     async function toggleMonetag(uid, t) { db.collection('users').doc(uid).update({ monetagEnabled: t }); const s = await db.collection('albums').where('userId', '==', uid).get(); s.forEach(d => d.ref.update({ monetagEnabled: t })); }
     function toggleAlbumLimit(uid, currentLimit) {
@@ -254,7 +254,7 @@
 
     // --- LAPORAN & MODERASI ---
     function loadReports() { db.collection('reports').onSnapshot((snapshot) => { allReports = []; snapshot.forEach(doc => allReports.push({id: doc.id, ...doc.data()})); renderReports(); }); }
-        let reportStatusFilter = 'all';
+    let reportStatusFilter = 'all';
     function setReportFilter(f) { reportStatusFilter = f; renderReports(); }
     function renderReports() {
         let q = document.getElementById('searchReport').value.toLowerCase();
@@ -281,12 +281,12 @@
     async function suspendAlbum(aid) { if(!confirm('Tangguhkan album ini?')) return; await db.collection('albums').doc(aid).update({ status: 'suspended' }); alert('Album ditangguhkan!'); }
     function resolveReport(rid) { db.collection('reports').doc(rid).update({ status: 'resolved' }); }
     function logout() { auth.signOut().then(() => window.location.href = "admin-login.html"); }
-        // ===== MAINTENANCE STORAGE =====
+
+    // ===== MAINTENANCE STORAGE =====
     const fnsAdmin = firebase.app().functions('us-central1');
     function openStorageModal() { document.getElementById('storageModal').style.display = 'flex'; loadStorageReport(); }
     function closeStorageModal() { document.getElementById('storageModal').style.display = 'none'; }
     function fmtBytes(b) { if (!b) return '0 B'; const u = ['B','KB','MB','GB']; let i = 0, n = b; while (n >= 1024 && i < 3) { n /= 1024; i++; } return n.toFixed(n >= 100 ? 0 : 1) + ' ' + u[i]; }
-
     function loadStorageReport() {
         const el = document.getElementById('storageReportBody');
         el.innerHTML = '<p class="text-gray-500 text-sm">Memuat laporan...</p>';
@@ -295,7 +295,6 @@
             renderStorageReport(doc.data());
         }).catch((e) => { el.innerHTML = '<p class="text-red-500 text-sm">Gagal memuat: ' + e.message + '</p>'; });
     }
-
     function renderStorageReport(r) {
         let h = '<div class="grid grid-cols-3 gap-2 mb-4 text-center">';
         h += '<div class="card" style="margin-bottom:0"><p class="text-xs text-gray-500">Terpakai</p><p class="text-lg font-bold text-white">' + fmtBytes(r.totalBytes || 0) + '</p><p class="text-xs text-gray-600">dari 5 GB gratis</p></div>';
@@ -320,15 +319,11 @@
         h += '<p class="text-[10px] text-gray-600">Laporan dibuat: ' + gen + ' &bull; Email rekap otomatis terkirim setiap tanggal 1, 10:00 WIB</p>';
         document.getElementById('storageReportBody').innerHTML = h;
     }
-
     async function refreshStorageReport() {
         document.getElementById('storageReportBody').innerHTML = '<p class="text-gray-500 text-sm"><i class="fas fa-spinner fa-spin"></i> Menganalisis storage... (10-30 detik)</p>';
-        try {
-            await fnsAdmin.httpsCallable('generateStorageReport')({});
-            loadStorageReport();
-        } catch (e) { alert('Gagal: ' + e.message); loadStorageReport(); }
+        try { await fnsAdmin.httpsCallable('generateStorageReport')({}); loadStorageReport(); }
+        catch (e) { alert('Gagal: ' + e.message); loadStorageReport(); }
     }
-
     async function cleanOrphanFiles() {
         if (!confirm('Hapus SEMUA file yatim?\n\nFile yatim = gambar di Storage yang sudah >14 hari TIDAK dipakai album/pengaturan mana pun.\nTindakan ini permanen dan tidak bisa dibatalkan.')) return;
         document.getElementById('storageReportBody').innerHTML = '<p class="text-gray-500 text-sm"><i class="fas fa-spinner fa-spin"></i> Membersihkan file yatim... mohon tunggu.</p>';
@@ -337,6 +332,60 @@
             alert('Selesai! ' + res.data.deleted + ' file dihapus, ' + fmtBytes(res.data.freedBytes) + ' ruang dibebaskan.');
             loadStorageReport();
         } catch (e) { alert('Gagal: ' + e.message); loadStorageReport(); }
+    }
+
+    // ===== STATISTIK =====
+    function loadStats() {
+        const days = parseInt(document.getElementById('statsPeriod').value) || 30;
+        const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+        document.getElementById('statsSummary').innerHTML = '<p class="text-gray-500 text-sm">Memuat...</p>';
+        document.getElementById('statsAlbumDetail').innerHTML = '';
+        db.collection('stats_daily').where('date', '>=', startDate).get().then((snap) => {
+            const totals = { views: 0, likes: 0, shares: 0, comments: 0, reports: 0, ctaClicks: 0 };
+            const byAlbum = {};
+            snap.forEach((doc) => {
+                const d = doc.data();
+                ['views','likes','shares','comments','reports','ctaClicks'].forEach(k => {
+                    const v = d[k] || 0;
+                    totals[k] += v;
+                    if (!byAlbum[d.albumId]) byAlbum[d.albumId] = { views: 0, likes: 0, shares: 0, comments: 0, reports: 0, ctaClicks: 0, cards: {} };
+                    byAlbum[d.albumId][k] += v;
+                    if (d.cardIdx >= 0) {
+                        if (!byAlbum[d.albumId].cards[d.cardIdx]) byAlbum[d.albumId].cards[d.cardIdx] = { views: 0, likes: 0, shares: 0, ctaClicks: 0 };
+                        if (k !== 'reports') byAlbum[d.albumId].cards[d.cardIdx][k] += v;
+                    }
+                });
+            });
+            renderStatsSummary(totals);
+            renderStatsAlbums(byAlbum);
+        }).catch((e) => { document.getElementById('statsSummary').innerHTML = '<p class="text-red-500 text-sm">Gagal: ' + e.message + '</p>'; });
+    }
+    function renderStatsSummary(t) {
+        const items = [['Views',t.views,'#22d3ee'],['Likes',t.likes,'#ef4444'],['Shares',t.shares,'#3b82f6'],['Komentar',t.comments,'#a78bfa'],['Laporan',t.reports,'#f97316'],['CTA',t.ctaClicks,'#4ade80']];
+        let h = '';
+        items.forEach(([l,v,c]) => { h += '<div class="card" style="margin-bottom:0;text-align:center"><p class="text-xs text-gray-500">'+l+'</p><p class="text-xl font-bold" style="color:'+c+'">'+v.toLocaleString('id-ID')+'</p></div>'; });
+        document.getElementById('statsSummary').innerHTML = h;
+    }
+    function renderStatsAlbums(byAlbum) {
+        const el = document.getElementById('statsAlbumDetail');
+        const ids = Object.keys(byAlbum);
+        if (ids.length === 0) { el.innerHTML = '<div class="card text-center text-gray-500">Belum ada data. Buka feed publik beberapa kali untuk mulai merekam.</div>'; return; }
+        let h = '';
+        ids.forEach((aid) => {
+            const a = byAlbum[aid];
+            let cardsHtml = '';
+            const cardIdxs = Object.keys(a.cards);
+            if (cardIdxs.length > 0) {
+                const maxV = Math.max(1, ...cardIdxs.map(x => a.cards[x].views));
+                cardIdxs.forEach((ci) => {
+                    const c = a.cards[ci];
+                    const barW = Math.round((c.views / maxV) * 100);
+                    cardsHtml += '<div class="mb-2"><div class="flex justify-between text-[11px] mb-1"><span class="text-gray-400">Card '+(parseInt(ci)+1)+'</span><span class="text-gray-500">'+c.views+'v | '+c.likes+'l | '+c.ctaClicks+' CTA</span></div><div style="height:6px;background:#1a1a1a;border-radius:3px"><div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#22d3ee,#3b82f6);border-radius:3px"></div></div></div>';
+                });
+            }
+            h += '<div class="card" onclick="this.querySelector(\'.stat-cards\').style.display=this.querySelector(\'.stat-cards\').style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer"><div class="flex justify-between items-center"><h4 class="font-bold text-white text-sm">'+aid.slice(0,8)+'...</h4><span class="text-xs text-gray-500">'+a.views+' views | '+a.likes+' likes | '+a.ctaClicks+' CTA</span></div><div class="stat-cards" style="display:none;margin-top:10px;border-top:1px solid #222;padding-top:8px">'+cardsHtml+'</div></div>';
+        });
+        el.innerHTML = h;
     }
 </script>
 </body>
