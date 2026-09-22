@@ -365,6 +365,8 @@ function updBannerTime(bIdx, val){ if(!album.banners[bIdx]) album.banners[bIdx] 
     let currentUserId = null;
     let currentAlbumId = null;
 
+        let hasLoadedAlbum = false;
+
     authV2.onAuthStateChanged((user) => {
         if (!user) {
             window.location.href = "login.html";
@@ -375,7 +377,10 @@ function updBannerTime(bIdx, val){ if(!album.banners[bIdx]) album.banners[bIdx] 
             if (currentAlbumId) {
                 let liveLink = document.getElementById('liveViewLink');
                 if(liveLink) { liveLink.href = 'view.html?albumId=' + currentAlbumId; }
-                loadAlbumData();
+                if (!hasLoadedAlbum) {
+                    hasLoadedAlbum = true;
+                    loadAlbumData();
+                }
             } else {
                 window.location.href = "dashboard.html";
             }
@@ -433,7 +438,11 @@ function updBannerTime(bIdx, val){ if(!album.banners[bIdx]) album.banners[bIdx] 
 
     window.saveToCloud = function() {
         if(!currentAlbumId || !currentUserId) { showToast('Sesi berakhir, silakan login ulang.'); return; }
-        document.getElementById('savingOverlay').style.display = 'flex';
+        // REM PENGAMAN: cegah save jika cards tampak kosong/termuat tidak lengkap
+        if (!album.cards || album.cards.length === 0 || (album.cards.length === 1 && !album.cards[0].title.text && (!album.cards[0].images || !album.cards[0].images[0] || !album.cards[0].images[0].url))) {
+            if (!confirm('PERINGATAN: Album tampak kosong!\n\nIni mungkin karena data belum termuat lengkap. Menyimpan sekarang akan MENIMPA data di Cloud.\n\nYakin ingin lanjut?')) return;
+        }  
+      document.getElementById('savingOverlay').style.display = 'flex';
         album.name = document.getElementById('albumNameInput').value || 'Tanpa Nama';
         let dataToSave = {
             name: album.name,
