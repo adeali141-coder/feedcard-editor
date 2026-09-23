@@ -198,9 +198,43 @@
     }
 
     // --- GLOBAL SETTINGS (MONETAG, LANDING, FOOTER) ---
-    function loadGlobalSettings() { db.collection('settings').doc('monetag').onSnapshot((doc) => { if(doc.exists) document.getElementById('globalMonetagUrl').value = doc.data().url || ''; }); }
-    function openMonetagSettings() { document.getElementById('monetagModal').style.display = 'flex'; } function closeMonetagSettings() { document.getElementById('monetagModal').style.display = 'none'; }
-    function saveGlobalMonetag() { db.collection('settings').doc('monetag').set({ url: document.getElementById('globalMonetagUrl').value }); closeMonetagSettings(); }
+    function loadGlobalSettings() { }
+    function openMonetagSettings() {
+        db.collection('settings').doc('monetagPopup').get().then((doc) => {
+            const d = doc.exists ? doc.data() : {};
+            document.getElementById('mtEnabled').checked = d.enabled || false;
+            document.getElementById('mtFirstVisit').checked = d.firstVisitEnabled !== false;
+            document.getElementById('mtMiniPromo').checked = d.miniPromoCloseEnabled !== false;
+            document.getElementById('mtPeriodic').checked = d.periodicEnabled || false;
+            document.getElementById('mtInterval').value = d.periodicMinutes || 15;
+            for (let i = 1; i <= 5; i++) { document.getElementById('mtUrl' + i).value = (d.urls && d.urls[i-1]) || ''; }
+            document.getElementById('monetagModal').style.display = 'flex';
+        });
+    }
+    function closeMonetagSettings() { document.getElementById('monetagModal').style.display = 'none'; }
+    function saveMonetagPopupSettings() {
+        const urls = [];
+        for (let i = 1; i <= 5; i++) { const v = document.getElementById('mtUrl' + i).value.trim(); if (v) urls.push(v); }
+        db.collection('settings').doc('monetagPopup').set({
+            enabled: document.getElementById('mtEnabled').checked,
+            firstVisitEnabled: document.getElementById('mtFirstVisit').checked,
+            miniPromoCloseEnabled: document.getElementById('mtMiniPromo').checked,
+            periodicEnabled: document.getElementById('mtPeriodic').checked,
+            periodicMinutes: parseInt(document.getElementById('mtInterval').value) || 15,
+            urls: urls
+        }).then(() => { closeMonetagSettings(); alert('Pengaturan Monetag tersimpan!'); });
+    }
+    function setUserMonetagUrl(uid) {
+        let url = prompt("URL Monetag khusus untuk User ini:\n(Kosongkan untuk memakai URL global)", "");
+        if (url !== null) {
+            url = url.trim();
+            db.collection('users').doc(uid).update({ monetagUrl: url });
+            db.collection('albums').where('userId', '==', uid).get().then((snap) => {
+                snap.forEach(d => d.ref.update({ monetagUrl: url }));
+            });
+            alert(url === '' ? 'URL kustom dihapus. User akan memakai URL global.' : 'URL Monetag kustom tersimpan!');
+        }
+    }
 
     function loadLandingSettings() { db.collection('settings').doc('landingPage').onSnapshot((doc) => { if(doc.exists) { document.getElementById('landingTitle').value = doc.data().hookTitle || ''; document.getElementById('landingSubtitle').value = doc.data().hookSubtitle || ''; document.getElementById('landingCtaText').value = doc.data().ctaText || ''; document.getElementById('landingCtaLink').value = doc.data().ctaLink || ''; document.getElementById('landingBanner').value = doc.data().bannerUrl || ''; document.getElementById('landingBgColor').value = doc.data().bgColor || ''; document.getElementById('landingBgImage').value = doc.data().bgImageUrl || ''; } }); }
     function openLandingSettings() { document.getElementById('landingModal').style.display = 'flex'; } function closeLandingSettings() { document.getElementById('landingModal').style.display = 'none'; }
@@ -225,7 +259,7 @@
             let isSuspended = u.status === 'suspended';
             let dateStr = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
             let waLink = u.whatsapp ? `https://wa.me/${u.whatsapp.replace(/[^0-9]/g, '')}` : '#';
-            html += `<div class="card ${isSuspended ? 'card-suspended' : ''}"><div class="flex justify-between items-start mb-3"><div><h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4><p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p><p class="text-xs text-gray-500"><i class="far fa-calendar mr-1"></i> Daftar: ${dateStr}</p></div><div class="flex flex-col items-end gap-2"><span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">${isSuspended ? 'Suspended' : 'Active'}</span><div class="flex gap-1"><a href="mailto:${u.email}" class="contact-btn bg-blue-900 text-blue-300"><i class="fas fa-envelope"></i></a>${u.whatsapp ? `<a href="${waLink}" target="_blank" class="contact-btn bg-green-900 text-green-300"><i class="fab fa-whatsapp"></i></a>` : ''}</div></div></div><div class="flex flex-col gap-2 mt-4 border-t border-[#222] pt-3"><button onclick="toggleSuspend('${u.id}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}"><i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}</button><div class="flex gap-2"><button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1"><i class="fas fa-coins"></i> Monetag</button><button onclick="toggleAlbumLimit('${u.id}', ${u.albumLimit || 2})" class="btn-g ${u.albumLimit === 5 ? 'text-green-400' : ''}" style="flex:1"><i class="fas fa-layer-group"></i> Limit: ${u.albumLimit || 2}</button></div><button onclick="sendCustomNotif('${u.id}')" class="btn-g text-blue-400"><i class="fas fa-bell"></i> Kirim Notifikasi</button></div></div>`;
+            html += `<div class="card ${isSuspended ? 'card-suspended' : ''}"><div class="flex justify-between items-start mb-3"><div><h4 class="font-bold text-white">${u.email} ${u.role === 'admin' ? '🛡️' : ''}</h4><p class="text-xs text-gray-400">WA: ${u.whatsapp || '-'}</p><p class="text-xs text-gray-500"><i class="far fa-calendar mr-1"></i> Daftar: ${dateStr}</p></div><div class="flex flex-col items-end gap-2"><span class="text-xs px-2 py-1 rounded-full ${isSuspended ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}">${isSuspended ? 'Suspended' : 'Active'}</span><div class="flex gap-1"><a href="mailto:${u.email}" class="contact-btn bg-blue-900 text-blue-300"><i class="fas fa-envelope"></i></a>${u.whatsapp ? `<a href="${waLink}" target="_blank" class="contact-btn bg-green-900 text-green-300"><i class="fab fa-whatsapp"></i></a>` : ''}</div></div></div><div class="flex flex-col gap-2 mt-4 border-t border-[#222] pt-3"><button onclick="toggleSuspend('${u.id}', ${isSuspended})" class="btn-g ${isSuspended ? 'text-green-400' : 'text-red-400'}"><i class="fas fa-${isSuspended ? 'unlock' : 'ban'}"></i> ${isSuspended ? 'Aktifkan' : 'Suspend'}</button><div class="flex gap-2"><button onclick="toggleMonetag('${u.id}', ${!u.monetagEnabled})" class="btn-g ${u.monetagEnabled ? 'text-yellow-400' : ''}" style="flex:1"><i class="fas fa-coins"></i> Monetag</button><button onclick="setUserMonetagUrl('${u.id}')" class="btn-g text-cyan-400" style="flex:none;padding:8px 10px;" title="URL Monetag khusus User ini"><i class="fas fa-link"></i></button><button onclick="toggleAlbumLimit('${u.id}', ${u.albumLimit || 2})" class="btn-g ${u.albumLimit === 5 ? 'text-green-400' : ''}" style="flex:1"><i class="fas fa-layer-group"></i> Limit: ${u.albumLimit || 2}</button></div><button onclick="sendCustomNotif('${u.id}')" class="btn-g text-blue-400"><i class="fas fa-bell"></i> Kirim Notifikasi</button></div></div>`;
         });
         document.getElementById('userList').innerHTML = html || '<p class="text-gray-500">User tidak ditemukan.</p>';
     }
