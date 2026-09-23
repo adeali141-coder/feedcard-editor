@@ -101,6 +101,16 @@
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
     
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
+    /* MONETAG POPUP */
+    #monetagPopup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.3);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
+    #monetagBox{position:relative;width:85%;max-width:400px;height:55vh;max-height:480px;background:#1a1a1a;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+    #monetagHeader{position:absolute;top:0;left:0;right:0;z-index:2;background:rgba(0,0,0,0.85);padding:6px 10px;display:flex;justify-content:space-between;align-items:center;}
+    #monetagCloseBtn{width:26px;height:26px;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:opacity .3s;}
+    #monetagCloseBtn.closing{pointer-events:none;opacity:0.3;}
+    #monetagCloseSpinner{display:none;position:absolute;inset:-1px;background:rgba(0,0,0,0.8);border-radius:50%;align-items:center;justify-content:center;}
+    #monetagCloseSpinner.show{display:flex;}
+    #monetagCloseText{display:none;position:absolute;top:38px;left:0;right:0;z-index:2;text-align:center;font-size:11px;color:#888;padding:3px;}
+    #monetagFrame{width:100%;height:100%;border:none;margin-top:34px;display:block;}
 </style>
 </head>
 <body>
@@ -115,7 +125,70 @@
 <div id="commentModal" class="modal-ov" onclick="if(event.target===this)closeCommentModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold" id="commentModalTitle">Komentar</h3><button onclick="closeCommentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div id="commentList" class="space-y-3 mb-4" style="max-height:50vh;overflow-y:auto"></div><div class="border-t pt-3" style="border-color:#222"><div class="flex gap-2 mb-2"><input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" /></div><div class="flex gap-2"><input id="commentText" class="inp flex-1" style="padding:6px 10px" placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter')submitComment()" /><button onclick="submitComment()" class="btn-a" style="padding:6px 14px;width:auto"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Link</label><div class="flex gap-2"><input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly /><button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px;width:auto"><i class="fas fa-copy"></i></button></div></div><div class="space-y-2"><button onclick="shareToFacebook()" class="btn-a flex items-center gap-2" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button><button onclick="shareToWhatsApp()" class="btn-a flex items-center gap-2" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button></div></div></div>
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Laporkan Feed Ini</h3><button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau.</p><textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea><button onclick="submitReport()" class="btn-a">Kirim Laporan</button></div></div>
-
+<!-- MONETAG POPUP -->
+<div id="monetagPopup">
+    <div id="monetagBox">
+        <div id="monetagHeader">
+            <span style="font-size:11px;color:#666;">Iklan</span>
+            <div style="position:relative;">
+                <button id="monetagCloseBtn" onclick="closeMonetagPopup()"><i class="fas fa-times"></i><div id="monetagCloseSpinner"><i class="fas fa-spinner fa-spin" style="font-size:10px;color:#4ade80"></i></div></button>
+            </div>
+        </div>
+        <div id="monetagCloseText">Menutup iklan...</div>
+        <iframe id="monetagFrame" src="about:blank" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+    </div>
+</div>
+<script>
+    let monetagConfig = null;
+    function loadMonetagConfig() {
+        if (currentAlbum && currentAlbum.monetagEnabled === false) return;
+        db.collection('settings').doc('monetagPopup').get().then((doc) => {
+            if (!doc.exists) return;
+            monetagConfig = doc.data();
+            if (currentAlbum && currentAlbum.monetagUrl) {
+                monetagConfig.urls = [currentAlbum.monetagUrl];
+            }
+            setupMonetagTriggers();
+        }).catch(function(){});
+    }
+    function setupMonetagTriggers() {
+        if (!monetagConfig || !monetagConfig.enabled) return;
+        if (monetagConfig.firstVisitEnabled !== false && !sessionStorage.getItem('mtShown')) {
+            setTimeout(function(){ showMonetagPopup(); }, 2000);
+        }
+        if (monetagConfig.periodicEnabled && monetagConfig.periodicMinutes >= 7) {
+            setInterval(function(){ showMonetagPopup(); }, monetagConfig.periodicMinutes * 60000);
+        }
+    }
+    function showMonetagPopup() {
+        if (!monetagConfig || !monetagConfig.enabled) return;
+        var urls = (monetagConfig.urls || []).filter(function(u){ return u && u.trim(); });
+        if (urls.length === 0) return;
+        document.getElementById('monetagFrame').src = urls[Math.floor(Math.random() * urls.length)];
+        document.getElementById('monetagPopup').style.display = 'flex';
+        sessionStorage.setItem('mtShown', '1');
+    }
+    function closeMonetagPopup() {
+        var btn = document.getElementById('monetagCloseBtn');
+        btn.classList.add('closing');
+        document.getElementById('monetagCloseSpinner').classList.add('show');
+        document.getElementById('monetagCloseText').style.display = 'block';
+        setTimeout(function() {
+            document.getElementById('monetagPopup').style.display = 'none';
+            document.getElementById('monetagFrame').src = 'about:blank';
+            btn.classList.remove('closing');
+            document.getElementById('monetagCloseSpinner').classList.remove('show');
+            document.getElementById('monetagCloseText').style.display = 'none';
+        }, 3000);
+    }
+    var origCloseMiniPromo = closeMiniPromo;
+    closeMiniPromo = function(idx) {
+        origCloseMiniPromo(idx);
+        if (monetagConfig && monetagConfig.miniPromoCloseEnabled !== false) {
+            setTimeout(function(){ showMonetagPopup(); }, 600);
+        }
+    };
+</script>
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -195,6 +268,7 @@
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
             recordStat(currentAlbumId, -1, 'views');
+                        loadMonetagConfig();
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
