@@ -100,7 +100,27 @@
 
 <div id="footerModal" class="modal-ov" onclick="if(event.target===this)closeFooterSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Footer</h3><input type="text" id="footerText" class="inp mb-3" placeholder="Teks Footer"><input type="text" id="footerImage" class="inp mb-3" placeholder="URL Gambar Footer"><input type="text" id="footerLink" class="inp mb-4" placeholder="URL Link Footer"><button onclick="saveGlobalFooter()" class="btn-a w-full">Simpan</button></div></div>
 
-<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()"><div class="modal-ct"><h3 class="text-lg font-bold mb-4">Pengaturan Monetag</h3><input type="text" id="globalMonetagUrl" class="inp mb-4" placeholder="URL Monetag"><button onclick="saveGlobalMonetag()" class="btn-a w-full">Simpan</button></div></div>
+<div id="monetagModal" class="modal-ov" onclick="if(event.target===this)closeMonetagSettings()">
+    <div class="modal-ct">
+        <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold">Pengaturan Monetag Popup</h3><button onclick="closeMonetagSettings()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark"></i></button></div>
+        <div class="space-y-3">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="mtEnabled" style="width:18px;height:18px"/> <span style="font-size:13px;color:#ccc">Aktifkan Monetag Popup</span></label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="mtFirstVisit" style="width:18px;height:18px"/> <span style="font-size:13px;color:#ccc">Muncul saat pertama kali masuk</span></label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="mtMiniPromo" style="width:18px;height:18px"/> <span style="font-size:13px;color:#ccc">Muncul saat mini-promo ditutup</span></label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="mtPeriodic" style="width:18px;height:18px"/> <span style="font-size:13px;color:#ccc">Muncul berkala</span></label>
+            <div><label class="text-xs text-gray-400">Interval berkala (menit, 7-30)</label><input type="number" id="mtInterval" class="inp" min="7" max="30" value="15" /></div>
+            <div>
+                <label class="text-xs text-gray-400 mb-2 block">5 SLOT LINK MONETAG GLOBAL (acak dipilih):</label>
+                <input type="text" id="mtUrl1" class="inp mb-2" placeholder="URL Slot 1" />
+                <input type="text" id="mtUrl2" class="inp mb-2" placeholder="URL Slot 2" />
+                <input type="text" id="mtUrl3" class="inp mb-2" placeholder="URL Slot 3" />
+                <input type="text" id="mtUrl4" class="inp mb-2" placeholder="URL Slot 4" />
+                <input type="text" id="mtUrl5" class="inp mb-4" placeholder="URL Slot 5" />
+            </div>
+            <button onclick="saveMonetagPopupSettings()" class="btn-a w-full">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
 
 <div id="storageModal" class="modal-ov" onclick="if(event.target===this)closeStorageModal()">
     <div class="modal-ct">
