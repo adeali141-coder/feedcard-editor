@@ -26,72 +26,49 @@
         --footer-font-size: 12px; 
         --footer-text-stroke: 1px 1px 2px rgba(0,0,0,0.9); 
         --counter-stroke: 1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9); 
-
         /* ===== PENGATURAN MINI PROMO ===== */
-        /* MODE OTOMATIS (default): ukuran kotak mengikuti rasio tiap slide */
         --mini-promo-w: 100px;
         --mini-promo-h: auto;
-        /* MODE MANUAL: isi KEDUA variabel di atas dengan angka, contoh:
-           --mini-promo-w: 100px;  --mini-promo-h: 178px;
-           Maka SEMUA slide berukuran sama (gambar dipotong rapi). */
-        --mini-promo-left: 4px;      /* jarak dari sisi kiri layar */
-        --mini-promo-bottom: 510px;  /* jarak dari sisi bawah layar */
+        --mini-promo-left: 4px;
+        --mini-promo-bottom: 510px;
     }
     /* ========================================== */
-
     *{margin:0;padding:0;box-sizing:border-box;scrollbar-width:none}
     ::-webkit-scrollbar{display:none}
     html, body { overflow-x: hidden; width: 100%; }
     body{font-family:'DM Sans',sans-serif;background:#000;color:#f0f0f0;}
-    
     .feed-scroll{scroll-snap-type: y mandatory; overflow-y:scroll; overflow-x: hidden; height:95vh; background:#000;}
     .feed-card-wrap{scroll-snap-align: start; min-height: var(--card-height); width: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden; border-bottom: 20px solid #000; padding: 0; margin: 0;}
-    
     .feed-bg-slider{position:absolute; top:0 !important; left:0 !important; width:100%; height:100%; z-index:0; margin:0 !important; padding:0 !important;}
     .feed-bg-slider img, .feed-bg-slider video, .feed-bg-slider iframe{
         width:100% !important; height:100% !important; object-fit:cover; object-position: top center; display:block; position:absolute !important; top:0 !important; left:0 !important; border:none; margin:0 !important; padding:0 !important;
     }
     .slider-track{display:flex; transition:transform .4s cubic-bezier(.25,.8,.25,1); height:100%; width:100%;}
     .slide{min-width:100%; height:100%; display:flex; justify-content:center; align-items:flex-start; position:relative;}
-    
     .feed-overlay{position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events: none;}
-
-    /* ============================================================
-       MINI PROMO (Tombol X di luar gambar + ukuran via :root)
-       ============================================================ */
+    /* MINI PROMO */
     .mini-promo-outer{position:absolute; left:var(--mini-promo-left,4px); bottom:var(--mini-promo-bottom,575px); z-index:4;}
     .mini-promo-container{position:relative; border-radius:8px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.5); background:rgba(255,255,255,0.07); transition:width .4s ease, height .4s ease;}
     .mini-promo-track{display:flex; transition:transform .5s ease-in-out; height:100%;}
     .mini-promo-slide{min-width:100%; height:100%;}
     .mini-promo-slide a{display:block; width:100%; height:100%;}
     .mini-promo-slide img{width:100%; height:100%; object-fit:cover; display:block;}
-    /* Tombol X: 20px (sebelumnya 25px), pojok kanan-atas, mayoritas DI LUAR gambar.
-       Mau 100% di luar gambar? Ubah right:-10px menjadi right:-32px */
     .mini-promo-close{position:absolute; top:-10px; right:-10px; width:20px; height:20px; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.55); border-radius:50%; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,0.45);}
     .mini-promo-container.mp-img-broken{background:#161616;}
-    /* ============================================================ */
-    
     .feed-content{position:absolute; bottom: var(--content-bottom); left:0; right:0; z-index:2; padding: 0 20px; padding-right: 60px; max-width: 500px; margin: 0 auto; width: 100%; text-shadow: var(--text-stroke); display: flex; flex-direction: column;}
-    
     .feed-actions{position:absolute; right: 10px; bottom: var(--actions-bottom); z-index:3; display: flex; flex-direction: column; gap: 15px; align-items: center; text-shadow: var(--text-stroke);}
     .feed-actions button{color:#fff; background:none; border:none; text-align:center; display:flex; flex-direction:column; align-items:center; font-size:12px; cursor:pointer; font-weight:600;}
     .feed-actions i{font-size: 26px; margin-bottom: 4px; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.9));}
     .like-btn.liked{color:#ef4444;}
     .feed-actions span { text-shadow: var(--counter-stroke); }
-    
     .slider-nav-btn{position:absolute; top:40vh; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:4; border:none;}
-    
     .slider-dots-top{position:absolute; top:2vh; left:50%; transform:translateX(-50%); z-index:4; display:flex; gap:6px;}
     .slider-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);transition:all .3s;cursor:pointer;}.slider-dot.active{background:#e8572a;transform:scale(1.5)}
-
     @keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
     .heart-pop{animation:heartPop .3s ease}
-    
-    /* FITUR SEE MORE */
     .desc-clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
     .desc-expanded { max-height: 50vh; overflow-y: auto; }
     .see-more-btn { display: none; color: #fff; font-weight: 600; cursor: pointer; margin-top: 4px; text-shadow: var(--text-stroke); }
-    
     .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;border:1px solid #2a2a2a;color:#f0f0f0;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;transition:transform .4s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
     .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.modal-ov.show{opacity:1;pointer-events:all}
     .modal-ct{background:#111;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);padding:24px}
@@ -99,7 +76,6 @@
     @media(min-width:640px){.modal-ct{border-radius:20px;margin-bottom:10%;max-height:70vh}}
     .inp{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;color:#f0f0f0;width:100%;font-size:14px;outline:none;transition:border .2s}
     .btn-a{background:linear-gradient(135deg,#e8572a,#ff7e47);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px;width:100%}
-    
     #promoFooter{position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); border-top:1px solid #222; padding:8px 16px; z-index:50; display:none; justify-content:center; align-items:center; gap:12px; font-size: var(--footer-font-size); text-shadow: var(--footer-text-stroke);}
     /* MONETAG POPUP */
     #monetagPopup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.3);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
@@ -125,6 +101,7 @@
 <div id="commentModal" class="modal-ov" onclick="if(event.target===this)closeCommentModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold" id="commentModalTitle">Komentar</h3><button onclick="closeCommentModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div id="commentList" class="space-y-3 mb-4" style="max-height:50vh;overflow-y:auto"></div><div class="border-t pt-3" style="border-color:#222"><div class="flex gap-2 mb-2"><input id="commentAuthor" class="inp" style="padding:6px 10px;width:35%" placeholder="Nama" /></div><div class="flex gap-2"><input id="commentText" class="inp flex-1" style="padding:6px 10px" placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter')submitComment()" /><button onclick="submitComment()" class="btn-a" style="padding:6px 14px;width:auto"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Link</label><div class="flex gap-2"><input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly /><button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px;width:auto"><i class="fas fa-copy"></i></button></div></div><div class="space-y-2"><button onclick="shareToFacebook()" class="btn-a flex items-center gap-2" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button><button onclick="shareToWhatsApp()" class="btn-a flex items-center gap-2" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button></div></div></div>
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Laporkan Feed Ini</h3><button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau.</p><textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea><button onclick="submitReport()" class="btn-a">Kirim Laporan</button></div></div>
+
 <!-- MONETAG POPUP -->
 <div id="monetagPopup">
     <div id="monetagBox">
@@ -138,6 +115,7 @@
         <iframe id="monetagFrame" src="about:blank" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
     </div>
 </div>
+
 <script>
     let monetagConfig = null;
     function loadMonetagConfig() {
@@ -181,14 +159,20 @@
             document.getElementById('monetagCloseText').style.display = 'none';
         }, 3000);
     }
-    var origCloseMiniPromo = closeMiniPromo;
-    closeMiniPromo = function(idx) {
-        origCloseMiniPromo(idx);
-        if (monetagConfig && monetagConfig.miniPromoCloseEnabled !== false) {
-            setTimeout(function(){ showMonetagPopup(); }, 600);
+    // Hook trigger 2: mini-promo close (menunggu script utama selesai memuat)
+    setTimeout(function() {
+        if (typeof closeMiniPromo === 'function') {
+            var origCloseMiniPromo = closeMiniPromo;
+            closeMiniPromo = function(idx) {
+                origCloseMiniPromo(idx);
+                if (monetagConfig && monetagConfig.miniPromoCloseEnabled !== false) {
+                    setTimeout(function(){ showMonetagPopup(); }, 600);
+                }
+            };
         }
-    };
+    }, 500);
 </script>
+
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBXLvuPUsI6jz5wmKRzOmR-R1NQcVbkfu0",
@@ -201,7 +185,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const functions = firebase.app().functions('us-central1');
-        // ===== STATISTICS RECORDING =====
+
+    // ===== STATISTICS RECORDING =====
     let viewedCards = new Set();
     function recordStat(albumId, cardIdx, type) {
         try {
@@ -262,19 +247,17 @@
             if (!doc.exists) { document.getElementById('appLoad').innerHTML = '<p class="text-gray-500">Album tidak ditemukan.</p>'; return; }
             currentAlbum = doc.data();
             if(currentAlbum.status === 'suspended') { document.getElementById('appLoad').innerHTML = '<p class="text-red-500 text-center px-4">Album ini telah ditangguhkan oleh Admin.</p>'; return; }
-
             document.title = currentAlbum.name;
             document.getElementById('appLoad').classList.add('hidden');
             document.getElementById('feedContainer').classList.remove('hidden');
             renderFeeds();
             recordStat(currentAlbumId, -1, 'views');
-                        loadMonetagConfig();
+            loadMonetagConfig();
             db.collection('comments').where('albumId', '==', currentAlbumId).onSnapshot((snapshot) => {
                 currentAlbumComments = [];
                 snapshot.forEach(doc => currentAlbumComments.push(doc.data()));
                 updateCommentCounts();
             });
-
             const cardParams = new URLSearchParams(window.location.search);
             const cardHumanIdx = cardParams.get('card');
             if(cardHumanIdx !== null) {
@@ -284,7 +267,6 @@
                     if(targetCard) targetCard.scrollIntoView({behavior: 'smooth', block: 'start'});
                 }, 500);
             }
-            
             db.collection('settings').doc('footer').get().then((doc) => {
                 if(doc.exists) { globalFooterData = doc.data(); renderPromoFooter(); }
             });
@@ -314,27 +296,21 @@
     function renderFeeds() {
         let cards = currentAlbum.cards || [];
         let html = '', activeCardCount = 0;
-        
         for(let i=0; i<cards.length; i++) {
             let c = cards[i];
             if(c.status === 'suspended') continue; 
-            
             if(c.hideActions === undefined) c.hideActions = false;
-            
             let tf = c.title.font === 'sans-serif' ? 'sans-serif' : ("'"+c.title.font+"', sans-serif");
             let df = c.desc.font === 'sans-serif' ? 'sans-serif' : ("'"+c.desc.font+"', sans-serif");
             let sid = 'slider_'+i;
             sliderState[sid] = 0;
-            
             let vi = c.images.filter(img => img.url);
             if(c.videoUrl) vi.unshift({url: c.videoUrl, link: ''});
-            
             let sh = vi.map((img, idx) => {
                 let mediaHtml = '';
                 let url = img.url;
                 let styleCover = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:cover; object-position:top center;";
                 let styleContain = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; margin:0; padding:0; object-fit:contain; object-position:top center;";
-                
                 if (url.indexOf('youtube.com') >= 0 || url.indexOf('youtu.be') >= 0) {
                     let vid = '';
                     try {
@@ -356,23 +332,19 @@
                 else {
                     mediaHtml = `<img src="${escA(url)}" loading="lazy" style="${styleContain}" />`;
                 }
-                
                 if (img.link) {
                     return `<div class="slide"><a href="${escA(img.link)}" target="_blank" style="width:100%;height:100%;display:block;">${mediaHtml}</a></div>`;
                 }
                 return `<div class="slide">${mediaHtml}</div>`;
             }).join('');
-
             let dh = vi.map((s, idx) => `<div class="slider-dot${idx===0?' active':''}" onclick="goSlide('${sid}',${idx})"></div>`).join('');
             let slidesArr = vi; 
-            
             let ctaHtml = '';
             if(c.cta && c.cta.text) {
                 ctaHtml = `<a href="${escA(c.cta.url)}" target="_blank" rel="noopener" onclick="recordStat(currentAlbumId, ${i}, 'ctaClicks')" style="text-decoration:none; display:inline-block; margin-bottom:12px;">
                     <button style="background:${c.cta.bgColor};color:${c.cta.textColor};border-radius:25px;padding:var(--cta-padding);font-size:14px;font-weight:600;border:none;cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${escH(c.cta.text)}</button>
                 </a>`;
             }
-
             let bgHtml = '';
             if (slidesArr.length > 0) {
                 bgHtml = `<div class="feed-bg-slider" id="${sid}">
@@ -387,22 +359,15 @@
             } else {
                 bgHtml = `<div style="position:absolute; inset:0; background:${c.bgColor}; z-index:0;"></div><div class="feed-overlay" style="background: none;"></div>`;
             }
-
-            // ============================================================
-            // MINI PROMO HTML GENERATOR (X di luar gambar + ukuran Manual/Auto)
-            // ============================================================
             let miniPromoHtml = '';
             if (c.miniPromos && c.miniPromos.length > 0) {
                 window.allMiniPromos = window.allMiniPromos || {};
                 window.allMiniPromos[i] = c.miniPromos;
-
                 let firstRatio = c.miniPromos[0].ratio || '1:1';
                 let mps = getMiniPromoSize(firstRatio);
-
                 let trackHtml = c.miniPromos.map(p =>
                     `<div class="mini-promo-slide"><a href="${escA(p.link || '#')}" target="_blank" rel="noopener"><img src="${escA(p.img)}" referrerpolicy="no-referrer" decoding="async" onerror="miniPromoImgError(this)" alt="promo"></a></div>`
                 ).join('');
-
                 miniPromoHtml = `<div class="mini-promo-outer" id="miniPromoOuter_${i}">
                     <button class="mini-promo-close" onclick="closeMiniPromo(${i})" aria-label="Tutup promo"><i class="fas fa-times"></i></button>
                     <div class="mini-promo-container" id="miniPromo_${i}" style="width:${mps.w}px; height:${mps.h}px;">
@@ -410,8 +375,6 @@
                     </div>
                 </div>`;
             }
-            // ============================================================
-
             html += `
                 <div class="feed-card-wrap" id="target-card-${i}" style="background:${c.bgColor};">
                     ${bgHtml}
@@ -426,7 +389,6 @@
                         ` : ''}
                     </div>
             `;
-            
             if(!c.hideActions) {
                 html += `
                     <div class="feed-actions">
@@ -437,11 +399,9 @@
                     </div>
                 `;
             }
-            
             html += `</div>`;
             activeCardCount++;
         }
-
         document.getElementById('feedContainer').innerHTML = html || '<div class="h-screen flex items-center justify-center"><p class="text-gray-500">Album kosong.</p></div>';
         observePromos();
         observeVideos();
@@ -456,7 +416,6 @@
         if(idx>=total) idx=0;
         sliderState[sid]=idx;
         tr.style.transform='translateX(-'+(idx*100)+'%)';
-        
         var dotsEl = document.getElementById('dots_'+sid);
         if(dotsEl) {
             var dc = dotsEl.children;
@@ -478,7 +437,6 @@
         c.liked = !wasLiked;
         recordStat(currentAlbumId, i, 'likes');
         if (b) { b.classList.toggle('liked', c.liked); b.classList.add('heart-pop'); setTimeout(function(){ b.classList.remove('heart-pop'); }, 300); }
-        // LANGSUNG update angka (tidak menunggu server)
         if (ct) {
             var cur = parseInt(ct.textContent) || 0;
             ct.textContent = c.liked ? cur + 1 : Math.max(0, cur - 1);
@@ -505,7 +463,6 @@
     }
     function openCommentModal(i) { commentCardIdx = i; replyTo = null; document.getElementById('commentModalTitle').textContent = 'Komentar'; document.getElementById('commentAuthor').value = localStorage.getItem('acf_userName') || ''; document.getElementById('commentList').innerHTML = '<p style="color:#666;text-align:center;padding:16px 0;font-size:14px">Memuat komentar...</p>'; document.getElementById('commentModal').classList.add('show'); renderCmts(); }
     function closeCommentModal() { document.getElementById('commentModal').classList.remove('show'); commentCardIdx = -1; replyTo = null; }
-    
     function renderCmts() {
         var el = document.getElementById('commentList');
         let parents = currentAlbumComments.filter(c => c.cardIdx == commentCardIdx && !c.parentId);
@@ -513,12 +470,10 @@
         document.getElementById('commentModalTitle').textContent = 'Komentar (' + parents.length + ')';
         var h = '';
         let isOwner = currentUserId === currentAlbum.userId;
-        
         for (var ci = 0; ci < parents.length; ci++) {
             var cm = parents[ci];
             let delBtn = isOwner ? `<button onclick="deleteComment('${cm.commentId}')" style="font-size:11px;color:#f87171;background:none;border:none;cursor:pointer;margin-top:4px;margin-left:10px;"><i class="fas fa-trash"></i></button>` : '';
             h += `<div style="padding:12px;border-radius:12px;background:#1a1a1a;margin-bottom:8px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">${escH(cm.author || 'Anonim')}</span></div><p style="font-size:13px;margin-top:6px;color:#ccc">${escH(cm.text)}</p><div><button onclick="setReply('${cm.commentId}','${escA(cm.author || 'Anonim')}')" style="font-size:11px;color:#e8572a;background:none;border:none;cursor:pointer;margin-top:4px"><i class="fas fa-reply" style="margin-right:4px"></i>Balas</button>${delBtn}</div>`;
-            
             let replies = currentAlbumComments.filter(r => r.parentId === cm.commentId);
             for (var ri = 0; ri < replies.length; ri++) {
                 var r = replies[ri];
@@ -548,7 +503,6 @@
         .then(() => { document.getElementById('commentText').value = ''; document.getElementById('commentText').placeholder = 'Tulis komentar...'; replyTo = null; showToast('Komentar berhasil terkirim!'); })
         .catch((e) => { showToast('Gagal simpan komentar: ' + e.message); });
     }
-
     function openShareModal(cardIdx = -1) {
         let baseUrl = 'https://feed.novavariety.store/f/' + currentAlbumId;
         if(cardIdx >= 0) {
@@ -559,7 +513,6 @@
                 if(sc) { let currentShares = parseInt(sc.innerText) || 0; sc.innerText = currentShares + 1; }
                 const incrementInteraction = functions.httpsCallable('incrementInteraction');
                 incrementInteraction({ albumId: currentAlbumId, cardIdx: cardIdx, type: 'share', isDecrement: false })
-                .then((result) => { if(result.data.success && sc) { sc.innerText = result.data.newValue; } })
                 .catch(e => console.error("Gagal track share:", e));
             }
         }
@@ -570,7 +523,6 @@
     function copyShareLink(){var i=document.getElementById('shareLinkInput');i.select();navigator.clipboard.writeText(i.value).then(function(){showToast('Link disalin!');});}
     function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank','width=600,height=400');}
     function shareToWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('shareLinkInput').value),'_blank');}
-
     function openReportModal(idx){currentReportFeedIdx=idx;document.getElementById('reportModal').classList.add('show');}
     function closeReportModal(){document.getElementById('reportModal').classList.remove('show');}
     function submitReport(){
@@ -583,7 +535,6 @@
         .then(()=>{showToast('Laporan terkirim! Admin akan meninjau.');closeReportModal();document.getElementById('reportReason').value='';})
         .catch(e=>showToast('Gagal: '+e.message));
     }
-
     function renderPromoFooter() {
         let isFooterEnabled = currentAlbum.footerEnabled !== false;
         if(isFooterEnabled && globalFooterData && (globalFooterData.text || globalFooterData.imageUrl)) {
@@ -597,33 +548,22 @@
             footerEl.style.display = 'flex';
         }
     }
-
-    // ============================================================
-    // MINI PROMO ROTATOR (Durasi dinamis + ukuran Manual/Auto)
-    // ============================================================
+    // MINI PROMO ROTATOR
     let miniPromoStates = {};
     let miniPromoIntervals = {};
-
-    // Baca ukuran mini promo dari PENGATURAN MANUAL LAYOUT (:root)
     function getMiniPromoSize(ratio) {
         const cs = getComputedStyle(document.documentElement);
         let wNum = parseFloat(cs.getPropertyValue('--mini-promo-w'));
         let hNum = parseFloat(cs.getPropertyValue('--mini-promo-h'));
-
-        // MODE MANUAL: kedua variabel berisi angka -> ukuran dikunci (semua slide sama)
         if (!isNaN(wNum) && wNum > 0 && !isNaN(hNum) && hNum > 0) {
             return { w: wNum, h: hNum, fixed: true };
         }
-
-        // MODE OTOMATIS: ukuran mengikuti rasio tiap slide (perilaku lama)
         let base = (!isNaN(wNum) && wNum > 0) ? wNum : 80;
         let w = base, h = base;
         if (ratio == '9:16') h = Math.round(base * 16 / 9);
         if (ratio == '16:9') w = Math.round(base * 16 / 9);
         return { w: w, h: h, fixed: false };
     }
-
-    // Fallback bila gambar mini promo gagal dimuat: coba 1x lagi, lalu tandai kotak
     function miniPromoImgError(img) {
         if (img.dataset.retried) {
             let box = img.closest('.mini-promo-container');
@@ -633,18 +573,14 @@
         img.dataset.retried = '1';
         img.src = img.src + (img.src.indexOf('?') >= 0 ? '&' : '?') + '_r=' + Date.now();
     }
-
     function initMiniPromos() {
         let containers = document.querySelectorAll('.mini-promo-container');
         containers.forEach(c => {
             let id = c.id.split('_')[1];
             miniPromoStates[id] = { idx: 0, visible: true };
-            
             if(miniPromoIntervals[id]) clearInterval(miniPromoIntervals[id]);
-            
             let cardData = currentAlbum.cards[id];
             let time = (cardData && cardData.miniPromoTime) ? cardData.miniPromoTime * 1000 : 3000;
-            
             if (window.allMiniPromos[id] && window.allMiniPromos[id].length > 1) {
                 miniPromoIntervals[id] = setInterval(() => {
                     if (miniPromoStates[id].visible) {
@@ -654,8 +590,6 @@
                             let total = tr.children.length;
                             miniPromoStates[id].idx = (miniPromoStates[id].idx + 1) % total;
                             tr.style.transform = `translateX(-${miniPromoStates[id].idx * 100}%)`;
-                            
-                            // Auto-resize hanya di MODE OTOMATIS
                             let activePromo = window.allMiniPromos[id][miniPromoStates[id].idx];
                             let ratio = activePromo.ratio || '1:1';
                             let mps = getMiniPromoSize(ratio);
@@ -669,13 +603,11 @@
             }
         });
     }
-
     function closeMiniPromo(idx) {
         let el = document.getElementById('miniPromoOuter_' + idx);
         if (el) el.style.display = 'none';
         if (miniPromoStates[idx]) miniPromoStates[idx].visible = false;
     }
-
     const promoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -688,14 +620,11 @@
             }
         });
     }, { threshold: 0.5 });
-
     function observePromos() {
         document.querySelectorAll('.feed-card-wrap').forEach(card => promoObserver.observe(card));
         initMiniPromos();
     }
-    // ============================================================
-
-    // FITUR SEE MORE / SEE LESS
+    // SEE MORE / SEE LESS
     function toggleDesc(idx) {
         let desc = document.getElementById('desc_' + idx);
         let btn = document.getElementById('seeMore_' + idx);
@@ -720,7 +649,6 @@
             });
         }, 200);
     }
-    
     function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
 </script>
 </body>
