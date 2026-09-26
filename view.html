@@ -149,8 +149,15 @@
 
 <script>
     let monetagConfig = null;
+    let splashConfig = null;
+
     function loadMonetagConfig() {
         if (currentAlbum && currentAlbum.monetagEnabled === false) return;
+        // Load splash settings
+        db.collection('settings').doc('splashPopup').get().then((doc) => {
+            if (doc.exists) splashConfig = doc.data();
+        }).catch(function(){});
+        // Load monetag settings
         db.collection('settings').doc('monetagPopup').get().then((doc) => {
             if (!doc.exists) return;
             monetagConfig = doc.data();
@@ -160,6 +167,7 @@
             setupMonetagTriggers();
         }).catch(function(){});
     }
+
     function setupMonetagTriggers() {
         if (!monetagConfig || !monetagConfig.enabled) return;
         if (monetagConfig.firstVisitEnabled !== false && !sessionStorage.getItem('mtShown')) {
@@ -169,7 +177,14 @@
             setInterval(function(){ showMonetagPopup(); }, monetagConfig.periodicMinutes * 60000);
         }
     }
+
     function showMonetagPopup() {
+        // SPLASH: kalau diaktifkan, tampilkan splash popup (custom content)
+        if (splashConfig && splashConfig.enabled && splashConfig.images && splashConfig.images.length > 0) {
+            showSplashPopup();
+            return;
+        }
+        // Fallback: popup Monetag iframe (jika splash tidak aktif)
         if (!monetagConfig || !monetagConfig.enabled) return;
         var urls = (monetagConfig.urls || []).filter(function(u){ return u && u.trim(); });
         if (urls.length === 0) return;
@@ -177,6 +192,7 @@
         document.getElementById('monetagPopup').style.display = 'flex';
         sessionStorage.setItem('mtShown', '1');
     }
+
     function closeMonetagPopup() {
         var btn = document.getElementById('monetagCloseBtn');
         btn.classList.add('closing');
@@ -190,6 +206,75 @@
             document.getElementById('monetagCloseText').style.display = 'none';
         }, 3000);
     }
+
+    // ===== SPLASH POPUP =====
+    let splashIdx = 0;
+    let splashTouchX = null;
+
+    function showSplashPopup() {
+        if (!splashConfig || !splashConfig.enabled || !splashConfig.images || splashConfig.images.length === 0) return;
+        var track = document.getElementById('splashTrack');
+        var dots = document.getElementById('splashDots');
+        var h = '', dh = '';
+        for (var i = 0; i < splashConfig.images.length; i++) {
+            h += '<div class="splashSlide"><img src="' + splashConfig.images[i] + '" /></div>';
+            dh += '<div class="splashDot' + (i === 0 ? ' active' : '') + '" onclick="goSplashSlide(' + i + ')"></div>';
+        }
+        track.innerHTML = h;
+        dots.innerHTML = dh;
+        splashIdx = 0;
+        updSplash();
+        document.getElementById('splashTextP').textContent = splashConfig.text || '';
+        document.getElementById('splashBtn').textContent = splashConfig.buttonText || 'Lanjutkan';
+        document.getElementById('splashPopup').style.display = 'flex';
+        sessionStorage.setItem('mtShown', '1');
+    }
+
+    function goSplashSlide(idx) {
+        var total = (splashConfig && splashConfig.images) ? splashConfig.images.length : 0;
+        if (total === 0) return;
+        if (idx < 0) idx = total - 1;
+        if (idx >= total) idx = 0;
+        splashIdx = idx;
+        updSplash();
+    }
+
+    function updSplash() {
+        document.getElementById('splashTrack').style.transform = 'translateX(-' + (splashIdx * 100) + '%)';
+        var d = document.getElementById('splashDots').children;
+        for (var i = 0; i < d.length; i++) {
+            if (i === splashIdx) d[i].classList.add('active');
+            else d[i].classList.remove('active');
+        }
+    }
+
+    // Swipe untuk splash slider
+    document.addEventListener('touchstart', function(e) {
+        var s = e.target.closest('#splashSlider');
+        if (!s) return;
+        splashTouchX = e.changedTouches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        var s = e.target.closest('#splashSlider');
+        if (!s || splashTouchX === null) return;
+        var d = splashTouchX - e.changedTouches[0].clientX;
+        if (Math.abs(d) > 40) goSplashSlide(splashIdx + (d > 0 ? 1 : -1));
+        splashTouchX = null;
+    }, { passive: true });
+
+    // Tombol Lanjutkan -> buka Monetag + tutup popup
+    function proceedFromSplash() {
+        var urls = (monetagConfig && monetagConfig.urls || []).filter(function(u) { return u && u.trim(); });
+        if (currentAlbum && currentAlbum.monetagUrl) {
+            urls = [currentAlbum.monetagUrl];
+        }
+        if (urls.length > 0) {
+            window.open(urls[Math.floor(Math.random() * urls.length)], '_blank');
+        }
+        document.getElementById('splashPopup').style.display = 'none';
+    }
+
     // Hook trigger 2: mini-promo close (menunggu script utama selesai memuat)
     setTimeout(function() {
         if (typeof closeMiniPromo === 'function') {
