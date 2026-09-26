@@ -91,6 +91,22 @@
     #monetagCloseSpinner.show{display:flex;}
     #monetagCloseText{display:none;position:absolute;top:38px;left:0;right:0;z-index:2;text-align:center;font-size:11px;color:#888;padding:3px;}
     #monetagFrame{width:100%;height:100%;border:none;margin-top:34px;display:block;}
+
+        /* SPLASH POPUP */
+    #splashPopup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.35);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;}
+    #splashBox{position:relative;width:85%;max-width:420px;height:77vh;max-height:620px;background:linear-gradient(180deg,#111 0%,#0a0a0a 100%);border-radius:20px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,0.7);display:flex;flex-direction:column;}
+    #splashSlider{flex:1;position:relative;overflow:hidden;touch-action:pan-x;}
+    #splashTrack{display:flex;height:100%;transition:transform .35s cubic-bezier(.25,.8,.25,1);}
+    .splashSlide{min-width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+    .splashSlide img{width:100%;height:100%;object-fit:cover;display:block;}
+    #splashDots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:2;}
+    .splashDot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all .3s;cursor:pointer;}
+    .splashDot.active{background:#4ade80;transform:scale(1.4);}
+    #splashTextArea{padding:10px 16px 4px;text-align:center;}
+    #splashTextP{font-size:14px;color:#ccc;line-height:1.4;font-weight:500;}
+    #splashBtnArea{padding:6px 16px 16px;}
+    #splashBtn{width:100%;background:linear-gradient(135deg,#059669,#34d399);color:#fff;border:none;border-radius:14px;padding:14px 20px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(5,150,105,0.4);transition:transform .2s;}
+    #splashBtn:active{transform:scale(0.97);}
 </style>
 </head>
 <body>
@@ -106,6 +122,17 @@
 <div id="shareModal" class="modal-ov" onclick="if(event.target===this)closeShareModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Bagikan</h3><button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><div class="mb-4"><label class="text-xs text-gray-400 mb-1 block">Link</label><div class="flex gap-2"><input id="shareLinkInput" class="inp flex-1" style="font-size:11px" readonly /><button onclick="copyShareLink()" class="btn-a" style="padding:8px 12px;font-size:12px;width:auto"><i class="fas fa-copy"></i></button></div></div><div class="space-y-2"><button onclick="shareToFacebook()" class="btn-a flex items-center gap-2" style="background:#1877f2"><i class="fab fa-facebook-f w-6 text-center"></i> Facebook</button><button onclick="shareToWhatsApp()" class="btn-a flex items-center gap-2" style="background:#25d366"><i class="fab fa-whatsapp w-6 text-center"></i> WhatsApp</button></div></div></div>
 <div id="reportModal" class="modal-ov" onclick="if(event.target===this)closeReportModal()"><div class="modal-ct"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold">Laporkan Feed Ini</h3><button onclick="closeReportModal()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark text-lg"></i></button></div><p class="text-sm text-gray-400 mb-4">Beri tahu admin mengapa feed ini perlu ditinjau.</p><textarea id="reportReason" class="inp mb-4" rows="5" placeholder="Tulis alasan pelaporan di sini..."></textarea><button onclick="submitReport()" class="btn-a">Kirim Laporan</button></div></div>
 
+<!-- SPLASH POPUP -->
+<div id="splashPopup">
+    <div id="splashBox">
+        <div id="splashSlider">
+            <div id="splashTrack"></div>
+            <div id="splashDots"></div>
+        </div>
+        <div id="splashTextArea"><p id="splashTextP"></p></div>
+        <div id="splashBtnArea"><button id="splashBtn" onclick="proceedFromSplash()"></button></div>
+    </div>
+</div>
 <!-- MONETAG POPUP -->
 <div id="monetagPopup">
     <div id="monetagBox">
