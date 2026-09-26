@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <!-- Quill WYSIWYG Editor -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -43,6 +44,7 @@
             <button onclick="openLandingSettings()" class="btn-g text-blue-400"><i class="fas fa-fire"></i> <span class="hidden md:inline">Landing</span></button>
             <button onclick="openFooterSettings()" class="btn-g text-blue-400"><i class="fas fa-shoe-prints"></i> <span class="hidden md:inline">Footer</span></button>
             <button onclick="openMonetagSettings()" class="btn-g text-yellow-400"><i class="fas fa-coins"></i> <span class="hidden md:inline">Monetag</span></button>
+            <button onclick="openSplashSettings()" class="btn-g text-pink-400"><i class="fas fa-images"></i> <span class="hidden md:inline">Splash</span></button>
             <button onclick="openStorageModal()" class="btn-g text-green-400"><i class="fas fa-hard-drive"></i> <span class="hidden md:inline">Storage</span></button>
             <button onclick="logout()" class="btn-g flex items-center gap-2"><i class="fas fa-right-from-bracket"></i> <span class="hidden md:inline">Logout</span></button>
         </div>
@@ -118,6 +120,28 @@
                 <input type="text" id="mtUrl5" class="inp mb-4" placeholder="URL Slot 5" />
             </div>
             <button onclick="saveMonetagPopupSettings()" class="btn-a w-full">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
+    <div id="splashModal" class="modal-ov" onclick="if(event.target===this)closeSplashSettings()">
+    <div class="modal-ct">
+        <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold">Splash Popup Content</h3><button onclick="closeSplashSettings()" class="text-gray-400 hover:text-white"><i class="fas fa-xmark"></i></button></div>
+        <div class="space-y-4">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="spEnabled" style="width:18px;height:18px"/> <span style="font-size:13px;color:#ccc">Aktifkan Splash Popup (menggantikan popup Monetag iframe)</span></label>
+            <div>
+                <label class="text-xs text-gray-400 mb-2 block">GAMBAR SLIDER (maks 7) — klik kotak untuk upload:</label>
+                <div id="spSlots" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;"></div>
+                <input type="file" id="spFilePicker" accept="image/*" style="display:none">
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 mb-1 block">Teks Popup (tampil di bawah slider):</label>
+                <textarea id="spText" class="inp" rows="2" placeholder="Selamat datang! Geser untuk melihat..."></textarea>
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 mb-1 block">Teks Tombol:</label>
+                <input type="text" id="spBtnText" class="inp" placeholder="Yuk klik untuk lanjut ke tujuanmu ➜" />
+            </div>
+            <button onclick="saveSplashSettings()" class="btn-a w-full">Simpan Splash Popup</button>
         </div>
     </div>
 </div>
@@ -464,6 +488,104 @@
             h += '<div class="card" onclick="this.querySelector(\'.stat-cards\').style.display=this.querySelector(\'.stat-cards\').style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer"><div class="flex justify-between items-center"><h4 class="font-bold text-white text-sm">' + albumName + '</h4><span class="text-xs text-gray-500">' + a.views + ' views | ' + a.likes + ' likes | ' + a.ctaClicks + ' CTA</span></div><div class="stat-cards" style="display:none;margin-top:10px;border-top:1px solid #222;padding-top:8px">' + cardsHtml + '</div></div>';
         });
         el.innerHTML = h;
+    }
+
+        // ===== SPLASH POPUP SETTINGS =====
+    const storageAdmin = firebase.storage();
+    let spImages = [];
+    let spUploadSlot = -1;
+
+    function openSplashSettings() {
+        db.collection('settings').doc('splashPopup').get().then((doc) => {
+            const d = doc.exists ? doc.data() : {};
+            spImages = (d.images || []).slice(0, 7);
+            while (spImages.length < 7) spImages.push('');
+            document.getElementById('spEnabled').checked = d.enabled || false;
+            document.getElementById('spText').value = d.text || '';
+            document.getElementById('spBtnText').value = d.buttonText || '';
+            renderSpSlots();
+            document.getElementById('splashModal').style.display = 'flex';
+        });
+    }
+    function closeSplashSettings() { document.getElementById('splashModal').style.display = 'none'; }
+
+    function renderSpSlots() {
+        let h = '';
+        for (let i = 0; i < 7; i++) {
+            const img = spImages[i];
+            h += '<div style="position:relative;aspect-ratio:3/4;border:2px dashed #2a2a2a;border-radius:10px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0a0a0a" onclick="pickSplashImage(' + i + ')">';
+            if (img) {
+                h += '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover" />';
+                h += '<button onclick="event.stopPropagation();removeSpImage(' + i + ')" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,0.9);color:#fff;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>';
+            } else {
+                h += '<div style="text-align:center;color:#333;font-size:20px"><i class="fas fa-plus"></i></div>';
+            }
+            h += '</div>';
+        }
+        document.getElementById('spSlots').innerHTML = h;
+    }
+
+    function pickSplashImage(slot) {
+        spUploadSlot = slot;
+        var fp = document.getElementById('spFilePicker');
+        fp.value = '';
+        fp.click();
+    }
+
+    document.getElementById('spFilePicker').addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        if (!file || spUploadSlot < 0) return;
+        if (!/^image\//.test(file.type)) { alert('File harus gambar.'); return; }
+        if (file.size > 10 * 1024 * 1024) { alert('Maks 10 MB.'); return; }
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var img = new Image();
+            img.onload = function () {
+                // Kompres ke maks 800px
+                var sc = Math.min(1, 800 / img.naturalWidth, 800 / img.naturalHeight);
+                var cv = document.createElement('canvas');
+                cv.width = Math.round(img.naturalWidth * sc);
+                cv.height = Math.round(img.naturalHeight * sc);
+                cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+                cv.toBlob(function (blob) {
+                    if (!blob) { alert('Gagal memproses.'); return; }
+                    var path = 'users/' + (auth.currentUser ? auth.currentUser.uid : 'admin') + '/splash/' + Date.now() + '.jpg';
+                    var task = storageAdmin.ref(path).put(blob, { contentType: 'image/jpeg' });
+                    task.on('state_changed', null,
+                        function (err) { alert('Upload gagal: ' + err.message); },
+                        function () {
+                            task.snapshot.ref.getDownloadURL().then(function (url) {
+                                spImages[spUploadSlot] = url;
+                                renderSpSlots();
+                            });
+                        });
+                }, 'image/jpeg', 0.85);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function removeSpImage(i) {
+        spImages[i] = '';
+        renderSpSlots();
+    }
+
+    function saveSplashSettings() {
+        const images = spImages.filter(u => u && u.trim());
+        if (images.length === 0) {
+            if (!confirm('Tidak ada gambar. Splash popup tidak akan tampil. Lanjutkan?')) return;
+        }
+        db.collection('settings').doc('splashPopup').set({
+            enabled: document.getElementById('spEnabled').checked,
+            images: images,
+            text: document.getElementById('spText').value || '',
+            buttonText: document.getElementById('spBtnText').value || 'Lanjutkan'
+        }).then(() => {
+            closeSplashSettings();
+            alert('Splash Popup tersimpan! ' + images.length + ' gambar.');
+        });
     }
 </script>
 </body>
