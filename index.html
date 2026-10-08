@@ -63,7 +63,7 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
 .saving-box{background:#111;border-radius:16px;padding:24px 32px;text-align:center;border:1px solid #2a2a2a}
 .slug-box{background:#0d3320;border:1px solid #166534;border-radius:10px;padding:10px 14px;color:#4ade80;font-size:13px;word-break:break-all}
     /* ===== MOBILE-ONLY VIEW ===== */
-    @media (min-width: 481px) {
+        @media (min-width: 481px) {
         html {
             background: #050505;
         }
@@ -72,6 +72,13 @@ body{font-family:'DM Sans',sans-serif;background:#373737;color:#f0f0f0;overflow:
             margin: 0 auto !important;
             min-height: 100vh;
             box-shadow: 0 0 60px rgba(0,0,0,0.8);
+        }
+        .modal-ov, .saving-ov {
+            left: calc(50% - 240px) !important;
+            right: calc(50% - 240px) !important;
+        }
+        .toast, #uploadProgressBox {
+            max-width: 440px;
         }
     } 
 </style>
