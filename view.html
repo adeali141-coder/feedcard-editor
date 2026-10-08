@@ -11,6 +11,26 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+/* ===== MOBILE-ONLY VIEW (desktop tampil seperti HP) ===== */
+    @media (min-width: 481px) {
+        html {
+            background: #050505;
+        }
+        body {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            box-shadow: 0 0 60px rgba(0,0,0,0.8);
+        }
+        .modal-ov, #splashPopup, #monetagPopup, #promoFooter {
+            left: calc(50% - 240px) !important;
+            right: calc(50% - 240px) !important;
+        }
+        #toast {
+            max-width: 440px;
+        }
+    }
+    
 <style>
     /* ==========================================
        PENGATURAN MANUAL LAYOUT (UBAH DI SINI)
